@@ -22,7 +22,7 @@
 {
     'name': 'Product Lifecycle Management',
     'version': '3.0',
-    'category': 'Generic Modules/Others',
+    'category': 'LifeCycle Management',
     'depends': ['base', 'process','document','product','mrp'],
     'author': 'OmniaSolutions',
     'description': """ This is a Product Lifecycle Management system providing:
@@ -42,6 +42,7 @@
     * SolidWorks 2011.1 (and above)
     """,
     'website': 'http://www.omniasolutions.eu',
+    'images': ['images/EngineeringPart.jpeg','images/OpenComponent.jpeg','images/OpenDocument.jpeg'],
     'init_xml': [
         ],
     'update_xml': [
@@ -66,6 +67,8 @@
         'install/plmfinishings/finishing_view.xml',
         'security/base_plm_security.xml',
         'security/ir.model.access.csv',
+        'security/ir.actions.act_window.csv',
+        'security/res.groups.csv',
         'plm_installer.xml',
         ],
     'demo_xml': [
