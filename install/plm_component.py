@@ -177,11 +177,22 @@ class plm_component(osv.osv):
 
     def newVersion(self,cr,uid,ids,context=None):
         """
-            create a new version of the document (to WorkFlow calling)
+            create a new version of the component (to WorkFlow calling)
         """
         if self.newRevision(cr,uid,ids,context=context)!=None:
             return True 
         return False 
+
+    def GetLastRevision(self, cr, uid, compNames, context=None):
+        """
+            Get Last revision of given items (by name)
+        """
+        result = []
+        for compName in compNames:
+            docIds=self.search(cr,uid,[('name','=',compName)],order='engineering_revision',context=context)
+            result.append(docIds[len(docIds)-1])
+        return list(set(result))
+
 
     def NewRevision(self,cr,uid,ids,context=None):
         """

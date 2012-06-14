@@ -69,14 +69,10 @@ class plm_document(osv.osv):
 
     def _getlastrev(self, cr, uid, ids, context=None):
         result = []
-        treated = []
         for objDoc in self.browse(cr, uid, ids, context=context):
-            if objDoc in treated:
-                continue
             docIds=self.search(cr,uid,[('name','=',objDoc.name)],order='revisionid',context=context)
             result.append(docIds[len(docIds)-1])
-            treated.append(objDoc)
-        return result
+        return list(set(result))
             
     def _data_get_files(self, cr, uid, ids, listedFiles=([],[]), forceFlag=False, context=None):
         """
@@ -567,6 +563,15 @@ class plm_document(osv.osv):
             retValues=getcheckedfiles(files)
         return retValues
 
+    def GetLastRevision(self, cr, uid, docNames, context=None):
+        """
+            Get Last revision of given items (by name)
+        """
+        result = []
+        for docName in docNames:
+            docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
+            result.append(docIds[len(docIds)-1])
+        return list(set(result))
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):
         """
