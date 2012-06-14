@@ -551,6 +551,9 @@ class plm_document(osv.osv):
     ]
 
     def CheckedIn(self, cr, uid, files, default=None, context=None):
+        """
+            Get checked status for requested files
+        """
         retValues=[]
         def getcheckedfiles(files):
             res=[]
