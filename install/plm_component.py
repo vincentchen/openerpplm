@@ -181,17 +181,19 @@ class plm_component(osv.osv):
         """
         if self.newRevision(cr,uid,ids,context=context)!=None:
             return True 
-        return False 
+        return False
 
-    def GetLastRevision(self, cr, uid, compNames, context=None):
+    def GetUpdated(self,cr,uid,vals,context=None):
         """
-            Get Last revision of given items (by name)
+            Get Last revision of given items (by ids)
         """
-        result = []
-        for compName in compNames:
-            docIds=self.search(cr,uid,[('name','=',compName)],order='engineering_revision',context=context)
-            result.append(docIds[len(docIds)-1])
-        return list(set(result))
+        ids=[]
+        partNames, atttribNames = vals
+        for partName in partNames:
+            partIds=self.search(cr,uid,[('name','=',partName)],order='engineering_revision',context=context)
+            ids.append(partIds[len(partIds)-1])
+        attribs=self.read(cr, uid, list(set(ids)), atttribNames)
+        return attribs
 
 
     def NewRevision(self,cr,uid,ids,context=None):

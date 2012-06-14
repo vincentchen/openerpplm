@@ -563,15 +563,16 @@ class plm_document(osv.osv):
             retValues=getcheckedfiles(files)
         return retValues
 
-    def GetLastRevision(self, cr, uid, docNames, context=None):
+    def GetUpdated(self,cr,uid,vals,context=None):
         """
-            Get Last revision of given items (by name)
+            Get Last revision of given items (by ids)
         """
-        result = []
+        ids=[]
+        docNames, atttribNames = vals
         for docName in docNames:
             docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
-            result.append(docIds[len(docIds)-1])
-        return list(set(result))
+            ids.append(docIds[len(docIds)-1])
+        return self.read(cr, uid, list(set(ids)), atttribNames)
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):
         """
