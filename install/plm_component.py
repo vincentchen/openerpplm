@@ -191,9 +191,9 @@ class plm_component(osv.osv):
         partNames, atttribNames = vals
         for partName in partNames:
             partIds=self.search(cr,uid,[('name','=',partName)],order='engineering_revision',context=context)
-            ids.append(partIds[len(partIds)-1])
-        attribs=self.read(cr, uid, list(set(ids)), atttribNames)
-        return attribs
+            if len(partIds)>0:
+                ids.append(partIds[len(partIds)-1])
+        return self.read(cr, uid, list(set(ids)), atttribNames)
 
 
     def NewRevision(self,cr,uid,ids,context=None):

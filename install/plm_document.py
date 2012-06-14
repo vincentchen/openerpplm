@@ -571,7 +571,8 @@ class plm_document(osv.osv):
         docNames, atttribNames = vals
         for docName in docNames:
             docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
-            ids.append(docIds[len(docIds)-1])
+            if len(docIds)>0:
+                ids.append(docIds[len(docIds)-1])
         return self.read(cr, uid, list(set(ids)), atttribNames)
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):
