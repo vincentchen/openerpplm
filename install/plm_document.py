@@ -565,14 +565,26 @@ class plm_document(osv.osv):
 
     def GetUpdated(self,cr,uid,vals,context=None):
         """
-            Get Last revision of given items (by ids)
+            Get Last/Requested revision of given items (by ids)
         """
         ids=[]
-        docNames, atttribNames = vals
-        for docName in docNames:
-            docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
-            if len(docIds)>0:
-                ids.append(docIds[len(docIds)-1])
+        docData, atttribNames = vals
+        for docName, docRev, updateDate in docData:
+            if updateDate:
+                if docRev == None:
+                    docIds=self.search(cr,uid,[('name','=',docName),('write_date','>',updateDate)],order='revisionid',context=context)
+                    if len(docIds)>0:
+                        ids.append(docIds[len(docIds)-1])
+                else:
+                    ids.extend(self.search(cr,uid,[('name','=',docName),('revisionid','=',docRev),('write_date','>',updateDate)],context=context))
+            else:
+                if docRev == None:
+                    docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
+                    if len(docIds)>0:
+                        ids.append(docIds[len(docIds)-1])
+                else:
+                    ids.extend(self.search(cr,uid,[('name','=',docName),('revisionid','=',docRev)],context=context))
+
         return self.read(cr, uid, list(set(ids)), atttribNames)
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):

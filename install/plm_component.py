@@ -183,17 +183,53 @@ class plm_component(osv.osv):
             return True 
         return False
 
-    def GetUpdated(self,cr,uid,vals,context=None):
+
+    def GetUpdated0(self,cr,uid,vals,context=None):
         """
-            Get Last revision of given items (by ids)
+            Get Last/Requested revision of given items (by name, revision, update time)
         """
         ids=[]
-        partNames, atttribNames = vals
-        for partName in partNames:
-            partIds=self.search(cr,uid,[('name','=',partName)],order='engineering_revision',context=context)
-            if len(partIds)>0:
-                ids.append(partIds[len(partIds)-1])
-        return self.read(cr, uid, list(set(ids)), atttribNames)
+        partData, attribNames = vals
+        for partName, partRev, updateDate in partData:
+            if partRev == None:
+                partIds=self.search(cr,uid,[('engineering_code','=',partName)],order='engineering_revision',context=context)
+                if len(partIds)>0:
+                    ids.append(partIds[len(partIds)-1])
+            else:
+                ids=self.search(cr,uid,[('engineering_code','=',partName),('engineering_revision','=',partRev)],context=context)
+        if updateDate:
+            readData=[]
+            for id in list(set(ids)):
+                tmpData=self.read(cr, uid, id, attribNames.append('write_date'))
+                if (datetime.strptime(updateDate,'%Y-%m-%d %H:%M:%S')<datetime.strptime(tmpData['write_date'],'%Y-%m-%d %H:%M:%S')):
+                    readData.append(tmpData)
+        else:
+            readData=self.read(cr, uid, list(set(ids)), attribNames)
+        return readData
+
+    def GetUpdated(self,cr,uid,vals,context=None):
+        """
+            Get Last/Requested revision of given items (by name, revision, update time)
+        """
+        ids=[]
+        partData, attribNames = vals
+        for partName, partRev, updateDate in partData:
+            if updateDate:
+                if partRev == None:
+                    partIds=self.search(cr,uid,[('engineering_code','=',partName),('write_date','>',updateDate)],order='engineering_revision',context=context)
+                    if len(partIds)>0:
+                        ids.append(partIds[len(partIds)-1])
+                else:
+                    ids.extend(self.search(cr,uid,[('engineering_code','=',partName),('engineering_revision','=',partRev),('write_date','>',updateDate)],context=context))
+            else:
+                if partRev == None:
+                    partIds=self.search(cr,uid,[('engineering_code','=',partName)],order='engineering_revision',context=context)
+                    if len(partIds)>0:
+                        ids.append(partIds[len(partIds)-1])
+                else:
+                    ids.extend(self.search(cr,uid,[('engineering_code','=',partName),('engineering_revision','=',partRev)],context=context))
+
+        return self.read(cr, uid, list(set(ids)), attribNames)
 
 
     def NewRevision(self,cr,uid,ids,context=None):
