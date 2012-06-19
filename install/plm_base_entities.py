@@ -498,3 +498,16 @@ class plm_finishing(osv.osv):
     ]
 plm_finishing()
 
+class plm_history(osv.osv):
+    _name = "plm.history"
+    _description = "PLM History"
+    _columns = {
+                'name': fields.char('Code', size=128, readonly=True, required=True, translate=True),
+                'revision': fields.char('Revision', size=128, readonly=True, required=True, translate=True),
+                'type': fields.char('Entity type', size=128, readonly=True, required=True, translate=True),
+                'description': fields.char('Description', size=128, readonly=True, translate=True),
+                'state': fields.char('Status',size=128, readonly=True, translate=True),
+                'changed': fields.date('Change date', readonly=True),
+                'changer': fields.char('Change user',size=128, readonly=True, translate=True),
+    }
+plm_history()
