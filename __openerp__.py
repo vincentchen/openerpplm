@@ -21,7 +21,7 @@
 ##############################################################################
 {
     'name': 'Product Lifecycle Management',
-    'version': '3.0',
+    'version': '4.0',
     'category': 'LifeCycle Management',
     'depends': ['base', 'process','document','product','mrp'],
     'author': 'OmniaSolutions',
