@@ -22,7 +22,7 @@
 {
     'name': 'Product Lifecycle Management',
     'version': '1.0',
-    'category': 'LifeCycle Management',
+    'category': 'Tools',
     'depends': ['base', 'process','document','product','mrp'],
     'author': 'OmniaSolutions',
     'description': """ This is a Product Lifecycle Management system providing:
@@ -32,7 +32,7 @@
     * Document Indexation
     * Documents Relationship
     * Engineering Bill of Materials
-    * Spare Part Bom & Report
+    * Spare Part BoM & Report
     
     
     Supported Editors :
