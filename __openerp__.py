@@ -22,7 +22,7 @@
 {
     'name': 'Product Lifecycle Management',
     'version': '3.0',
-    'category': 'LifeCycle Management',
+    'category': 'Tools',
     'depends': ['base', 'process','document','product','mrp'],
     'author': 'OmniaSolutions',
     'description': """ This is a Product Lifecycle Management system providing:
@@ -32,7 +32,7 @@
     * Document Indexation
     * Documents Relationship
     * Engineering Bill of Materials
-    * Spare Part Bom & Report
+    * Spare Part BoM & Report
     
     
     Supported Editors :
@@ -68,7 +68,6 @@
         'install/plmfinishings/finishing_view.xml',
         'security/base_plm_security.xml',
         'security/ir.model.access.csv',
-        'security/ir.actions.act_window.csv',
         'security/res.groups.csv',
         'plm_installer.xml',
         ],
