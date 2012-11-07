@@ -21,6 +21,7 @@
 ##############################################################################
 
 import sys
+import types
 from osv import osv, fields
 from tools.translate import _
 import logging
@@ -156,7 +157,7 @@ class plm_relation(osv.osv):
     }
 
     def init(self, cr):
-       self._packed=[]
+        self._packed=[]
 
     def _getinbomidnullsrc(self, cr, uid, pid):
         counted=[]
@@ -181,7 +182,7 @@ class plm_relation(osv.osv):
         if not ids:
             ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','!=',False),('type','=','normal')])
         for obj in self.browse(cr,uid,list(set(ids)),context=None):
-             counted.append(obj)
+            counted.append(obj)
         return list(set(counted))
 
     def _getbomid(self, cr, uid, pid, sid):
@@ -254,9 +255,9 @@ class plm_relation(osv.osv):
         
         if len(ids)>1:
             sid=ids[1]
-        id=ids[0]
-        relDatas.append(id)
-        relDatas.append(self._implodebom(cr, uid, self._inbomid(cr, uid, id, sid)))
+        oid=ids[0]
+        relDatas.append(oid)
+        relDatas.append(self._implodebom(cr, uid, self._inbomid(cr, uid, oid, sid)))
         prtDatas=self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
     
@@ -320,9 +321,9 @@ class plm_relation(osv.osv):
         
         if len(ids)>1:
             sid=ids[1]
-        id=ids[0]
-        relDatas.append(id)
-        relDatas.append(self._implodebom(cr, uid, self._inbomid(cr, uid, id, sid)))
+        oid=ids[0]
+        relDatas.append(oid)
+        relDatas.append(self._implodebom(cr, uid, self._inbomid(cr, uid, oid, sid)))
         prtDatas=self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
@@ -416,11 +417,12 @@ class plm_relation(osv.osv):
                 if args!=None:
                     for arg in args:
                         res[str(arg)]=args[str(arg)]
-                if ('product_qty' in res) and (res['product_qty']<1e-6):
-                    res['product_qty']=1.0
+                if ('product_qty' in res):
+                    if(type(res['product_qty'])!=types.FloatType) or (res['product_qty']<1e-6):
+                        res['product_qty']=1.0
                 return self.create(cr, uid, res)
             except:
-                print "saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args))
+                logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
                 raise AttributeError(_("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(sys.exc_info()))))
 
         if len(relations)<1: # no relation to save 

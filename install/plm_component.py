@@ -311,8 +311,6 @@ class plm_component(osv.osv):
 
     def _summarizeBom(self, cr, uid, datarows):
         dic={}
-        retd=[]
-        bomType=self.pool.get('mrp.bom')
         for datarow in datarows:
             key=str(datarow.product_id.name)
             if key in dic:
