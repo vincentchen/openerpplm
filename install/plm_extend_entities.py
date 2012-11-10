@@ -123,6 +123,7 @@ class plm_relation(osv.osv):
                 'uom_id': fields.related('product_id','uom_id',type="integer",relation="product.product",string="Unit of Measure",store=False),
                 'child_complete_ids': fields.function(_child_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                }
+
 plm_relation()
 
 class plm_document_relation(osv.osv):
