@@ -47,7 +47,7 @@ class plm_component(osv.osv):
         if not 'active_id' in context:
             return False
         if self.action_check_spareBom_WF(cr, uid, context['active_ids'], context):
-            logMessage=_('Following Parts can be evaluable for Spare BOM :')+'\n'+RETDMESSAGE
+            logMessage=_('Following Parts are without Spare BOM :')+'\n'+RETDMESSAGE
             raise osv.except_osv(_('Check on Spare Bom'), logMessage)
         return False
 
