@@ -111,6 +111,10 @@ def _modulePath():
     return os.path.dirname(__file__)
 openerpModulePath=_modulePath()
 
+def _customPath():
+    return os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),'custom'),'report')
+customModulePath=_customPath()
+
 
 def BomSort(object):
     bomobject=[]
@@ -136,8 +140,13 @@ class external_pdf(render):
     def _render(self):
         return self.pdf
 
-header_file=os.path.join(openerpModulePath,"spare_parts_header.rml")
-body_file=os.path.join(openerpModulePath,"spare_parts_body.rml")
+header_file=os.path.join(customModulePath,"spare_parts_header.rml")
+if not os.path.exists(header_file):
+    header_file=os.path.join(openerpModulePath,"spare_parts_header.rml")
+
+body_file=os.path.join(customModulePath,"spare_parts_body.rml")
+if not os.path.exists(body_file):
+    body_file=os.path.join(openerpModulePath,"spare_parts_body.rml")
 
 
 class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
@@ -225,6 +234,8 @@ class component_spare_parts_report(report_int):
     def getSparePartsPdfFile(self, cr, uid, context, component, output, componentTemplate, bomTemplate):
         packedObjs=[]
         packedIds=[]
+        if component in self.processedObjs:
+            return
         bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','spbom'),('bom_id','=',False)])
 #        if len(bomIds)<1:
 #            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','normal'),('bom_id','=',False)])
@@ -233,11 +244,10 @@ class component_spare_parts_report(report_int):
         if len(bomIds)>0:
             BomObject=bomTemplate.browse(cr, uid, bomIds[0], context=context)
             if BomObject:
+                self.processedObjs.append(component)
                 for bom_line in BomObject.bom_lines:
-                    if not(bom_line.product_id in self.processedObjs):
-                        self.processedObjs.append(bom_line.product_id)
-                        packedObjs.append(bom_line.product_id)
-                        packedIds.append(bom_line.id)
+                    packedObjs.append(bom_line.product_id)
+                    packedIds.append(bom_line.id)
                 if len(packedIds)>0:
                     for pageStream in self.getPdfComponentLayout(component):
                         output.addPage(pageStream)
@@ -245,16 +255,14 @@ class component_spare_parts_report(report_int):
                     pageStream=StringIO.StringIO()
                     pageStream.write(stream)
                     output.addPage(pageStream)
-                    processed=[]
                     for packedObj in packedObjs:
-                        if not packedObj.id in processed:
+                        if not packedObj in self.processedObjs:
                             self.getSparePartsPdfFile(cr,uid,context,packedObj,output,componentTemplate,bomTemplate)   
-                    processed.append(packedObj.id) 
-
+ 
     def getPdfComponentLayout(self,component):
         ret=[]
         for document in component.linkeddocuments:
-            if document.printout: # and document.name[0]=='L':
+            if document.usedforspare and document.printout:
                 #TODO: To Evaluate document type 
                 ret.append( StringIO.StringIO(base64.decodestring(document.printout)))
         return ret 
