@@ -435,7 +435,9 @@ class plm_document(osv.osv):
         if len(allIDs)>0:
             objId=allIDs[0]
         if objId:
-            expData=self.export_data(cr, uid, [objId], columns)
+            tmpData=self.export_data(cr, uid, [objId], columns)
+            if 'datas' in tmpData:
+                expData=tmpData['datas']
         return expData
 
     def ischecked_in(self, cr, uid, ids, context=None):
@@ -548,7 +550,7 @@ class plm_document(osv.osv):
 
 
     _columns = {
-                'usedforspare': fields.boolean('Used for Spare'),
+                'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used for Spare Part Manual"),
                 'revisionid': fields.integer('Revision Index', required=True),
                 'writable': fields.boolean('Writable'),
                 'datas': fields.function(_data_get,method=True,fnct_inv=_data_set,string='File Content',type="binary"),

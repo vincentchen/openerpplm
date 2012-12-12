@@ -287,7 +287,9 @@ class plm_component(osv.osv):
         if len(allIDs)>0:
             objId=allIDs[0]
         if objId:
-            expData=self.export_data(cr, uid, [objId], columns)
+            tmpData=self.export_data(cr, uid, [objId], columns)
+            if 'datas' in tmpData:
+                expData=tmpData['datas']
         return expData
 
 ##  Menu action Methods
