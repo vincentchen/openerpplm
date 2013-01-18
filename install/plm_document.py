@@ -633,7 +633,7 @@ class plm_document(osv.osv):
         listed_models=[]
         listed_documents=[]
         oid, listedFiles, selection = request        
-        if selection == None:
+        if selection == False:
             selection=1
         if selection<0:
             forceFlag=True
@@ -661,7 +661,7 @@ class plm_document(osv.osv):
         """
         forceFlag=False
         ids, listedFiles, selection = request
-        if selection == None:
+        if selection == False:
             selection=1
 
         if selection<0:
@@ -683,7 +683,7 @@ class plm_document(osv.osv):
         listed_documents=[]
         modArray=[]
         oid, listedFiles, selection = request
-        if selection == None:
+        if selection == False:
             selection=1
 
         if selection<0:
