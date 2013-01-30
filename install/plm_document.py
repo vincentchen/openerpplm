@@ -611,7 +611,7 @@ class plm_document(osv.osv):
                 else:
                     docIds=self.search(cr,uid,[('name','=',docName),('revisionid','=',docRev),('write_date','>',updateDate)],context=context)
                     if len(docIds)>0:
-                        ids.append(docIds)
+                        ids.extend(docIds)
             else:
                 if docRev == None or docRev == False:
                     docIds=self.search(cr,uid,[('name','=',docName)],order='revisionid',context=context)
@@ -620,9 +620,7 @@ class plm_document(osv.osv):
                 else:
                     docIds=self.search(cr,uid,[('name','=',docName),('revisionid','=',docRev)],context=context)
                     if len(docIds)>0:
-                        ids.append(docIds)
- 
-
+                        ids.extend(docIds)
         return list(set(ids))
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):
@@ -827,7 +825,8 @@ plm_checkout()
 
 class plm_document_relation(osv.osv):
     _name = 'plm.document.relation'
-    _columns = {'parent_id':fields.many2one('ir.attachment', 'Related parent document', ondelete='cascade'), 
+    _columns = {
+                'parent_id':fields.many2one('ir.attachment', 'Related parent document', ondelete='cascade'), 
                 'child_id':fields.many2one('ir.attachment', 'Related child document',  ondelete='cascade'),
                 'configuration':fields.char('Configuration Name',size=1024),
                 'link_kind': fields.char('Kind of Link',size=64, required=True)
