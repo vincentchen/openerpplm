@@ -7,7 +7,7 @@
             <field name="type">tree</field>
         	<field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="red:reason in ('Removed');gray:reason in ('Changed')" string="BoM Relations in Bom 2">
+                <tree colors="red:reason in ('Removed');gray:reason in ('Changed')" string="BoM Relations in Bom 1">
  <!--
                     <field name="bom_id" select="True"/>
 -->
