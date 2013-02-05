@@ -843,9 +843,11 @@ class plm_document_relation(osv.osv):
                 'parent_id':fields.many2one('ir.attachment', 'Related parent document', ondelete='cascade'), 
                 'child_id':fields.many2one('ir.attachment', 'Related child document',  ondelete='cascade'),
                 'configuration':fields.char('Configuration Name',size=1024),
-                'link_kind': fields.char('Kind of Link',size=64, required=True)
+                'link_kind': fields.char('Kind of Link',size=64, required=True),
+                'create_date':fields.datetime('Date Created', readonly=True),
                }
     _defaults = {
+                 'create_date': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S"),
                  'link_kind': lambda *a: 'HiTree'
     }
     _sql_constraints = [

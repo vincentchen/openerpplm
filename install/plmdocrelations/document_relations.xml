@@ -59,6 +59,8 @@
                     <field name="child_state" select="True"/>
                     <field name="configuration"/>
                     <field name="link_kind"  select="True"/>
+                    <field name="create_date" invisible="True"/>
+                    
                 </tree>
             </field>
         </record>
