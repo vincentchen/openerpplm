@@ -279,7 +279,7 @@
     </record>
 
     <act_window name="Create Normal Bom"
-        res_model="product.product"
+        res_model="plm.temporary"
         src_model="product.product"
         view_mode="form"
         view_id="plm_component_create_normalbom"
