@@ -50,7 +50,7 @@
             <field name="type">tree</field>
         	<field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree string="Document Relations" colors="blue:method">
+                <tree string="Document Relations">
                     <field name="parent_id" select="True"/>
                     <field name="parent_revision" select="True"/>
                     <field name="parent_state" select="True"/>
