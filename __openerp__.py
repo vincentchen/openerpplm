@@ -39,9 +39,9 @@
     Supported Editors :
     
     - Category : CAD / Mechanical CAD
-    * ThinkDesign 2009.3 (and above)
-    * SolidWorks 2011.1 (and above)
-    * Inventor 2011 (and above)
+        * ThinkDesign 2009.3 (and above)
+        * SolidWorks 2011.1 (and above)
+        * Inventor 2011 (and above)
     """,
     'website': 'http://www.omniasolutions.eu',
     'images': ['images/EngineeringPart.jpeg','images/OpenComponent.jpeg','images/OpenDocument.jpeg'],

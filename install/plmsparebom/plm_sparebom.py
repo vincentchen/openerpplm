@@ -47,26 +47,6 @@ class plm_temporary(osv.osv_memory):
               'domain': "[('product_id','in', ["+','.join(map(str,context['active_ids']))+"])]",
          }
     
-    def action_check_spareBom(self, cr, uid, ids, context=None):
-        """
-            Check if a Spare Bom exists (action callable from views)
-        """
-        global RETDMESSAGE
-        if not 'active_id' in context:
-            return False
-        if self.pool.get('product.product').action_check_spareBom_WF(cr, uid, context['active_ids'], context):
-            logMessage=_('Following Parts are without Spare BOM :')+'\n'+RETDMESSAGE
-            raise osv.except_osv(_('Check on Spare Bom'), logMessage)
-
-        return {
-              'name': _('Engineering Parts'),
-              'view_type': 'form',
-              "view_mode": 'tree,form',
-              'res_model': 'product.product',
-              'type': 'ir.actions.act_window',
-              'domain': "[('id','in', ["+','.join(map(str,context['active_ids']))+"])]",
-         }
-    
 plm_temporary()
 
 class plm_component(osv.osv):
@@ -80,18 +60,6 @@ class plm_component(osv.osv):
         for idd in ids:
             self.processedIds=[]
             self._create_spareBom(cr, uid, idd, context)
-        return False
-
-    def action_check_spareBom_WF(self, cr, uid, ids, context=None):
-        """
-            Check if a Spare Bom exists (action callable from code)
-        """
-        global RETDMESSAGE
-        RETDMESSAGE=''
-        for idd in ids:
-            self._check_spareBom(cr, uid, idd, context)
-        if len(RETDMESSAGE)>0:
-            return True
         return False
 
 #   Internal methods
@@ -137,41 +105,6 @@ class plm_component(osv.osv):
         else:
             for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_lines:
                 self._create_spareBom(cr, uid, bom_line.product_id.id, context=context)
-        return False
-
-    def _check_spareBom(self, cr, uid, idd, context=None):
-        """
-            Check if a Spare Bom exists (recursive on all EBom children)
-        """
-        sourceBomType='ebom'
-        global RETDMESSAGE
-        bomType=self.pool.get('mrp.bom')
-        checkObj=self.browse(cr, uid, idd, context)
-        if not checkObj:
-            return False
-        if (type(context) is DictType) and ('sourceBomType' in context):
-            sourceBomType=context['sourceBomType']
-        if checkObj.std_description.bom_tmpl:
-            if checkObj.engineering_revision:
-                objBom=bomType.search(cr, uid, [('name','=',checkObj.name),('engineering_revision','=',checkObj.engineering_revision),('type','=','spbom'),('bom_id','=',False)])
-            else:
-                objBom=bomType.search(cr, uid, [('name','=',checkObj.name),('type','=','spbom'),('bom_id','=',False)])
-            if not objBom:
-                RETDMESSAGE=RETDMESSAGE+"%s/%d \n" %(checkObj.name,checkObj.engineering_revision)
-
-        if checkObj.engineering_revision:
-            idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('engineering_revision','=',checkObj.engineering_revision),('type','=',sourceBomType),('bom_id','=',False)])
-        else:
-            idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('type','=',sourceBomType),('bom_id','=',False)])
-        if not idBoms:
-            if checkObj.engineering_revision:
-                idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('engineering_revision','=',checkObj.engineering_revision),('type','=','normal'),('bom_id','=',False)])
-            else:
-                idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('type','=','normal'),('bom_id','=',False)])
-            
-        for idBom in idBoms:
-            for bom_line in bomType.browse(cr,uid,idBom,context=context).bom_lines:
-                self._check_spareBom(cr, uid, bom_line.product_id.id, context)
         return False
 
 plm_component()
