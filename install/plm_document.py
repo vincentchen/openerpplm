@@ -25,6 +25,8 @@ import base64
 import tools
 import os, stat
 import logging
+import StringIO
+
 
 from tools.translate import _
 from osv import osv, fields
@@ -106,16 +108,18 @@ class plm_document(osv.osv):
             
     def _data_get(self, cr, uid, ids, name, arg, context):
         result = {}
+        value=False
         for objDoc in self.browse(cr, uid, ids, context=context):
             if not objDoc.store_fname:
-                raise osv.except_osv(_('Stored Document Error'), _("Document %s - %s cannot be accessed" %(str(objDoc.name),str(objDoc.revisionid))))
-            filestore=os.path.join(self._get_filestore(cr), objDoc.store_fname)
-            if os.path.exists(filestore):
-                value = file(filestore, 'rb').read()
-                if len(value)>0:
-                    result[objDoc.id] = base64.encodestring(value)
-                else:
-                    result[objDoc.id] = ''
+                value=objDoc.db_datas
+                if not value or len(value)<1:
+                    raise osv.except_osv(_('Stored Document Error'), _("Document %s - %s cannot be accessed" %(str(objDoc.name),str(objDoc.revisionid))))
+            else:
+                filestore=os.path.join(self._get_filestore(cr), objDoc.store_fname)
+                if os.path.exists(filestore):
+                    value = file(filestore, 'rb').read()
+            if value and len(value)>0:
+                result[objDoc.id] = base64.encodestring(value)
             else:
                 result[objDoc.id] = ''
         return result
@@ -138,9 +142,9 @@ class plm_document(osv.osv):
                 printout=oiDocument.printout
             if oiDocument.preview:
                 preview=oiDocument.preview
-                
+            db_datas=b''
             fname,filesize=self._manageFile(cr,uid,oid,binvalue=value,context=context)
-            cr.execute('update ir_attachment set store_fname=%s,file_size=%s where id=%s', (fname,filesize,oid))
+            cr.execute('update ir_attachment set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,filesize,db_datas,oid))
             self.pool.get('plm.backupdoc').create(cr,uid, {
                                           'userid':uid,
                                           'existingfile':fname,
