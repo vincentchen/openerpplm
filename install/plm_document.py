@@ -142,7 +142,7 @@ class plm_document(osv.osv):
                 printout=oiDocument.printout
             if oiDocument.preview:
                 preview=oiDocument.preview
-            db_datas=b''
+            db_datas=b''                    # Clean storage field. 
             fname,filesize=self._manageFile(cr,uid,oid,binvalue=value,context=context)
             cr.execute('update ir_attachment set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,filesize,db_datas,oid))
             self.pool.get('plm.backupdoc').create(cr,uid, {
