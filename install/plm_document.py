@@ -891,7 +891,7 @@ class plm_document_relation(osv.osv):
                     logging.error("saveChild : Unable to create a relation between documents. One of documents involved doesn't exist. Arguments(" + str(args) +") ")
                     raise Exception("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist.")
             except:
-                logging.error("saveChild : Unable to create a relation. Arguments(" + str(args) +") ")
+                logging.error("saveChild : Unable to create a relation. Arguments(%s)" %(str(args)))
                 raise Exception("saveChild: Unable to create a relation.")
             
         savedItems=[]
