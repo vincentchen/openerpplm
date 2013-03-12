@@ -154,8 +154,8 @@ class plm_document(osv.osv):
                                          }, context=context)
 
             return True
-        except Exception,e :
-            raise except_orm(_('Error in _data_set'), str(e))
+        except Exception,ex :
+            raise except_orm(_('Error in _data_set'), str(ex))
 
     def _explodedocs(self, cr, uid, oid, kind, listed_documents=[], recursion=True):
         result=[]
@@ -848,10 +848,10 @@ class plm_document_relation(osv.osv):
                 'child_id':fields.many2one('ir.attachment', 'Related child document',  ondelete='cascade'),
                 'configuration':fields.char('Configuration Name',size=1024),
                 'link_kind': fields.char('Kind of Link',size=64, required=True),
-                'create_date':fields.datetime('Date Created', readonly=True),
+                'createdate':fields.datetime('Date Created', readonly=True),
                }
     _defaults = {
-                 'create_date': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S"),
+                 'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S"),
                  'link_kind': lambda *a: 'HiTree'
     }
     _sql_constraints = [
@@ -890,8 +890,8 @@ class plm_document_relation(osv.osv):
                 else:
                     logging.error("saveChild : Unable to create a relation between documents. One of documents involved doesn't exist. Arguments(" + str(args) +") ")
                     raise Exception("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist.")
-            except:
-                logging.error("saveChild : Unable to create a relation. Arguments(%s)" %(str(args)))
+            except Exception,ex:
+                logging.error("saveChild : Unable to create a relation. Arguments (%s) Exception (%s)" %(str(args), str(ex)))
                 raise Exception("saveChild: Unable to create a relation.")
             
         savedItems=[]
