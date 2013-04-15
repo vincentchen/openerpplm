@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
     
+    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
+
     <record model="ir.ui.view" id="plm_component_tree">
         <field name="name">plm.component</field>
         <field name="model">product.product</field>
@@ -34,21 +35,15 @@
         <field name="priority" eval="10"/>
         <field name="arch" type="xml">
 			<search string="Product">
-                   	<filter icon="terp-go-month" string="  Latest 7 Days  " separator="1"
+                   	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
                            	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
                           	help="Created latest 7 Days"/>
-                 	<filter icon="terp-go-month" string="  Yesterday  " separator="1"
+                 	<filter icon="terp-go-month" string="Yesterday" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
                     		help="Created yesterday"/>
-                	<filter icon="terp-go-month" string="  Today  " separator="1"
+                	<filter icon="terp-go-month" string="Today" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
                          	help="Created today"/>
-                   	<separator orientation="vertical"/>
-                   	<field name="name"/>
-                   	<field name="description"/>
-                   	<field name="engineering_code"/>
-                    <field name="engineering_material"/>
-                    <field name="engineering_surface"/>
                    	<separator orientation="vertical"/>
                     <filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
                     <filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
@@ -153,21 +148,15 @@
         <field name="priority" eval="15"/>
         <field name="arch" type="xml">
 		 	<search string="Parts">
-                   	<filter icon="terp-go-month" string="  Latest 7 Days  " separator="1"
+                   	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
                            	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
                           	help="Created latest 7 Days"/>
-                 	<filter icon="terp-go-month" string="  Yesterday  " separator="1"
+                 	<filter icon="terp-go-month" string="Yesterday" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
                     		help="Created yesterday"/>
-                	<filter icon="terp-go-month" string="  Today  " separator="1"
+                	<filter icon="terp-go-month" string="Today" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
                          	help="Created today"/>
-                   	<separator orientation="vertical"/>
-                   	<field name="name"/>
-                   	<field name="description"/>
-                   	<field name="engineering_code"/>
-                   	<field name="engineering_material"/>
-                   	<field name="engineering_surface"/>
                    	<separator orientation="vertical"/>
                    	<filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
                    	<filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
@@ -253,14 +242,6 @@
         <field name="view_id" ref="plm_component_base_tree"/>
         <field name="view_id_search" ref="plm_component_base_search"/>
     </record>
-    
-    
-    <menuitem
-        name="Search on Engineering Parts"
-        action="action_plm_component_base"
-        id="menu_base_component"
-        parent="plm_component_menu_view"/>
-
 
     <record id="plm_component_create_normalbom" model="ir.ui.view">
         <field name="name">plm.relation.normal</field>
@@ -268,9 +249,9 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
         <form string="Creation of Normal Bom">
-            <label string="Are you sure you want to create a new Normal Bom?" colspan="4"/>
+            <label string="Are you sure you want to create a new Normal Bom?" colspan="2"/>
             <separator string="" colspan="4" />
-            <group colspan="4" col="4">
+            <group colspan="2" col="2">
             	<button icon="gtk-cancel" special="cancel" string="Cancel"/>
             	<button icon="terp-gtk-go-back-rtl" string="Create Normal Bom" name="action_create_normalBom" type="object"/>
             </group>
@@ -286,6 +267,11 @@
         target="new"
         key2="client_action_multi"
         id="act_create_normalBom"/>
+
+    <menuitem name="Search on Engineering Parts" 
+              action="action_plm_component_base"
+              id="menu_base_component"
+              parent="plm_component_menu_view"/>
 
 </data>
 </openerp>

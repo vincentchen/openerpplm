@@ -25,8 +25,6 @@ import base64
 import tools
 import os, stat
 import logging
-import StringIO
-
 
 from tools.translate import _
 from osv import osv, fields
@@ -51,7 +49,8 @@ def create_directory(path):
     return dir_name
 
 class plm_document(osv.osv):
-    _name = 'ir.attachment'
+    _name = 'plm.document'
+    _table = 'plm_document'
     _inherit = 'ir.attachment'
 
     def _is_checkedout_for_me(self, cr, uid, oid, context=None):
@@ -132,7 +131,7 @@ class plm_document(osv.osv):
                 os.unlink(os.path.join(self._get_filestore(cr), filename))
             except:
                 pass
-            cr.execute('update ir_attachment set store_fname=NULL WHERE id=%s', (oid,) )
+            cr.execute('update plm_document set store_fname=NULL WHERE id=%s', (oid,) )
             return True
         #if (not context) or context.get('store_method','fs')=='fs':
         try:
@@ -144,7 +143,7 @@ class plm_document(osv.osv):
                 preview=oiDocument.preview
             db_datas=b''                    # Clean storage field. 
             fname,filesize=self._manageFile(cr,uid,oid,binvalue=value,context=context)
-            cr.execute('update ir_attachment set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,filesize,db_datas,oid))
+            cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,filesize,db_datas,oid))
             self.pool.get('plm.backupdoc').create(cr,uid, {
                                           'userid':uid,
                                           'existingfile':fname,
@@ -421,7 +420,7 @@ class plm_document(osv.osv):
         """
             Remove faked documents
         """
-        cr.execute('delete from ir_attachment where store_fname=NULL')
+        cr.execute('delete from plm_document where store_fname=NULL')
         return True 
 
     def QueryLast(self, cr, uid, request=([],[]), default=None, context=None):
@@ -567,7 +566,7 @@ class plm_document(osv.osv):
             if len(res):
                 return False
         return True
-
+#   Overridden methods for this entity
 
     _columns = {
                 'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used for Spare Part Manual"),
@@ -587,7 +586,7 @@ class plm_document(osv.osv):
     }
 
     _sql_constraints = [
-        ('filename_uniq', 'unique (name,revisionid)', 'File name has to be unique!') # qui abbiamo la sicurezza dell'univocita del nome file
+        ('filename_unique', 'unique (name,revisionid)', 'File name has to be unique!') # qui abbiamo la sicurezza dell'univocita del nome file
     ]
 
     def CheckedIn(self, cr, uid, files, default=None, context=None):
@@ -799,7 +798,7 @@ class plm_checkout(osv.osv):
                 'userid':fields.many2one('res.users', 'Related User', ondelete='cascade'), 
                 'hostname':fields.char('hostname',size=64), 
                 'hostpws':fields.char('PWS Directory',size=1024), 
-                'documentid':fields.many2one('ir.attachment', 'Related Document', ondelete='cascade'), 
+                'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
                 'createdate':fields.datetime('Date Created', readonly=True)
     }
     _defaults = {
@@ -812,7 +811,7 @@ class plm_checkout(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context!=None and context!={}:
             return False
-        documentType=self.pool.get('ir.attachment')
+        documentType=self.pool.get('plm.document')
         docID=documentType.browse(cr, uid, vals['documentid'])
         values={'writable':True,}
         if not documentType.write(cr, uid, [docID.id], values):
@@ -827,7 +826,7 @@ class plm_checkout(osv.osv):
                 logging.warning("unlink : Unable to Check-In the required document.\n You aren't authorized in this context.")
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the required document.\n You aren't authorized in this context."))
                 return False
-        documentType=self.pool.get('ir.attachment')
+        documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
         for checkObj in checkObjs:
             checkObj.documentid.writable=False
@@ -844,14 +843,13 @@ plm_checkout()
 class plm_document_relation(osv.osv):
     _name = 'plm.document.relation'
     _columns = {
-                'parent_id':fields.many2one('ir.attachment', 'Related parent document', ondelete='cascade'), 
-                'child_id':fields.many2one('ir.attachment', 'Related child document',  ondelete='cascade'),
+                'parent_id':fields.many2one('plm.document', 'Related parent document', ondelete='cascade'), 
+                'child_id':fields.many2one('plm.document', 'Related child document',  ondelete='cascade'),
                 'configuration':fields.char('Configuration Name',size=1024),
                 'link_kind': fields.char('Kind of Link',size=64, required=True),
-                'createdate':fields.datetime('Date Created', readonly=True),
+                'create_date':fields.datetime('Date Created', readonly=True),
                }
     _defaults = {
-                 'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S"),
                  'link_kind': lambda *a: 'HiTree'
     }
     _sql_constraints = [
@@ -911,8 +909,8 @@ class plm_backupdoc(osv.osv):
                 'userid':fields.many2one('res.users', 'Related User', ondelete='cascade'), 
                 'createdate':fields.datetime('Date Created', readonly=True),
                 'existingfile':fields.char('Physical Document Location',size=1024), 
-                'documentid':fields.many2one('ir.attachment', 'Related Document', ondelete='cascade'), 
-                'revisionid': fields.related('documentid','revisionid',type="int",relation="ir.attachment",string="Revision",store=False),
+                'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
+                'revisionid': fields.related('documentid','revisionid',type="int",relation="plm.document",string="Revision",store=False),
                 'printout': fields.binary('Printout Content'),
                 'preview': fields.binary('Preview Content'),
     }
@@ -927,24 +925,22 @@ class plm_backupdoc(osv.osv):
                 logging.warning("unlink : Unable to remove the required documents. You aren't authorized in this context.")
                 raise osv.except_osv(_('Backup Error'), _("Unable to remove the required document.\n You aren't authorized in this context."))
                 return False
-        documentType=self.pool.get('ir.attachment')
+        documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
         for checkObj in checkObjs:
             if not int(checkObj.documentid):
                 return super(plm_backupdoc,self).unlink(cr, uid, ids, context=context)
-            objDocs=documentType.browse(cr, uid, [checkObj.documentid])
-            if len(objDocs)>0:
-                currentname=objDocs[0].store_fname
-                if checkObj.existingfile != currentname:
-                    fullname=os.path.join(self._get_filestore(cr),checkObj.existingfile)
+            currentname=checkObj.documentid.store_fname
+            if checkObj.existingfile != currentname:
+                fullname=os.path.join(documentType._get_filestore(cr),checkObj.existingfile)
+                if os.path.exists(fullname):
                     if os.path.exists(fullname):
-                        if os.path.exists(fullname):
-                            os.chmod(fullname, stat.S_IWRITE)
-                            os.unlink(fullname)
-                            committed=True
-                    else:
-                        logging.warning("unlink : Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set. You can't change writable flag.")
-                        raise osv.except_osv(_('Check-In Error'), _("Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set.\n It isn't a backup file, it's original current one."))
+                        os.chmod(fullname, stat.S_IWRITE)
+                        os.unlink(fullname)
+                        committed=True
+                else:
+                    logging.warning("unlink : Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set. You can't change writable flag.")
+                    raise osv.except_osv(_('Check-In Error'), _("Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set.\n It isn't a backup file, it's original current one."))
         if committed:
             return super(plm_backupdoc,self).unlink(cr, uid, ids, context=context)
         else:
@@ -957,7 +953,7 @@ class plm_backupdoc(osv.osv):
                 logging.warning("unlink : Unable to remove the required documents.\n You aren't authorized in this context.")
                 raise osv.except_osv(_('Backup Error'), _("Unable to remove the required document.\n You aren't authorized in this context."))
                 return False
-        documentType=self.pool.get('ir.attachment')
+        documentType=self.pool.get('plm.document')
         checkObj=self.browse(cr, uid, context['active_id'])
         objDoc=documentType.browse(cr, uid, checkObj.documentid.id)
         if objDoc.state=='draft' and documentType.ischecked_in(cr, uid, ids, context):

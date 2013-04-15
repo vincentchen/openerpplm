@@ -24,24 +24,38 @@
     'version': '1.0',
     'category': 'Tools',
     'depends': ['base', 'process','board','document','product','mrp'],
-    'author': 'OmniaSolutions',
-    'description': """ This is a Product Lifecycle Management system providing:
+    'description': """
+Manage Product Lifecycle Management in OpenERP
+==============================================
+
+This application enables a group of people to intelligently and efficiently manage 3D Models and 2D Drawings, directly from CAD editors.
+
+It manages fundamental revisions of Products and Documents, helps to work in Concurrent Engineering with access policies to documents.
+
+Moreover, it adds many reports and views on Bill of Materials or related to them. It helps to share 2D documents using PDF embedded.
+
+New functionality Compare BoMs helps to understand differences between Bill of Materials.
+
+Key Features :
+--------------
     
     * Editor Integration
     * Document Management
-    * Document Indexation
-    * Documents Relationship
+    * Document Relationship
     * Engineering Bill of Materials
-    * Spare Part BoM & Report
+    * Spare Parts BoM & Reports
     * Compare BoMs
     
     
-    Supported Editors :
+Supported Editors :
+-------------------
+   
+    * Category : CAD / Mechanical CAD
     
-    - Category : CAD / Mechanical CAD
         * ThinkDesign 2009.3 (and above)
-        * SolidWorks 2011.1 (and above)
+        * SolidWorks 2011 (and above)
         * Inventor 2011 (and above)
+        
     """,
     'website': 'http://www.omniasolutions.eu',
     'images': ['images/EngineeringPart.jpeg','images/OpenComponent.jpeg','images/OpenDocument.jpeg'],
@@ -49,7 +63,6 @@
         ],
     'update_xml': [
         'board_plm_view.xml',
-        'install/plmviews/plm_menu.xml',
         'install/plmdocuments/document_view.xml',
         'install/plmdocuments/document_workflow.xml',
         'install/plmdocuments/backupdoc_view.xml',
