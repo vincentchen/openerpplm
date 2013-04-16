@@ -91,6 +91,7 @@ Supported Editors :
     'demo_xml': [
         ],
     'installable': True,
+    'application': True,
     'auto_install': False,
     'active': True,
 }
