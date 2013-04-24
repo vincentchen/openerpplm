@@ -24,6 +24,7 @@
     'version': '1.0',
     'category': 'Tools',
     'depends': ['base', 'process','board','document','product','mrp'],
+    'author': 'OmniaSolutions',
     'description': """
 Manage Product Lifecycle Management in OpenERP
 ==============================================
