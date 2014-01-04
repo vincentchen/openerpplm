@@ -636,7 +636,7 @@ class plm_document(osv.osv):
                 'datas': fields.function(_data_get,method=True,fnct_inv=_data_set,string='File Content',type="binary"),
                 'printout': fields.binary('Printout Content', help="Print PDF content."),
                 'preview': fields.binary('Preview Content', help="Static preview."),
-                'state':fields.selection(USED_STATES,'Status',readonly="True",required=True),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
     }    
 
     _defaults = {

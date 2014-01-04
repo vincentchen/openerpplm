@@ -34,7 +34,7 @@ class plm_component(osv.osv):
     _name = 'product.template'
     _inherit = 'product.template'
     _columns = {
-                'state':fields.selection(USED_STATES,'Status',readonly="True"),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
                 'engineering_code': fields.char('Part Number',size=64),
                 'engineering_revision': fields.integer('Revision', required=True),
                 'engineering_writable': fields.boolean('Writable'),
