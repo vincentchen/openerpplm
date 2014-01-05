@@ -122,7 +122,6 @@ class plm_relation(osv.osv):
                 'engineering_revision': fields.related('product_id','engineering_revision',type="char",relation="product.template",string="Revision",store=False),
                 'description': fields.related('product_id','description',type="char",relation="product.template",string="Description",store=False),
                 'weight_net': fields.related('product_id','weight_net',type="float",relation="product.product",string="Weight Net",store=False),
-                'uom_id': fields.related('product_id','uom_id',type="integer",relation="product.product",string="Unit of Measure",store=False),
                 'child_complete_ids': fields.function(_child_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                }
 

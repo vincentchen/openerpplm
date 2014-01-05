@@ -287,7 +287,6 @@ class plm_relation(osv.osv):
                 self._packed.append(bom_line.product_id.id)
                 output.append([bom_line.product_id.id, innerids])
         return(output)
-    
 
     def GetExploseSum(self, cr, uid, ids, context=None):
         """
@@ -424,6 +423,8 @@ class plm_relation(osv.osv):
                 if ('product_qty' in res):
                     if(type(res['product_qty'])!=types.FloatType) or (res['product_qty']<1e-6):
                         res['product_qty']=1.0
+                if not ('product_uom' in res):
+                    res['product_uom']=1
                 return self.create(cr, uid, res)
             except:
                 logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
