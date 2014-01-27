@@ -88,7 +88,10 @@ class plm_document(osv.osv):
             try:
                 isCheckedOutToMe=self._is_checkedout_for_me(cr, uid, objDoc.id, context)
                 if not(objDoc.datas_fname in listfiles):
-                    value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
+                    if (not objDoc.store_fname) and (objDoc.db_datas):
+                        value = objDoc.db_datas
+                    else:
+                        value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                     result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                 else:
                     if forceFlag:
@@ -97,7 +100,10 @@ class plm_document(osv.osv):
                         timefile=time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]),'%Y-%m-%d %H:%M:%S').timetuple())
                         isNewer=(timeSaved-timefile)>5
                     if (isNewer and not(isCheckedOutToMe)):
-                        value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
+                        if (not objDoc.store_fname) and (objDoc.db_datas):
+                            value = objDoc.db_datas
+                        else:
+                            value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                         result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                     else:
                         result.append((objDoc.id,objDoc.datas_fname,None, isCheckedOutToMe, timeDoc))
@@ -223,6 +229,8 @@ class plm_document(osv.osv):
                 collectable = isNewer and not(isCheckedOutToMe)
             else:
                 collectable = True
+            if (objDoc.file_size<1) and (objDoc.datas):
+                objDoc.file_size=len(objDoc.datas)
             result.append((objDoc.id, objDoc.datas_fname, objDoc.file_size, collectable, isCheckedOutToMe, timeDoc))
         return list(set(result))
             
