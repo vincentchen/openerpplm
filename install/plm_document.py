@@ -106,10 +106,10 @@ class plm_document(osv.osv):
                             value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                         result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                     else:
-                        result.append((objDoc.id,objDoc.datas_fname,None, isCheckedOutToMe, timeDoc))
+                        result.append((objDoc.id,objDoc.datas_fname,False, isCheckedOutToMe, timeDoc))
             except Exception, ex:
                 logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
-                result.append((objDoc.id,objDoc.datas_fname,None, True, self.getServerTime(cr, uid, ids)))
+                result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
             
     def _data_get(self, cr, uid, ids, name, arg, context):
