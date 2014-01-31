@@ -49,7 +49,7 @@
 	            	<field name="description"/>
                    	<separator orientation="vertical"/>
                     <filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                    <filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
+                    <filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
                     <filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
                     <filter string="Latest" name="latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
 <!-- 
@@ -277,8 +277,9 @@
 	            	<field name="description"/>
                    	<separator orientation="vertical"/>
                    	<filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                   	<filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
+                   	<filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
                    	<filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
+                   	<filter string="Latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
                 </search>
          </field>
     </record>
