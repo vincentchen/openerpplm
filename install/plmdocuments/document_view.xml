@@ -91,9 +91,9 @@
         <field name="priority" eval="1"/>
         <field name="arch" type="xml">
 			<tree string="Documents">
-                <field name="name" select="True"/>
-                <field name="revisionid" select="True"/>
-                <field name="state" select="True"/>
+                <field name="name" select="True" />
+                <field name="revisionid" select="True" />
+                <field name="state" select="True"  />
                 <field name="parent_id"/>
                 <field name="datas_fname" select="True"/>
                 <field name="create_uid" select="True"/>
@@ -138,12 +138,14 @@
                         </field>
                    		<separator orientation="vertical"/>
                    		<filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                   		<filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
+                   		<filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
+                   		<filter string="Latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
                         <filter string="Owner" icon="terp-personal" domain="[]" context="{'group_by':'create_uid'}"/>
                         <filter string="Month" help="Creation Month" icon="terp-go-month" domain="[]" context="{'group_by':'create_date'}"/>
+                        <filter string="Revision" help="Revision" icon="terp-go-month" domain="[]" context="{'group_by':'revisionid'}"/>
                     </group>
               </search>
          </field>
@@ -151,14 +153,14 @@
 
 
     <record model="ir.actions.act_window" id="plm_action_document_form">
-    	<field name="name">Document</field>
+    	<field name="name">Documents</field>
     	 <field name="res_model">ir.attachment</field>
         <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
     </record>
 
     <menuitem
-        name="Search on Document"
+        name="Search on Documents"
         action="plm_action_document_form"
         id="menu_document_files"
         parent="plm_document_form"/>

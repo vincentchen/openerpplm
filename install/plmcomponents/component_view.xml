@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
     
+    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
+
     <record model="ir.ui.view" id="plm_component_tree">
         <field name="name">plm.component</field>
         <field name="model">product.product</field>
@@ -15,10 +16,10 @@
                 <field name="engineering_revision"/>
                 <field name="state" select="True"/>
                 <field name="description" select="True" />
-                <field name="engineering_writable"  />
+                <field name="engineering_writable" invisible="True"/>
                 <field name="engineering_material" select="True"/>
                 <field name="engineering_surface" select="True"/>
-                <field name="linkeddocuments"/>
+                <field name="linkeddocuments" invisible="True"/>
                 <field name="std_umc1"/>
                 <field name="std_value1"/>
                 <field name="std_umc2"/>
@@ -34,13 +35,13 @@
         <field name="priority" eval="10"/>
         <field name="arch" type="xml">
 			<search string="Product">
-                   	<filter icon="terp-go-month" string="  Latest 7 Days  " separator="1"
+                   	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
                            	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
                           	help="Created latest 7 Days"/>
-                 	<filter icon="terp-go-month" string="  Yesterday  " separator="1"
+                 	<filter icon="terp-go-month" string="Yesterday" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
                     		help="Created yesterday"/>
-                	<filter icon="terp-go-month" string="  Today  " separator="1"
+                	<filter icon="terp-go-month" string="Today" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
                          	help="Created today"/>
                    	<separator orientation="vertical"/>
@@ -51,8 +52,10 @@
                     <field name="engineering_surface"/>
                    	<separator orientation="vertical"/>
                     <filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                    <filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
+                    <filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
                     <filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
+                    <filter string="Latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
+                    
 <!-- 
                    <newline/>
                     <group expand="0" string="Extended Filters..." groups="base.group_extended">
@@ -138,10 +141,10 @@
                 <field name="engineering_revision"/>
                 <field name="state" select="True"/>
                 <field name="description" select="True" />
-                <field name="engineering_writable"  />
+                <field name="engineering_writable" invisible="1" />
                 <field name="engineering_material" select="True"/>
                 <field name="engineering_surface" select="True"/>
-                <field name="linkeddocuments"/>
+                <field name="linkeddocuments" invisible="True"/>
             </tree>
         </field>
     </record>  
@@ -153,13 +156,13 @@
         <field name="priority" eval="15"/>
         <field name="arch" type="xml">
 		 	<search string="Parts">
-                   	<filter icon="terp-go-month" string="  Latest 7 Days  " separator="1"
+                   	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
                            	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
                           	help="Created latest 7 Days"/>
-                 	<filter icon="terp-go-month" string="  Yesterday  " separator="1"
+                 	<filter icon="terp-go-month" string="Yesterday" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
                     		help="Created yesterday"/>
-                	<filter icon="terp-go-month" string="  Today  " separator="1"
+                	<filter icon="terp-go-month" string="Today" separator="1"
                          	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
                          	help="Created today"/>
                    	<separator orientation="vertical"/>
@@ -170,9 +173,10 @@
                    	<field name="engineering_surface"/>
                    	<separator orientation="vertical"/>
                    	<filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                   	<filter string="Released" icon="terp-stock_symbol-selection" domain="['|',('state', '=', 'released'),('state', '=', 'undermodify')]"/>
+                   	<filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
                    	<filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
-                </search>
+                  	<filter string="Latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
+                 </search>
          </field>
     </record>
 
