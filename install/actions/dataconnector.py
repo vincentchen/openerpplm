@@ -24,10 +24,12 @@ import os
 import types
 import cPickle as pickle
 from datetime import datetime
-from sqlalchemy import *
 
 from osv import osv, fields
 import logging
+
+def normalize(value):
+    return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
 
 
 class plm_component(osv.osv):
@@ -44,19 +46,15 @@ class plm_component(osv.osv):
             Map OpenErp vs. destination Part data transfer fields
         """
         return {
-                'name'                  : 'revname',
-                'engineering_revision'  : 'revprog',
-                'description'           : 'revdes',
+                'table' : 'PARTS',                          # Used with 'db' transfer
+                'status': ['released',],
+                'fields':
+                    {
+                    'name'                  : 'revname',
+                    'engineering_revision'  : 'revprog',
+                    'description'           : 'revdes',
+                    }
                 }
-
-    @property
-    def get_status_data_transfer(self):
-        """
-            Map OpenErp vs. destination Part data transfer fields
-        """
-        return [
-                'released',
-               ]
 
     @property
     def get_bom_data_transfer(self):
@@ -64,8 +62,15 @@ class plm_component(osv.osv):
             Map OpenErp vs. destination BoM data transfer fields
         """
         return {
-                'itemnum'               : 'relpos',
-                'product_qty'           : 'relqty',
+                'kind' : 'normal',                         # Bom type name to export
+                'table': 'BOMS',                           # Destination table name. Used with 'db' transfer
+                'PName': 'parent',                         # Parent column name.     Used with 'db' transfer
+                'CName': 'child',                          # Child column name.      Used with 'db' transfer
+                'fields':
+                    {
+                    'itemnum'               : 'relpos',
+                    'product_qty'           : 'relqty',
+                    }
                 }
 
     @property
@@ -88,7 +93,7 @@ class plm_component(osv.osv):
                     'exte'                  : 'csv',
                     'separator'             : ',',
                     'name'                  : 'transfer',
-                    'bomname'               : 'tranferbom',
+                    'bomname'               : 'transferbom',
                     'directory'             : '/tmp',
                     }
                 }
@@ -116,6 +121,8 @@ class plm_component(osv.osv):
                 except:
                     pass
                 os.unlink(fileName)
+        else:
+            self.set_last_session
         return lastDate.strftime('%Y-%m-%d %H:%M:%S')
 
     @property
@@ -133,160 +140,75 @@ class plm_component(osv.osv):
         fobj.close()
         return lastDate.strftime('%Y-%m-%d %H:%M:%S')
 
-    @property
-    def get_connection(self,dataConn):
-        """
-            Get last execution date & time as stored.
-                format => '%Y-%m-%d %H:%M:%S'
-        """
-        connection=False
-        try:
-            connectionString=r'%s://%s:%s@%s/%s' %(dataConn['protocol'],dataConn['user'],dataConn['password'],dataConn['host'],dataConn['database'])
-            engine = create_engine(connectionString, echo=False)
-            connection = engine.connect()
-        except Exception,ex:
-            logging.error("[get_connection] : Error to connect (%s)." %(str(ex)))
-        return connection
-    
     def TransferData(self, cr, uid, ids=False, context=None):
  
+        operation=False
+        reportStatus='Failed'
         updateDate=self.get_last_session
         logging.debug("[TransferData] Start : %s" %(str(updateDate)))
         transfer=self.get_data_transfer
-        datamap=self.get_part_data_transfer
+        datamap=self.get_part_data_transfer['fields']
         fieldsListed=datamap.keys()
-        statuses=self.get_status_data_transfer
-        allIDs=self.query_data(cr, uid, updateDate)
+        allIDs=self.query_data(cr, uid, updateDate, self.get_part_data_transfer['status'])
         tmpData=self.export_data(cr, uid, allIDs, fieldsListed)
         if tmpData.get('datas'):
             if 'db' in transfer:
+                import dbconnector
+                dataTargetTable=self.get_part_data_transfer['table']
                 connection=self.get_connection(transfer['db'])
             
-                checked=self.saveParts(cr, uid, connection, tmpData.get('datas'), fieldsListed, datamap)
+                checked=self.saveParts(cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
     
                 if checked:
-                    self.saveBoms(cr, uid, connection, checked, allIDs, fieldsListed, datamap)   
+                    bomTargetTable=self.get_bom_data_transfer['table']
+                    bomdatamap=self.get_bom_data_transfer['fields']
+                    parentName=self.get_bom_data_transfer['PName']
+                    childName=self.get_bom_data_transfer['CName']
+                    kindBomname=self.get_bom_data_transfer['kind']
+                    operation=self.saveBoms(cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentName, childName, bomdatamap)  
+                     
                 if connection:
                     connection.quit()
+                    
             if 'file' in transfer:
-                datamap=self.get_bom_data_transfer
-                bomfieldsListed=datamap.keys()
-                self.extract_data(cr,uid,ids,allIDs, fieldsListed, bomfieldsListed,transfer['db'])
+                bomfieldsListed=self.get_bom_data_transfer['fields'].keys()
+                kindBomname=self.get_bom_data_transfer['kind']
+                operation=self.extract_data(cr, uid, allIDs, kindBomname, fieldsListed, bomfieldsListed, transfer['file'])
 
-        updateDate=self.set_last_session
-        logging.debug("[TransferData] End : %s" %(str(updateDate)))
+        if operation:
+            updateDate=self.set_last_session
+            reportStatus='Successful'
+            
+        logging.debug("[TransferData] %s End : %s" %(reportStatus,str(updateDate)))
         return False
 
-    def query_data(self, cr, uid, updateDate):
+    def query_data(self, cr, uid, updateDate, statuses=[]):
         """
             Query to return values based on columns selected.
                 updateDate => '%Y-%m-%d %H:%M:%S'
         """
-        allIDs=self.search(cr,uid,[('write_date','>',updateDate),('state','in',['released'])],order='engineering_revision')
-        allIDs.extend(self.search(cr,uid,[('create_date','>',updateDate),('state','in',['released'])],order='engineering_revision'))
+        if not statuses:
+            statusList=['released']
+        else:
+            statusList=statuses
+            
+        allIDs=self.search(cr,uid,[('write_date','>',updateDate),('state','in',statusList)],order='engineering_revision')
+        allIDs.extend(self.search(cr,uid,[('create_date','>',updateDate),('state','in',statusList)],order='engineering_revision'))
         return list(set(allIDs))
 
-    def saveParts(self, cr, uid, connection, prtInfos, fieldsListed, datamap):
-        """
-            Updates parts if exist in DB otherwise it create them.
-        """
-        checked={}
-        if connection:
-            for prtInfo in prtInfos:
-                entity=False
-                prtDict=dict(zip(fieldsListed,prtInfo))
-                if 'TMM_COMPONENT' in prtDict:
-                    kindName=prtDict['TMM_COMPONENT']
-                else:
-                    kindName='COMPONENT'
-                if 'name' in prtDict:
-                    prtName=prtDict['name']
-                else:
-                    continue
-                        
-                filterString="RevName = '%s'" %(prtName)
-                try:
-                    for ent in connection.entities.query(kindName, filterSql=filterString):
-                        entity = ent
-                        break
-                    if not entity:
-                        entity=connection.entities.create(kindName)
-
-                    for column in prtDict.keys():
-                        entity.setValue(datamap[column],prtDict[column])
-                    connection.entities.save(entity)
-                    checked[prtName]=entity
-                except Exception:
-                    checked[prtName]=False
-        return checked
-
-    def saveBoms(self, cr, uid, connection, checked, allIDs, fieldsListed, datamap):
-
-        
-        def checkChildren(self, cr, uid, connection, components, datamap):
-            for component in components:
-                for bomid in component.bom_ids:
-                    if not (str(bomid.type).upper()==kindName):
-                        continue
-                    for bom in bomid.bom_lines:
-                        if not bom.product_id.name in childNames:
-                            childNames.append(bom.product_id.name)
-                            childIDs.append(bom.product_id.id)
-                            
-            tmpData=self.export_data(cr, uid, childIDs, datamap.keys())
-            return self.saveParts(cr, uid, connection, tmpData.get('datas'), fieldsListed, datamap)
-
-        def removeBoms(connection, parentName, kindName, relSource):
-            filterString="RelParent ='%s' and Relsource='%s' and TMM_TYPE='%s'" %(parentName,relSource,kindName)
-            for relation in connection.entities.query("RELATION", filterSql=filterString):
-                if connection.relations.isDeletable(relation,kindName):
-                    connection.relations.delete(relation)
-
-
-        kindName='EBOM'
-        relation=False
-        childNames=[]
-        childIDs=[]
-        entityChecked=checked
-        
-        if connection:
-                    
-            components=self.browse(cr, uid, allIDs)
-
-            entityChecked.update(checkChildren(self, cr, uid, connection, components, datamap))
-                             
-            for component in components:
-                if not component.name in entityChecked.keys():
-                    continue
-                entityFather=entityChecked[component.name]
-                for bomid in component.bom_ids:
-                    if not (str(bomid.type).upper()==kindName):
-                        continue
-                    relSource=bomid.source_id.name
-                    
-                    removeBoms(connection, component.name, kindName, relSource)
-
-                    for bom in bomid.bom_lines:
-                        if not bom.product_id.name in entityChecked.keys():
-                            continue
-                        entityChild=entityChecked[bom.product_id.name]
-                        relation=connection.relations.create(entityFather, entityChild, kindName)
-                        
-                        bomFields=self.get_bom_data_transfer
-                        expData=self.pool.get('mrp.bom').export_data(cr, uid, [bom.id], bomFields.keys())
-                        if expData.get('datas'):
-                            bomData=dict(zip(bomFields.values(),expData.get('datas')[0]))                                       
-                            for column in bomData:
-                                relation.setValue(column,bomData[column])
-                        relation.setValue('RelSource',relSource)
-                        connection.relations.save(relation,forceNew=True)
-
-
-    def extract_data(self,cr,uid,ids,allIDs, anag_fields=False, rel_fields=False, transferdata={}):
+    def extract_data(self,cr,uid,allIDs, kindBomname='normal', anag_fields=False, rel_fields=False, transferdata={}):
         """
             action to be executed for Transmitted state.
             Transmit the object to ERP Metodo
         """
+        
+        def getChildrenBom(component, kindName):
+            for bomid in component.bom_ids:
+                if not (str(bomid.type).lower()==kindName):
+                    continue
+                return bomid.bom_lines
+            return []
+        
         if not anag_fields:
             anag_fields=['name','description']
         if not rel_fields:
@@ -317,14 +239,22 @@ class plm_component(osv.osv):
         if not self.export_csv(filename, anag_fields, expData, True):
             raise osv.except_osv(_('Export Data Error'), _("Writing operations on file (%s) have failed." %(filename)))
             return False
-        bomType=self.pool.get('mrp.bom')
-        for oic in self.browse(cr, uid, ids, context=None):
+        
+        ext_fields=['parent','child']
+        ext_fields.extend(rel_fields)
+        for oic in self.browse(cr, uid, allIDs, context=None):
+            dataSet=[]
             fname="%s-%s.%s" %(bomname,str(oic.name),exte)
             filename=os.path.join(outputpath,fname)
-            relIDs=self._getExplodedBom(cr, uid, [oic.id], 1, 0)
-            if len(relIDs)>0:
-                expData=bomType.export_data(cr, uid, relIDs,rel_fields)
-                if not self.export_csv(filename, rel_fields, expData, True):
+            for oirel in getChildrenBom(oic, kindBomname):
+                rowData=[oic.name,oirel.product_id.name]
+                for rel_field in rel_fields:
+                    rowData.append(eval('oirel.%s' %(rel_field)))
+                dataSet.append(rowData)
+            if dataSet:
+                expData={'datas': dataSet}
+                
+                if not self.export_csv(filename, ext_fields, expData, True):
                     raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
                     return False
         return True

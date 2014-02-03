@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-        <record id="ir_tt_gateway_action" model="ir.cron">
+        <record id="ir_transfer_gateway_action" model="ir.cron">
             <field name="name">Data Transfer</field>
             <field name="active" eval="False"/>
             <field name="interval_number">30</field>
