@@ -34,6 +34,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle,Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from report import report_sxw
 from operator import itemgetter
+from tools.translate import _
 
 # NOTE : TO BE ADDED TO FINAL CONFIGURATION. NOT IN STANDARD PYTHON
 from report.pyPdf import PdfFileWriter, PdfFileReader
