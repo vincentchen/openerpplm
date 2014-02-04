@@ -25,6 +25,7 @@ import types
 import cPickle as pickle
 from datetime import datetime
 
+from tools.translate import _
 from osv import osv, fields
 import logging
 
@@ -260,7 +261,7 @@ class plm_component(osv.osv):
         return True
 
     def export_csv(self, fname, fields=[], result={}, write_title=False):
-        import csv
+        import csv, stat
         if not ('datas' in result) or not result:
             logging.error("export_csv : No 'datas' in result.")
             return False
@@ -284,6 +285,7 @@ class plm_component(osv.osv):
                         row.append(data or '')
                 writer.writerow(row)
             fp.close()
+            os.chmod(fname, stat.S_IRWXU|stat.S_IRWXO|stat.S_IRWXG)
             return True
         except IOError, (errno, strerror):
             logging.error("export_csv : IOError : "+str(errno)+" ("+str(strerror)+").")
