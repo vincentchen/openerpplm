@@ -880,6 +880,16 @@ class plm_checkout(osv.osv):
         ('documentid', 'unique (documentid)', 'The documentid must be unique !') 
     ]
 
+    def _adjustRelations(self, cr, uid, oids, userid=False):
+        docRelType=self.pool.get('plm.document.relation')
+        if userid:
+            ids=docRelType.search(cr,uid,[('child_id','in',oids),('userid','=',False)])
+        else:
+            ids=docRelType.search(cr,uid,[('child_id','in',oids)])
+        if ids:
+            values={'userid':userid,}
+            docRelType.write(cr, uid, ids, values)
+
     def create(self, cr, uid, vals, context=None):
         if context!=None and context!={}:
             return False
@@ -890,6 +900,7 @@ class plm_checkout(osv.osv):
             logging.warning("create : Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+").")
             raise osv.except_osv(_('Check-Out Error'), _("Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+")."))
             return False
+        self._adjustRelations(cr, uid, [docID.id], uid)
         return super(plm_checkout,self).create(cr, uid, vals, context=context)   
          
     def unlink(self, cr, uid, ids, context=None):
@@ -900,13 +911,16 @@ class plm_checkout(osv.osv):
                 return False
         documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
+        docids=[]
         for checkObj in checkObjs:
             checkObj.documentid.writable=False
             values={'writable':False,}
+            docids.append(checkObj.documentid.id)
             if not documentType.write(cr, uid, [checkObj.documentid.id], values):
                 logging.warning("unlink : Unable to check-in the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag.")
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag."))
                 return False
+        self._adjustRelations(cr, uid, docids, False)
         return super(plm_checkout,self).unlink(cr, uid, ids, context=context)
 
 plm_checkout()
@@ -920,9 +934,11 @@ class plm_document_relation(osv.osv):
                 'configuration':fields.char('Configuration Name',size=1024),
                 'link_kind': fields.char('Kind of Link',size=64, required=True),
                 'create_date':fields.datetime('Date Created', readonly=True),
+                'userid':fields.many2one('res.users', 'CheckOut User',readonly="True"), 
                }
     _defaults = {
-                 'link_kind': lambda *a: 'HiTree'
+                 'link_kind': lambda *a: 'HiTree',
+                 'userid': lambda *a: False,
     }
     _sql_constraints = [
         ('relation_uniq', 'unique (parent_id,child_id,link_kind)', 'The Document Relation must be unique !') 
