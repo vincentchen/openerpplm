@@ -32,9 +32,30 @@ import logging
 def normalize(value):
     return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
 
+class plm_temporary(osv.osv_memory):
+    _inherit = "plm.temporary"
+##  Specialized Actions callable interactively
+    def action_transferData(self, cr, uid, ids, context=None):
+        """
+            Call for Transfer Data method
+        """
+        if not 'active_id' in context:
+            return False
+        self.pool.get('product.product').TransferData(cr, uid)
+        return False
+#         return {
+#               'name': _('Products'),
+#               'view_type': 'form',
+#               "view_mode": 'tree,form',
+#               'res_model': 'product.product',
+#               'type': 'ir.actions.act_window',
+#               'domain': "[]",
+#          }
+    
+plm_temporary()
+
 
 class plm_component(osv.osv):
-    _name = 'product.product'
     _inherit = 'product.product'
 
 ###################################################################
@@ -156,9 +177,9 @@ class plm_component(osv.osv):
             if 'db' in transfer:
                 import dbconnector
                 dataTargetTable=self.get_part_data_transfer['table']
-                connection=self.get_connection(transfer['db'])
+                connection=dbconnector.get_connection(transfer['db'])
             
-                checked=self.saveParts(cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
+                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
     
                 if checked:
                     bomTargetTable=self.get_bom_data_transfer['table']
@@ -166,11 +187,8 @@ class plm_component(osv.osv):
                     parentName=self.get_bom_data_transfer['PName']
                     childName=self.get_bom_data_transfer['CName']
                     kindBomname=self.get_bom_data_transfer['kind']
-                    operation=self.saveBoms(cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentName, childName, bomdatamap)  
+                    operation=dbconnector.saveBoms(self, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentName, childName, bomdatamap)  
                      
-                if connection:
-                    connection.quit()
-                    
             if 'file' in transfer:
                 bomfieldsListed=self.get_bom_data_transfer['fields'].keys()
                 kindBomname=self.get_bom_data_transfer['kind']
@@ -290,7 +308,6 @@ class plm_component(osv.osv):
         except IOError, (errno, strerror):
             logging.error("export_csv : IOError : "+str(errno)+" ("+str(strerror)+").")
             return False
-
 
 plm_component()
 
