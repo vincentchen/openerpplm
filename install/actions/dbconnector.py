@@ -30,169 +30,160 @@ def normalize(value):
     return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
 
 
-class plm_component(osv.osv):
-    _name = 'product.product'
-    _inherit = 'product.product'
+def get_connection(dataConn):
+    """
+        Get last execution date & time as stored.
+            format => '%Y-%m-%d %H:%M:%S'
+    """
+    connection=False
+    try:
+        connectionString=r'%s://%s:%s@%s/%s' %(dataConn['protocol'],dataConn['user'],dataConn['password'],dataConn['host'],dataConn['database'])
+        engine = create_engine(connectionString, echo=False)
+        connection = engine.connect()
+    except Exception,ex:
+        logging.error("[get_connection] : Error to connect (%s)." %(str(ex)))
+    return connection
 
-    @property
-    def get_connection(self,dataConn):
-        """
-            Get last execution date & time as stored.
-                format => '%Y-%m-%d %H:%M:%S'
-        """
-        connection=False
-        try:
-            connectionString=r'%s://%s:%s@%s/%s' %(dataConn['protocol'],dataConn['user'],dataConn['password'],dataConn['host'],dataConn['database'])
-            engine = create_engine(connectionString, echo=False)
-            connection = engine.connect()
-        except Exception,ex:
-            logging.error("[get_connection] : Error to connect (%s)." %(str(ex)))
-        return connection
-    
-    def saveParts(self, cr, uid, connection, prtInfos, targetTable, datamap):
-        """
-            Updates parts if exist in DB otherwise it create them.
-        """
-        checked={}
-        if connection:
-            trans = connection.begin()
-            for prtInfo in prtInfos:
-                prtDict=dict(zip(datamap.keys(),prtInfo))
- 
-                if 'name' in prtDict:
-                    prtName=prtDict['name']
-                else:
-                    continue
+def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap):
+    """
+        Updates parts if exist in DB otherwise it create them.
+    """
+    checked={}
+    if connection:
+        trans = connection.begin()
+        for prtInfo in prtInfos:
+            prtDict=dict(zip(datamap.keys(),prtInfo))
 
-                string1="delete from %s where %s = '%s'" %(targetTable,datamap['name'],normalize(prtName))
-                connection.execution_options(autocommit=False).execute(eval(string1))
-                                 
-                separator=""
-                namesString=""
-                valuesString=""
-                for column in prtDict.keys():
-                    if (type(prtDict[column]) is datetime):
-                        namesString+="%s %s" %(separator,datamap[column])
-                        valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%d/%m/%Y %H/%M/%s"))
-                    elif (type(prtDict[column]) is types.IntType) or (type(prtDict[column]) is types.LongType):
-                        namesString+="%s %s" %(separator,datamap[column])
-                        valuesString+="%s %d" %(separator,prtDict[column])
-                    elif (type(prtDict[column]) is types.BooleanType):
-                        namesString+="%s %s" %(separator,datamap[column])
-                        valuesString+="%s %d" %(separator,prtDict[column])
-                    elif (type(prtDict[column]) is types.FloatType):
-                        namesString+="%s %s" %(separator,datamap[column])
-                        valuesString+="%s %f" %(separator,prtDict[column])
-                    elif (type(prtDict[column]) is types.StringType):
-                        namesString+="%s %s" %(separator,datamap[column])
-                        valuesString+="%s '%s'" %(separator,normalize(prtDict[column]))
-                    if len(namesString)>0:
-                        separator=","
+            if 'name' in prtDict:
+                prtName=prtDict['name']
+            else:
+                continue
 
-                try:
-                    string1="insert into %s (%s) values (%s)" %(targetTable,namesString,valuesString)
-                    connection.execution_options(autocommit=False).execute(eval(string1))
-                    checked[prtName]=prtDict
-                except Exception:
-                    checked[prtName]=False
-            trans.commit()
-        return checked
-
-    def saveBoms(self, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname='normal', bomTargetTable, parentColName, childColName, bomdatamap):
-
-        
-        def checkChildren(self, cr, uid, connection, components, datamap):
-            for component in components:
-                for bomid in component.bom_ids:
-                    if not (str(bomid.type).lower()==kindName):
-                        continue
-                    for bom in bomid.bom_lines:
-                        if not bom.product_id.name in childNames:
-                            childNames.append(bom.product_id.name)
-                            childIDs.append(bom.product_id.id)
-                            
-            tmpData=self.export_data(cr, uid, childIDs, datamap.keys())
-            return self.saveParts(cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
-
-        def removeBoms(connection, bomTargetTable, parentColName, parentName):
-            trans = connection.begin()
-            try:
-                string1="delete from %s where %s = '%s'" %(bomTargetTable,parentColName,parentName)
-                connection.execution_options(autocommit=False).execute(string1)
-            except Exception,ex:
-                logging.error("[saveBoms::removeBoms] : Exception (%s) cleaning bom (%s)." %(str(ex),parentName))
-            trans.commit()
-
-        kindName=kindBomname
-        relation=False
-        childNames=[]
-        childIDs=[]
-        entityChecked=checked
-        
-        if connection:
-            trans = connection.begin()
-            components=self.browse(cr, uid, allIDs)
-            entityChecked.update(checkChildren(self, cr, uid, connection, components, datamap))
+            string1="delete from %s where %s='%s'" %(targetTable,datamap['name'],normalize(prtName))
+            connection.execution_options(autocommit=False).execute(string1)
                              
-            for component in components:
-                if not component.name in entityChecked.keys():
-                    logging.error("[saveBoms] : Product (%s) is not in current data package." %(component.name))
+            separator=""
+            namesString=""
+            valuesString=""
+            for column in prtDict.keys():
+                if (type(prtDict[column]) is datetime):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%d/%m/%Y %H/%M/%s"))
+                elif (type(prtDict[column]) is types.IntType) or (type(prtDict[column]) is types.LongType):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s %d" %(separator,prtDict[column])
+                elif (type(prtDict[column]) is types.BooleanType):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s %d" %(separator,prtDict[column])
+                elif (type(prtDict[column]) is types.FloatType):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s %f" %(separator,prtDict[column])
+                elif (type(prtDict[column]) is types.StringType) or (type(prtDict[column]) is types.UnicodeType):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s '%s'" %(separator,normalize(prtDict[column]))
+                if len(namesString)>0:
+                    separator=","
+
+            try:
+                string1="insert into %s (%s) values (%s)" %(targetTable,namesString,valuesString)
+                connection.execution_options(autocommit=False).execute(string1)
+                checked[prtName]=prtDict
+            except Exception:
+                checked[prtName]=False
+        trans.commit()
+    return checked
+
+def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentColName, childColName, bomdatamap):
+
+    
+    def checkChildren(ObjectOE, cr, uid, connection, components, datamap):
+        for component in components:
+            for bomid in component.bom_ids:
+                if not (str(bomid.type).lower()==kindName):
                     continue
-                entityFather=entityChecked[component.name]
-                if not entityFather:
-                    logging.error("[saveBoms] : Product (%s), as father, seems it could be not saved." %(component.name))
+                for bom in bomid.bom_lines:
+                    if not bom.product_id.name in childNames:
+                        childNames.append(bom.product_id.name)
+                        childIDs.append(bom.product_id.id)
+                        
+        tmpData=ObjectOE.export_data(cr, uid, childIDs, datamap.keys())
+        return saveParts(ObjectOE, cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
+
+    def removeBoms(connection, bomTargetTable, parentColName, parentName):
+        trans = connection.begin()
+        try:
+            string1="delete from %s where %s = '%s'" %(bomTargetTable,parentColName,parentName)
+            connection.execution_options(autocommit=False).execute(string1)
+        except Exception,ex:
+            logging.error("[saveBoms::removeBoms] : Exception (%s) cleaning bom (%s)." %(str(ex),parentName))
+        trans.commit()
+
+    kindName=kindBomname.lower()
+    relation=False
+    childNames=checked.keys()
+    childIDs=[]
+    entityChecked=checked
+    
+    if connection:
+        trans = connection.begin()
+        components=ObjectOE.browse(cr, uid, allIDs)
+        entityChecked.update(checkChildren(ObjectOE, cr, uid, connection, components, datamap))
+                         
+        for component in components:
+            if not component.name in entityChecked.keys():
+                logging.error("[saveBoms] : Product (%s) is not in current data package." %(component.name))
+                continue
+            entityFather=entityChecked[component.name]
+            if not entityFather:
+                logging.error("[saveBoms] : Product (%s), as father, seems it could be not saved." %(component.name))
+                continue
+            
+            for bomid in component.bom_ids:
+                if not (str(bomid.type).lower()==kindName):
                     continue
                 
-                for bomid in component.bom_ids:
-                    if not (str(bomid.type).upper()==kindName):
+                removeBoms(connection, bomTargetTable, parentColName, component.name)
+
+                for bom in bomid.bom_lines:
+                    if not bom.product_id.name in entityChecked.keys():
+                        logging.error("[saveBoms] : Product (%s) is not in current data package." %(bom.product_id.name))
                         continue
+
+                    entityChild=entityChecked[bom.product_id.name]
+                    if not entityChild:
+                        logging.error("[saveBoms] : Product (%s), as child, seems it could be not saved." %(bom.product_id.name))
+                        continue
+
+                    separator=","
+                    namesString="%s, %s" %(parentColName, childColName)
+                    valuesString="'%s', '%s'" %(normalize(component.name),normalize(bom.product_id.name))
                     
-                    removeBoms(connection, bomTargetTable, parentColName, component.name)
+                    expData=ObjectOE.pool.get('mrp.bom').export_data(cr, uid, [bom.id], bomdatamap.keys())
+                    if expData.get('datas'):
+                        bomDict=dict(zip(bomdatamap.keys(),expData.get('datas')[0]))                                       
+                        for column in bomDict:
+                            if (type(bomDict[column]) is datetime):
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s '%s'" %(separator,datetime.strptime(bomDict[column],"%d/%m/%Y %H/%M/%s"))
+                            elif (type(bomDict[column]) is types.IntType) or (type(bomDict[column]) is types.LongType):
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s %d" %(separator,bomDict[column])
+                            elif (type(bomDict[column]) is types.BooleanType):
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s %d" %(separator,bomDict[column])
+                            elif (type(bomDict[column]) is types.FloatType):
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s %f" %(separator,bomDict[column])
+                            elif (type(bomDict[column]) is types.StringType) or (type(bomDict[column]) is types.UnicodeType):
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s '%s'" %(separator,normalize(bomDict[column]))
 
-                    for bom in bomid.bom_lines:
-                        if not bom.product_id.name in entityChecked.keys():
-                            logging.error("[saveBoms] : Product (%s) is not in current data package." %(bom.product_id.name))
-                            continue
+                        try:
+                            string1="insert into %s (%s) values (%s)" %(bomTargetTable, namesString,valuesString)
+                            connection.execution_options(autocommit=False).execute(string1)
+                        except Exception:
+                            logging.error("[saveBoms] : Parent (%s) Child (%s), relation not saved." %(component.name,bom.product_id.name))
+        trans.commit()
+        return True
 
-                        entityChild=entityChecked[bom.product_id.name]
-                        if not entityChild:
-                            logging.error("[saveBoms] : Product (%s), as child, seems it could be not saved." %(bom.product_id.name))
-                            continue
- 
-                        separator=","
-                        namesString="%s, %s" %(parentColName, childColName)
-                        valuesString="'%s', '%s'" %(normalize(component.name),normalize(bom.product_id.name))
-                        
-                        expData=self.pool.get('mrp.bom').export_data(cr, uid, [bom.id], bomdatamap.keys())
-                        if expData.get('datas'):
-                            bomDict=dict(zip(bomdatamap.values(),expData.get('datas')[0]))                                       
-                            for column in bomDict:
-                                if (type(bomDict[column]) is datetime):
-                                    namesString+="%s %s" %(separator,bomdatamap[column])
-                                    valuesString+="%s '%s'" %(separator,datetime.strptime(bomDict[column],"%d/%m/%Y %H/%M/%s"))
-                                elif (type(bomDict[column]) is types.IntType) or (type(bomDict[column]) is types.LongType):
-                                    namesString+="%s %s" %(separator,bomdatamap[column])
-                                    valuesString+="%s %d" %(separator,bomDict[column])
-                                elif (type(bomDict[column]) is types.BooleanType):
-                                    namesString+="%s %s" %(separator,bomdatamap[column])
-                                    valuesString+="%s %d" %(separator,bomDict[column])
-                                elif (type(bomDict[column]) is types.FloatType):
-                                    namesString+="%s %s" %(separator,bomdatamap[column])
-                                    valuesString+="%s %f" %(separator,bomDict[column])
-                                elif (type(bomDict[column]) is types.StringType):
-                                    namesString+="%s %s" %(separator,bomdatamap[column])
-                                    valuesString+="%s '%s'" %(separator,normalize(bomDict[column]))
-
-                            try:
-                                string1="insert into %s (%s) values (%s)" %(bomTargetTable, namesString,valuesString)
-                                connection.execution_options(autocommit=False).execute(eval(string1))
-                            except Exception:
-                                logging.error("[saveBoms] : Parent (%s) Child (%s), relation not saved." %(component.name,bom.product_id.name))
-            trans.commit()
-            return True
-
-        return False
-
-
-plm_component()
-
+    return False
