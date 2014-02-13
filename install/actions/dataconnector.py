@@ -170,6 +170,7 @@ class plm_component(osv.osv):
         logging.debug("[TransferData] Start : %s" %(str(updateDate)))
         transfer=self.get_data_transfer
         datamap=self.get_part_data_transfer['fields']
+        datatyp=self.get_part_data_transfer['types']
         fieldsListed=datamap.keys()
         allIDs=self.query_data(cr, uid, updateDate, self.get_part_data_transfer['status'])
         tmpData=self.export_data(cr, uid, allIDs, fieldsListed)
@@ -179,15 +180,16 @@ class plm_component(osv.osv):
                 dataTargetTable=self.get_part_data_transfer['table']
                 connection=dbconnector.get_connection(transfer['db'])
             
-                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
+                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap,datatyp)
     
                 if checked:
                     bomTargetTable=self.get_bom_data_transfer['table']
                     bomdatamap=self.get_bom_data_transfer['fields']
+                    bomdatatyp=self.get_bom_data_transfer['types']
                     parentName=self.get_bom_data_transfer['PName']
                     childName=self.get_bom_data_transfer['CName']
                     kindBomname=self.get_bom_data_transfer['kind']
-                    operation=dbconnector.saveBoms(self, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentName, childName, bomdatamap)  
+                    operation=dbconnector.saveBoms(self, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, datatyp, kindBomname, bomTargetTable, parentName, childName, bomdatamap, bomdatatyp)  
                      
             if 'file' in transfer:
                 bomfieldsListed=self.get_bom_data_transfer['fields'].keys()

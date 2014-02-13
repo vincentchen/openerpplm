@@ -44,7 +44,7 @@ def get_connection(dataConn):
         logging.error("[get_connection] : Error to connect (%s)." %(str(ex)))
     return connection
 
-def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap):
+def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap, datatyp):
     """
         Updates parts if exist in DB otherwise it create them.
     """
@@ -66,21 +66,22 @@ def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap):
             namesString=""
             valuesString=""
             for column in prtDict.keys():
-                if (type(prtDict[column]) is datetime):
-                    namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%d/%m/%Y %H/%M/%s"))
-                elif (type(prtDict[column]) is types.IntType) or (type(prtDict[column]) is types.LongType):
-                    namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %d" %(separator,prtDict[column])
-                elif (type(prtDict[column]) is types.BooleanType):
+                if (datatyp[column] == 'datetime'):
+                    if prtDict[column]:
+                        namesString+="%s %s" %(separator,datamap[column])
+                        valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%Y-%m-%d %H:%M:%S"))
+                elif (datatyp[column] == 'int'):
                     namesString+="%s %s" %(separator,datamap[column])
                     valuesString+="%s %d" %(separator,prtDict[column])
-                elif (type(prtDict[column]) is types.FloatType):
+                elif (datatyp[column] == 'bool'):
+                    namesString+="%s %s" %(separator,datamap[column])
+                    valuesString+="%s %d" %(separator,prtDict[column])
+                elif (datatyp[column] =='float'):
                     namesString+="%s %s" %(separator,datamap[column])
                     valuesString+="%s %f" %(separator,prtDict[column])
-                elif (type(prtDict[column]) is types.StringType) or (type(prtDict[column]) is types.UnicodeType):
+                elif (datatyp[column] == 'char'):
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s '%s'" %(separator,normalize(prtDict[column]))
+                    valuesString+="%s '%s'" %(separator,normalize(prtDict[column]).replace("False",''))
                 if len(namesString)>0:
                     separator=","
 
@@ -88,12 +89,12 @@ def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap):
                 string1="insert into %s (%s) values (%s)" %(targetTable,namesString,valuesString)
                 connection.execution_options(autocommit=False).execute(string1)
                 checked[prtName]=prtDict
-            except Exception:
+            except Exception,ex:
                 checked[prtName]=False
         trans.commit()
     return checked
 
-def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentColName, childColName, bomdatamap):
+def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, datatyp, kindBomname, bomTargetTable, parentColName, childColName, bomdatamap, bomdatatyp):
 
     
     def checkChildren(ObjectOE, cr, uid, connection, components, datamap):
@@ -107,7 +108,7 @@ def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, da
                         childIDs.append(bom.product_id.id)
                         
         tmpData=ObjectOE.export_data(cr, uid, childIDs, datamap.keys())
-        return saveParts(ObjectOE, cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
+        return saveParts(ObjectOE, cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap, datatyp)
 
     def removeBoms(connection, bomTargetTable, parentColName, parentName):
         trans = connection.begin()
@@ -162,21 +163,22 @@ def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, da
                     if expData.get('datas'):
                         bomDict=dict(zip(bomdatamap.keys(),expData.get('datas')[0]))                                       
                         for column in bomDict:
-                            if (type(bomDict[column]) is datetime):
-                                namesString+="%s %s" %(separator,bomdatamap[column])
-                                valuesString+="%s '%s'" %(separator,datetime.strptime(bomDict[column],"%d/%m/%Y %H/%M/%s"))
-                            elif (type(bomDict[column]) is types.IntType) or (type(bomDict[column]) is types.LongType):
+                            if (bomdatatyp[column] == 'datetime'):
+                                if bomDict[column]:
+                                    namesString+="%s %s" %(separator,bomdatamap[column])
+                                    valuesString+="%s '%s'" %(separator,datetime.strptime(bomDict[column],"%Y-%m-%d %H:%M:%S"))
+                            elif (bomdatatyp[column] == 'int'):
+                                namesString+="%s %s" %(separator,int(bomdatamap[column]))
+                                valuesString+="%s %d" %(separator,bomDict[column])
+                            elif (bomdatatyp[column] == 'bool'):
                                 namesString+="%s %s" %(separator,bomdatamap[column])
                                 valuesString+="%s %d" %(separator,bomDict[column])
-                            elif (type(bomDict[column]) is types.BooleanType):
+                            elif (bomdatatyp[column] =='float'):
                                 namesString+="%s %s" %(separator,bomdatamap[column])
-                                valuesString+="%s %d" %(separator,bomDict[column])
-                            elif (type(bomDict[column]) is types.FloatType):
+                                valuesString+="%s %f" %(separator,float(bomDict[column]))
+                            elif (bomdatatyp[column] == 'char'):
                                 namesString+="%s %s" %(separator,bomdatamap[column])
-                                valuesString+="%s %f" %(separator,bomDict[column])
-                            elif (type(bomDict[column]) is types.StringType) or (type(bomDict[column]) is types.UnicodeType):
-                                namesString+="%s %s" %(separator,bomdatamap[column])
-                                valuesString+="%s '%s'" %(separator,normalize(bomDict[column]))
+                                valuesString+="%s '%s'" %(separator,normalize(bomDict[column]).replace("False",''))
 
                         try:
                             string1="insert into %s (%s) values (%s)" %(bomTargetTable, namesString,valuesString)
