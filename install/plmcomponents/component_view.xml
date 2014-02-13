@@ -185,8 +185,8 @@
                             <field name="description_sale" placeholder="note to be displayed on quotations..."/>
                         </page>
                         <page string="Engineering Infos">
-                        <group colspan="8" col="8" string="Part Number Area">
-                            <group colspan="4" col="4">
+                        <group colspan="4" col="4" string="Part Number Area">
+                            <group colspan="4" col="4" name="PNArea">
                                 <field name="engineering_code" select="1" attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
                                 <field name="engineering_revision" readonly="True" colspan="2"/>
                             </group>
