@@ -168,8 +168,8 @@ def saveBoms(ObjectOE, cr, uid, connection, checked, allIDs, dataTargetTable, da
                                     namesString+="%s %s" %(separator,bomdatamap[column])
                                     valuesString+="%s '%s'" %(separator,datetime.strptime(bomDict[column],"%Y-%m-%d %H:%M:%S"))
                             elif (bomdatatyp[column] == 'int'):
-                                namesString+="%s %s" %(separator,int(bomdatamap[column]))
-                                valuesString+="%s %d" %(separator,bomDict[column])
+                                namesString+="%s %s" %(separator,bomdatamap[column])
+                                valuesString+="%s %d" %(separator,int(bomDict[column]))
                             elif (bomdatatyp[column] == 'bool'):
                                 namesString+="%s %s" %(separator,bomdatamap[column])
                                 valuesString+="%s %d" %(separator,bomDict[column])
