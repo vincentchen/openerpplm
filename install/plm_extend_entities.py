@@ -38,34 +38,6 @@ plm_document()
 class plm_component(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
-    
-#     def _fathers_compute(self, cr, uid, ids, name, arg, context=None):
-#         """ Gets father bom.
-#         @param self: The object pointer
-#         @param cr: The current row, from the database cursor,
-#         @param uid: The current user ID for security checks
-#         @param ids: List of selected IDs
-#         @param name: Name of the field
-#         @param arg: User defined argument
-#         @param context: A standard dictionary for contextual values
-#         @return:  Dictionary of values
-#         """
-#         result = []
-#         if context is None:
-#             context = {}
-#         bom_obj = self.pool.get('mrp.bom')
-#         bom_id = context and context.get('active_id', False) or False
-# 
-#         for bom in self.browse(cr, uid, ids, context=context):
-#             if (bom.id == bom_id):
-#                 tmp_ids = bom_obj.search(cr, uid, [('bom_id','!=',False),('product_id','=',bom_id)])
-#                 bom_parents = bom_obj.browse(cr, uid, tmp_ids, context=context)
-#                 for bom_parent in bom_parents:
-#                     if not (bom_parent.bom_id.id in result):
-#                         result.append(bom_parent.bom_id.id)
-# 
-#         return result
-
     _columns = {
         	    'linkeddocuments':fields.many2many('plm.document', 'plm_component_document_rel','component_id','document_id', 'Linked Docs'),  
                 'tmp_material': fields.many2one('plm.material','Raw Material', required=False, change_default=True, help="Select raw material for current product"),
