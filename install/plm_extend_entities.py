@@ -127,20 +127,25 @@ class plm_relation(osv.osv):
         @param context: A standard dictionary for contextual values
         @return:  Dictionary of values
         """
-        
+        bom_type=''
         result = {}
         if context is None:
             context = {}
         bom_obj = self.pool.get('mrp.bom')
         bom_lines = bom_obj.browse(cr, uid, ids, context=context)
         for bom_line in bom_lines:
+            bom_type=bom_line.type
             result[bom_line.id]=[]
             if bom_line.bom_id.id:
                 if not (bom_line.bom_id.id in result[bom_line.id]):
                     result[bom_line.id]+=[bom_line.bom_id.id]
             else:
                 for thisId in ids:
-                    tmp_ids = bom_obj.search(cr, uid, [('bom_id','!=',False),('product_id','=',bom_line.product_id.id)])
+                    if bom_type=='':
+                        tmp_ids = bom_obj.search(cr, uid, [('bom_id','!=',False),('product_id','=',bom_line.product_id.id)])
+                    else:
+                        tmp_ids = bom_obj.search(cr, uid, [('bom_id','!=',False),('product_id','=',bom_line.product_id.id),('type','=',bom_type)])
+
                     bom_parents = bom_obj.browse(cr, uid, tmp_ids, context=context)
                     for bom_parent in bom_parents:
                         if bom_parent.bom_id.id:
