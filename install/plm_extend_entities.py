@@ -161,6 +161,7 @@ class plm_relation(osv.osv):
                 'child_complete_ids': fields.function(_child_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                 'father_complete_ids': fields.function(_father_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                }
+    _order = 'itemnum'
 
 plm_relation()
 
