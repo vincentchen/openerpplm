@@ -279,7 +279,6 @@ class plm_missing_bom(osv.osv_memory):
                 }
     _defaults = {
     }
-    _order = 'itemnum'
 plm_missing_bom()
 
 class plm_adding_bom(osv.osv_memory):
@@ -297,6 +296,5 @@ class plm_adding_bom(osv.osv_memory):
                 }
     _defaults = {
     }
-    _order = 'itemnum'
 plm_adding_bom()
 
