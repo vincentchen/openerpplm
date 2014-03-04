@@ -168,6 +168,10 @@ class plm_relation(osv.osv):
         ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','!=',False),('type','=','ebom')])
         if not ids:
             ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','!=',False),('type','=','normal')])
+        if not ids:
+            ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','=',False),('type','=','ebom')])
+            if not ids:
+                ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','=',False),('type','=','normal')])
         for obj in self.browse(cr,uid,ids,context=None):
             if obj.bom_id in counted:
                 continue
@@ -185,6 +189,10 @@ class plm_relation(osv.osv):
         ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','!=',False),('type','=','ebom')])
         if not ids:
             ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','!=',False),('type','=','normal')])
+        if not ids:
+            ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','=',False),('type','=','ebom')])
+            if not ids:
+                ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','=',False),('type','=','normal')])
         for obj in self.browse(cr,uid,list(set(ids)),context=None):
             counted.append(obj)
         return list(set(counted))
