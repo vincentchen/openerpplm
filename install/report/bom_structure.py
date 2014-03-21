@@ -74,17 +74,17 @@ _createtemplate()
 
 ###############################################################################################################à
 
-def BomSort(object):
+def BomSort(myObject):
     bomobject=[]
     res={}
     index=0
-    for l in object:
+    for l in myObject:
         res[str(index)]=l.itemnum
         index+=1
     items = res.items()
     items.sort(key = itemgetter(1))
     for res in items:
-        bomobject.append(object[int(res[0])])
+        bomobject.append(myObject[int(res[0])])
     return bomobject
 
 class bom_structure_all_custom_report(report_sxw.rml_parse):
@@ -96,13 +96,13 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
             'bom_type':self.bom_type,
         })
 
-    def get_children(self, object, level=0):
+    def get_children(self, myObject, level=0):
         result=[]
 
         def _get_rec(bomobject,level):
-            object=BomSort(bomobject)
+            myObject=BomSort(bomobject)
 
-            for l in object:
+            for l in myObject:
                 res={}
                 res['name']=l.name
                 res['item']=l.itemnum
@@ -121,12 +121,12 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
                     _get_rec(l.child_complete_ids,level+1)
             return result
 
-        children=_get_rec(object,level+1)
+        children=_get_rec(myObject,level+1)
 
         return children
 
-    def bom_type(self, object):
-        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+    def bom_type(self, myObject):
+        result=dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(myObject.type,'')
         return _(result)
 
 report_sxw.report_sxw('report.plm.bom.structure.all','mrp.bom','/'+openerpModule+'/install/report/'+thisModule+'.rml',parser=bom_structure_all_custom_report,header='internal')
@@ -141,12 +141,12 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
             'bom_type':self.bom_type,
         })
 
-    def get_children(self, object, level=0):
+    def get_children(self, myObject, level=0):
         result=[]
 
         def _get_rec(bomobject,level):
-            object=BomSort(bomobject)
-            for l in object:
+            myObject=BomSort(bomobject)
+            for l in myObject:
                 res={}
                 res['name']=l.name
                 res['item']=l.itemnum
@@ -162,12 +162,12 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
                 result.append(res)
             return result
 
-        children=_get_rec(object,level+1)
+        children=_get_rec(myObject,level+1)
 
         return children
 
-    def bom_type(self, object):
-        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+    def bom_type(self, myObject):
+        result=dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(myObject.type,'')
         return _(result)
 
 report_sxw.report_sxw('report.plm.bom.structure.one','mrp.bom','/'+openerpModule+'/install/report/'+thisModule+'.rml',parser=bom_structure_one_custom_report,header='internal')
@@ -182,15 +182,15 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
             'bom_type':self.bom_type,
         })
 
-    def get_children(self, object, level=0):
+    def get_children(self, myObject, level=0):
         result=[]
 
         def _get_rec(bomobject,level):
-            object=BomSort(bomobject)
+            myObject=BomSort(bomobject)
             tmp_result=[]
             listed={}
             keyIndex=0
-            for l in object:
+            for l in myObject:
                 res={}
                 if l.name in listed.keys():
                     res=tmp_result[listed[l.name]]
@@ -221,12 +221,12 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
                         tmp_result.extend(buffer)
             return tmp_result
 
-        result.extend(_get_rec(object,level+1))
+        result.extend(_get_rec(myObject,level+1))
 
         return result
 
-    def bom_type(self, object):
-        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+    def bom_type(self, myObject):
+        result=dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(myObject.type,'')
         return _(result)
 
 report_sxw.report_sxw('report.plm.bom.structure.all.sum','mrp.bom','/'+openerpModule+'/install/report/'+thisModule+'.rml',parser=bom_structure_all_sum_custom_report,header='internal')
@@ -240,15 +240,15 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
             'bom_type':self.bom_type,
         })
 
-    def get_children(self, object, level=0):
+    def get_children(self, myObject, level=0):
         result=[]
 
         def _get_rec(bomobject,level):
-            object=BomSort(bomobject)
+            myObject=BomSort(bomobject)
             tmp_result=[]
             listed={}
             keyIndex=0
-            for l in object:
+            for l in myObject:
                 res={}
                 if l.name in listed.keys():
                     res=tmp_result[listed[l.name]]
@@ -271,12 +271,12 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
                     keyIndex+=1
             return result.extend(tmp_result)
 
-        children=_get_rec(object,level+1)
+        children=_get_rec(myObject,level+1)
 
         return result
 
-    def bom_type(self, object):
-        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+    def bom_type(self, myObject):
+        result=dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(myObject.type,'')
         return _(result)
 
 report_sxw.report_sxw('report.plm.bom.structure.one.sum','mrp.bom','/'+openerpModule+'/install/report/'+thisModule+'.rml',parser=bom_structure_one_sum_custom_report,header='internal')
@@ -291,14 +291,14 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
             'bom_type':self.bom_type,
         })
 
-    def get_children(self, object, level=0):
+    def get_children(self, myObject, level=0):
         result=[]
         listed={}
         
 
         def _get_rec(bomobject,level,fth_qty):
-            object=BomSort(bomobject)
-            for l in object:
+            myObject=BomSort(bomobject)
+            for l in myObject:
                 res={}
                 if l.name in listed.keys():
                     res=result[listed[l.name]]
@@ -326,12 +326,12 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
 
             return result
 
-        _get_rec(object,level+1,1)
+        _get_rec(myObject,level+1,1)
 
         return result
 
-    def bom_type(self, object):
-        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+    def bom_type(self, myObject):
+        result=dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(myObject.type,'')
         return _(result)
 
 report_sxw.report_sxw('report.plm.bom.structure.leaves','mrp.bom','/'+openerpModule+'/install/report/'+thisModule+'.rml',parser=bom_structure_leaves_custom_report,header='internal')

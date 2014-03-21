@@ -152,7 +152,7 @@
             </para>
           </td>
           <td>
-            <para style="terp_default_Bold_9">[[ (o.product_id.name) or removeParentNode('font') ]] [[ o.product_id. default_code ]]</para>
+            <para style="terp_default_Bold_9">[ [[ (o.product_id.default_code) or removeParentNode('font') ]] ] [[ o.product_id.name ]]</para>
           </td>
           <td>
             <para style="P4">[[ (o.product_id.engineering_revision) ]]</para>
@@ -217,3 +217,4 @@
     </section>
   </story>
 </document>
+
