@@ -28,8 +28,8 @@
 ##############################################################################
 import os
 import time
-from report import report_sxw
 from operator import itemgetter
+from report import report_sxw
 from tools.translate import _
 
 
@@ -41,6 +41,9 @@ openerpModule=_moduleName()
 def _thisModule():
     return os.path.splitext(os.path.basename(__file__))[0]
 thisModule=_thisModule()
+
+def _translate(value):
+    return _(value)
 
 ###############################################################################################################à
 
@@ -94,6 +97,7 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -139,6 +143,7 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -180,6 +185,7 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -238,6 +244,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -289,6 +296,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
