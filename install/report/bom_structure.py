@@ -42,6 +42,9 @@ def _thisModule():
     return os.path.splitext(os.path.basename(__file__))[0]
 thisModule=_thisModule()
 
+def _translate(value):
+    return _(value)
+
 ###############################################################################################################à
 
 def _createtemplate():
@@ -94,6 +97,7 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -108,7 +112,7 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
                 res['item']=l.itemnum
                 res['ancestor']=l.bom_id.product_id
                 res['pname']=l.product_id.name
-                res['pdesc']=l.product_id.description
+                res['pdesc']=_(l.product_id.description)
                 res['pcode']=l.product_id.default_code
                 res['previ']=l.product_id.engineering_revision
                 res['pqty']=l.product_qty
@@ -139,6 +143,7 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -151,7 +156,7 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
                 res['name']=l.name
                 res['item']=l.itemnum
                 res['pname']=l.product_id.name
-                res['pdesc']=l.product_id.description
+                res['pdesc']=_(l.product_id.description)
                 res['pcode']=l.product_id.default_code
                 res['previ']=l.product_id.engineering_revision
                 res['pqty']=l.product_qty
@@ -180,6 +185,7 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -202,7 +208,7 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    res['pdesc']=l.product_id.description
+                    res['pdesc']=_(l.product_id.description)
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
@@ -238,6 +244,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -258,7 +265,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
                     res['name']=l.name
                     res['item']=l.itemnum
                     res['pname']=l.product_id.name
-                    res['pdesc']=l.product_id.description
+                    res['pdesc']=_(l.product_id.description)
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
@@ -289,6 +296,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, myObject, level=0):
@@ -309,7 +317,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    res['pdesc']=l.product_id.description
+                    res['pdesc']=_(l.product_id.description)
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
