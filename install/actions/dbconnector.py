@@ -27,7 +27,10 @@ from osv import osv, fields
 import logging
 
 def normalize(value):
-    return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
+    if type(value)==types.StringType or type(value)==types.UnicodeType:
+        return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
+    else:
+        return str(value).strip()
 
 
 def get_connection(dataConn):
@@ -72,13 +75,13 @@ def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap, dat
                         valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%Y-%m-%d %H:%M:%S"))
                 elif (datatyp[column] == 'int'):
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %d" %(separator,prtDict[column])
+                    valuesString+="%s %d" %(separator,int(prtDict[column]))
                 elif (datatyp[column] == 'bool'):
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %d" %(separator,prtDict[column])
+                    valuesString+="%s %d" %(separator,int(prtDict[column]))
                 elif (datatyp[column] =='float'):
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %f" %(separator,prtDict[column])
+                    valuesString+="%s %f" %(separator,float(prtDict[column]))
                 elif (datatyp[column] == 'char'):
                     namesString+="%s %s" %(separator,datamap[column])
                     valuesString+="%s '%s'" %(separator,normalize(prtDict[column]).replace("False",''))
