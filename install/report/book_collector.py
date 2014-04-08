@@ -1,4 +1,5 @@
 import os
+import base64
 import StringIO
 from reportlab.pdfgen import canvas
 
@@ -7,7 +8,6 @@ from report.pyPdf import PdfFileWriter, PdfFileReader
 # NOTE : TO BE ADDED TO FINAL CONFIGURATION. NOT IN STANDARD PYTHON
 
 from report.render import render
-import base64
 
 def isPdf(fileName):
     if (os.path.splitext(fileName)[1].lower()=='.pdf'):
