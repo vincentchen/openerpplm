@@ -30,7 +30,10 @@ from osv import osv, fields
 import logging
 
 def normalize(value):
-    return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
+    if type(value)==types.StringType or type(value)==types.UnicodeType:
+        return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
+    else:
+        return str(value).strip()
 
 class plm_temporary(osv.osv_memory):
     _inherit = "plm.temporary"
