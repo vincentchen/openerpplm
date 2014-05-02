@@ -49,7 +49,6 @@ class plm_component(osv.osv):
                  'type': 'product',
                  'supply_method': 'produce',
                  'procure_method':'make_to_order',
-                 'categ_id': 1,
                  'standard_price': 0,
                  'volume':0,
                  'weight_net':0,
@@ -57,8 +56,6 @@ class plm_component(osv.osv):
                  'sale_ok':0,
                  'purchase_ok':0,
                  'state':'draft',
-                 'uom_id':1,
-                 'uom_po_id':1,
                  'mes_type':'fixed',
                  'cost_method':'standard',
     }
