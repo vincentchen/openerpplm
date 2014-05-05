@@ -78,6 +78,14 @@ class plm_component(osv.osv):
         result.extend(bufferdata)
         return list(set(result))
 
+    def RegMessage(self, cr, uid, request, default=None, context=None):
+        """
+            Registers a message for requested component
+        """
+        oid, message = request
+        self.wf_message_post(cr, uid, [oid], body=_(message))
+        return False
+
     def getLastTime(self, cr, uid, oid, default=None, context=None):
         return self.getUpdTime(self.browse(cr, uid, oid, context=context))
 
@@ -159,21 +167,24 @@ class plm_component(osv.osv):
         """
         newID=None
         newIndex=0
-        for oldObject in self.browse(cr, uid, ids, context=context):
-            newIndex=int(oldObject.engineering_revision)+1
-            defaults={}
-            defaults['engineering_writable']=False
-            defaults['state']='undermodify'
-            self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
-            # store updated infos in "revision" object
-            defaults['name']=oldObject.name                 # copy function needs an explicit name value
-            defaults['engineering_revision']=newIndex
-            defaults['engineering_writable']=True
-            defaults['state']='draft'
-            defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
-            newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
-            self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
-            # create a new "old revision" object
+        for tmpObject in self.browse(cr, uid, ids, context=context):
+            latestIDs=self.GetLatestIds(cr, uid,[(tmpObject.engineering_code,tmpObject.engineering_revision,False)], context=context)
+            for oldObject in self.browse(cr, uid, latestIDs, context=context):
+                newIndex=int(oldObject.engineering_revision)+1
+                defaults={}
+                defaults['engineering_writable']=False
+                defaults['state']='undermodify'
+                self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
+                # store updated infos in "revision" object
+                defaults['name']=oldObject.name                 # copy function needs an explicit name value
+                defaults['engineering_revision']=newIndex
+                defaults['engineering_writable']=True
+                defaults['state']='draft'
+                defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
+                newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
+                self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
+                # create a new "old revision" object
+                break
             break
         return (newID, newIndex) 
 
@@ -204,7 +215,7 @@ class plm_component(osv.osv):
                     if self._iswritable(cr,uid,objPart):
                         del(part['lastupdate'])
                         if not self.write(cr,uid,[existingID], part , context=context, check=True):
-                            raise osv.except_osv(_('Update Part Error'), _("Part %s cannot be updated" %(str(part['engineering_code']))))
+                            raise osv.except_osv(_('Update Part Error'), _("Part %r cannot be updated" %(part['engineering_code'])))
                         hasSaved=True
                 part['name']=objPart.name
             part['componentID']=existingID
@@ -270,7 +281,7 @@ class plm_component(osv.osv):
     def _summarizeBom(self, cr, uid, datarows):
         dic={}
         for datarow in datarows:
-            key=str(datarow.product_id.name)
+            key=datarow.product_id.name
             if key in dic:
                 dic[key].product_qty=float(dic[key].product_qty)+float(datarow.product_qty)
             else:
@@ -349,13 +360,13 @@ class plm_component(osv.osv):
     def _iswritable(self, cr, user, oid):
         checkState=('draft')
         if not oid.engineering_writable:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") not writable.")
+            logging.warning("_iswritable : Part (%r - %d) is not writable." %(oid.engineering_code,oid.engineering_revision))
             return False
         if not oid.state in checkState:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") in status ; "+str(oid.state)+".")
+            logging.warning("_iswritable : Part (%r - %d) is in status %r." %(oid.engineering_code,oid.engineering_revision,oid.state))
             return False
         if oid.engineering_code == False:
-            logging.warning("_iswritable : Part ("+str(oid.name)+"-"+str(oid.engineering_revision)+") without Engineering P/N.")
+            logging.warning("_iswritable : Part (%r - %d) is without Engineering P/N." %(oid.name,oid.engineering_revision))
             return False
         return True  
 
@@ -467,17 +478,17 @@ class plm_component(osv.osv):
         else:
             vals['engineering_code'] = vals['name']
         if ('name' in vals) and ('engineering_revision' in vals):
-            if vals['engineering_revision'] > 0:
-                vals['name']=vals['name'].replace(' (copy)','')
-        if len(existingIDs)>0:
-            return existingIDs[len(existingIDs)-1]           #TODO : Manage search for highest revisonid
-        else:
-            try:
-                return super(plm_component,self).create(cr, uid, vals, context=context)
-            except:
-                raise Exception(_("It has tried to create %s , %s"%(str(vals['name']),str(vals))))
-                return False
-         
+            existObjs=self.browse(cr,uid,existingIDs,context=context)
+            if existObjs:
+                existObj=existObjs[0]
+                if vals['engineering_revision'] > existObj.engineering_revision:
+                    vals['name']=existObj.name
+        try:
+            return super(plm_component,self).create(cr, uid, vals, context=context)
+        except:
+            raise Exception(_("It has tried to create %r , %r"%(vals['name'],vals)))
+            return False
+
     def write(self, cr, uid, ids, vals, context=None, check=True):
 #        checkState=('confirmed','released','undermodify','obsoleted')
 #        if check:
@@ -526,7 +537,7 @@ class plm_component(osv.osv):
                 if oldObject.state in checkState:
                     self.wf_message_post(cr, uid, [oldObject.id], body=_('Removed : Latest Revision.'))
                     if not self.write(cr, uid, [oldObject.id], values, context, check=False):
-                        logging.warning("unlink : Unable to update state to old component ("+str(oldObject.engineering_code)+"-"+str(oldObject.engineering_revision)+").")
+                        logging.warning("unlink : Unable to update state to old component (%r - %d)." %(oldObject.engineering_code,oldObject.engineering_revision))
                         return False
         return super(plm_component,self).unlink(cr, uid, ids, context=context)
 

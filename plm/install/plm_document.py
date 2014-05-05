@@ -258,8 +258,8 @@ class plm_document(osv.osv):
         defaults['state']='draft'
         defaults['writable']=True
         newID=super(plm_document,self).copy(cr,uid,oid,defaults,context=context)
-        if (objId):
-            self.wf_message_post(cr, uid, [oid], body=_('Copied starting from : %s.' %previous_name))
+        if (newID):
+            self.wf_message_post(cr, uid, [newID], body=_('Copied starting from : %s.' %previous_name))
         if docRelIds:
             # create all the document relation
             brwEnts=documentRelation.browse(cr,uid,docRelIds,context=context)
@@ -328,15 +328,18 @@ class plm_document(osv.osv):
             create a new revision of the document
         """
         newID=None
-        for oldObject in self.browse(cr,uid,ids,context=context):
-            self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context,check=False)
-            defaults={}
-            defaults['name']=oldObject.name
-            defaults['revisionid']=int(oldObject.revisionid)+1
-            defaults['writable']=True
-            defaults['state']='draft'
-            newID=super(plm_document,self).copy(cr,uid,oldObject.id,defaults,context=context)
-            self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
+        for tmpObject in self.browse(cr, uid, ids, context=context):
+            latestIDs=self.GetLatestIds(cr, uid,[(tmpObject.name,tmpObject.revisionid,False)], context=context)
+            for oldObject in self.browse(cr, uid, latestIDs, context=context):
+                self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context,check=False)
+                defaults={}
+                defaults['name']=oldObject.name
+                defaults['revisionid']=int(oldObject.revisionid)+1
+                defaults['writable']=True
+                defaults['state']='draft'
+                newID=super(plm_document,self).copy(cr,uid,oldObject.id,defaults,context=context)
+                self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
+                break
             break
         return (newID, defaults['revisionid']) 
     
@@ -416,6 +419,14 @@ class plm_document(osv.osv):
             document['hasUpdated']=hasUpdated
             retValues.append(document)
         return retValues 
+
+    def RegMessage(self, cr, uid, request, default=None, context=None):
+        """
+            Registers a message for requested document
+        """
+        oid, message = request
+        self.wf_message_post(cr, uid, [oid], body=_(message))
+        return False
 
     def UpdateDocuments(self, cr, uid, documents, default=None, context=None):
         """
@@ -901,7 +912,9 @@ class plm_checkout(osv.osv):
             raise osv.except_osv(_('Check-Out Error'), _("Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+")."))
             return False
         self._adjustRelations(cr, uid, [docID.id], uid)
-        return super(plm_checkout,self).create(cr, uid, vals, context=context)   
+        newID = super(plm_checkout,self).create(cr, uid, vals, context=context)   
+        documentType.wf_message_post(cr, uid, [docID.id], body=_('Checked-Out'))
+        return newID
          
     def unlink(self, cr, uid, ids, context=None):
         if context!=None and context!={}:
@@ -921,7 +934,9 @@ class plm_checkout(osv.osv):
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag."))
                 return False
         self._adjustRelations(cr, uid, docids, False)
-        return super(plm_checkout,self).unlink(cr, uid, ids, context=context)
+        dummy = super(plm_checkout,self).unlink(cr, uid, ids, context=context)
+        documentType.wf_message_post(cr, uid, [checkObj.documentid.id], body=_('Checked-In'))
+        return dummy
 
 plm_checkout()
 
@@ -999,6 +1014,7 @@ class plm_backupdoc(osv.osv):
                 'existingfile':fields.char('Physical Document Location',size=1024), 
                 'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
                 'revisionid': fields.related('documentid','revisionid',type="integer",relation="plm.document",string="Revision",store=False),
+                'state': fields.related('documentid','state',type="char",relation="plm.document",string="Status",store=False),
                 'printout': fields.binary('Printout Content'),
                 'preview': fields.binary('Preview Content'),
     }
