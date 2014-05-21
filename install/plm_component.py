@@ -111,6 +111,8 @@ class plm_component(osv.osv):
             exitValues['name']=newEnt.name
             exitValues['engineering_code']=newEnt.engineering_code
             exitValues['engineering_revision']=newEnt.engineering_revision
+            exitValues['engineering_writable']=True
+            exitValues['state']='draft'
         return exitValues
 
     def newVersion(self,cr,uid,ids,context=None):
