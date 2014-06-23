@@ -106,12 +106,8 @@ class plm_component_document_rel(osv.osv):
         """
         def cleanStructure(relations):
             res={}
-            latest=None
             for relation in relations:
                 res['document_id'],res['component_id']=relation
-                if latest==res['document_id']:
-                    continue
-                latest=res['document_id']
                 ids=self.search(cr,uid,[('document_id','=',res['document_id']),('component_id','=',res['component_id'])])
                 self.unlink(cr,uid,ids)
 
