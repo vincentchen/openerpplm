@@ -449,11 +449,19 @@ class plm_component(osv.osv):
                 vals['engineering_code'] = vals['name']
         else:
             vals['engineering_code'] = vals['name']
-        if ('name' in vals) and ('engineering_revision' in vals):
-            if vals['engineering_revision'] > 0:
-                vals['name']=vals['name'].replace(' (copy)','')
-        if len(existingIDs)>0:
-            return existingIDs[len(existingIDs)-1]           #TODO : Manage search for highest revisonid
+
+        if ('name' in vals) and existingIDs:
+            existingID=existingIDs[len(existingIDs)-1]
+            if ('engineering_revision' in vals):
+                existObj=self.browse(cr,uid,existingID,context=context)
+                if existObj:
+                    if vals['engineering_revision'] > existObj.engineering_revision:
+                        vals['name']=existObj.name
+                    else:
+                        return existingID
+            else:
+                return existingID
+            
         else:
             try:
                 return super(plm_component,self).create(cr, uid, vals, context=context)
