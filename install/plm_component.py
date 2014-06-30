@@ -468,7 +468,7 @@ class plm_component(osv.osv):
             try:
                 return super(plm_component,self).create(cr, uid, vals, context=context)
             except:
-            raise Exception(_("It has tried to create %r , %r"%(vals['name'],vals)))
+                raise osv.except_osv(_('Create Entity Error'), _("It has tried to create %r , %r"%(vals['name'],vals)))
                 return False
          
     def write(self, cr, uid, ids, vals, context=None, check=True):
