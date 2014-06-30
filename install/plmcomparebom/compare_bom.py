@@ -169,7 +169,7 @@ class plm_compare_bom(osv.osv_memory):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'res_model': 'plm.compare.bom',
-            'res_id': ids,
+            'res_id': ids[0],
             'views': [(id3,'form')],
             'type': 'ir.actions.act_window',
          }
@@ -182,7 +182,7 @@ class plm_compare_bom(osv.osv_memory):
         changesA=([],[],[],{},{})
         changesB=([],[],[],{},{})
  
-        fields=['name']                   # Evaluate differences
+        fields=['name','engineering_revision']                   # Evaluate differences
         boolfields=['name','itemnum','product_qty'] # Evaluate changes
 
         differs=self._differs_Bom(cr, uid, oid1, oid2, fields)

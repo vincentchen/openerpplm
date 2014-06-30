@@ -270,7 +270,7 @@ class plm_component(osv.osv):
                     for bom_line in list(set(oidBom.bom_lines) ^ set(ok_rows)):
                         bomType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
-                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.name.replace(' Copy',''),'product_qty':bom_line.product_qty,},context=None)
+                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
                         self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         else:
             for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_lines:
@@ -358,13 +358,13 @@ class plm_component(osv.osv):
     def _iswritable(self, cr, user, oid):
         checkState=('draft')
         if not oid.engineering_writable:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") not writable.")
+            logging.warning("_iswritable : Part (%r - %d) is not writable." %(oid.engineering_code,oid.engineering_revision))
             return False
         if not oid.state in checkState:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") in status ; "+str(oid.state)+".")
+            logging.warning("_iswritable : Part (%r - %d) is in status %r." %(oid.engineering_code,oid.engineering_revision,oid.state))
             return False
         if oid.engineering_code == False:
-            logging.warning("_iswritable : Part ("+str(oid.name)+"-"+str(oid.engineering_revision)+") without Engineering P/N.")
+            logging.warning("_iswritable : Part (%r - %d) is without Engineering P/N." %(oid.name,oid.engineering_revision))
             return False
         return True  
 
@@ -443,6 +443,8 @@ class plm_component(osv.osv):
 
 #   Overridden methods for this entity
     def create(self, cr, uid, vals, context=None):
+        if not vals:
+            return False
         existingIDs=self.search(cr, uid, [('name','=',vals['name'])], order = 'engineering_revision', context=context)
         if 'engineering_code' in vals:
             if vals['engineering_code'] == False:
@@ -466,7 +468,7 @@ class plm_component(osv.osv):
             try:
                 return super(plm_component,self).create(cr, uid, vals, context=context)
             except:
-                raise Exception(_("It has tried to create %s , %s"%(str(vals['name']),str(vals))))
+            raise Exception(_("It has tried to create %r , %r"%(vals['name'],vals)))
                 return False
          
     def write(self, cr, uid, ids, vals, context=None, check=True):
@@ -513,7 +515,7 @@ class plm_component(osv.osv):
                 oldObject=self.browse(cr, uid, existingID[0], context=context)
                 if oldObject.state in checkState:
                     if not self.write(cr, uid, [oldObject.id], values, context, check=False):
-                        logging.warning("unlink : Unable to update state to old component ("+str(oldObject.engineering_code)+"-"+str(oldObject.engineering_revision)+").")
+                        logging.warning("unlink : Unable to update state to old component (%r - %d)." %(oldObject.engineering_code,oldObject.engineering_revision))
                         return False
         return super(plm_component,self).unlink(cr, uid, ids, context=context)
 

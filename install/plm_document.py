@@ -150,8 +150,8 @@ class plm_document(osv.osv):
                                          }, context=context)
 
             return True
-        except Exception,e :
-            raise except_orm(_('Error in _data_set'), str(e))
+        except Exception,ex :
+            raise except_orm(_('Error in _data_set'), str(ex))
 
     def _explodedocs(self, cr, uid, oid, kind, listed_documents=[], recursion=True):
         result=[]
@@ -219,6 +219,8 @@ class plm_document(osv.osv):
                 collectable = isNewer and not(isCheckedOutToMe)
             else:
                 collectable = True
+            if (objDoc.file_size<1) and (objDoc.datas):
+                objDoc.file_size=len(objDoc.datas)
             result.append((objDoc.id, objDoc.datas_fname, objDoc.file_size, collectable, isCheckedOutToMe, timeDoc))
         return list(set(result))
             
@@ -548,13 +550,13 @@ class plm_document(osv.osv):
 
 
     _columns = {
-                'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used for Spare Part Manual"),
+                'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
                 'writable': fields.boolean('Writable'),
                 'datas': fields.function(_data_get,method=True,fnct_inv=_data_set,string='File Content',type="binary"),
-                'printout': fields.binary('Printout Content'),
-                'preview': fields.binary('Preview Content'),
-                'state':fields.selection(USED_STATES,'Status',readonly="True",required=True),
+                'printout': fields.binary('Printout Content', help="Print PDF content."),
+                'preview': fields.binary('Preview Content', help="Static preview."),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
     }    
 
     _defaults = {
@@ -870,8 +872,8 @@ class plm_document_relation(osv.osv):
                 else:
                     logging.error("saveChild : Unable to create a relation between documents. One of documents involved doesn't exist. Arguments(" + str(args) +") ")
                     raise Exception("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist.")
-            except:
-                logging.error("saveChild : Unable to create a relation. Arguments(" + str(args) +") ")
+            except Exception,ex:
+                logging.error("saveChild : Unable to create a relation. Arguments (%s) Exception (%s)" %(str(args), str(ex)))
                 raise Exception("saveChild: Unable to create a relation.")
             
         savedItems=[]

@@ -31,9 +31,10 @@ import logging
 USED_STATES=[('draft','Draft'),('confirmed','Confirmed'),('transmitted','Transmitted'),('released','Released'),('undermodify','UnderModify'),('obsoleted','Obsoleted'),('reactivated','Reactivated')]
 
 class plm_component(osv.osv):
+    _name = 'product.template'
     _inherit = 'product.template'
     _columns = {
-                'state':fields.selection(USED_STATES,'Status',readonly="True"),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
                 'engineering_code': fields.char('Part Number',size=64),
                 'engineering_revision': fields.integer('Revision', required=True),
                 'engineering_writable': fields.boolean('Writable'),
@@ -139,6 +140,7 @@ plm_component_document_rel()
 
          
 class plm_relation(osv.osv):
+    _name = 'mrp.bom'
     _inherit = 'mrp.bom'
     _columns = {
                 'create_date': fields.datetime('Date Created', readonly=True),
@@ -438,7 +440,7 @@ class plm_relation(osv.osv):
         """
             Evaluate net weight for assembly, based on net weight of each part  
         """
-        weight=0
+        weight=0.0
         values={}
         ancestor=None
         for obj in bomObjects:
@@ -454,6 +456,9 @@ class plm_relation(osv.osv):
         return weight
 
 #   Overridden methods for this entity
+    def write(self, cr, uid, ids, vals, check=True, context=None):
+        return super(plm_relation,self).write(cr, uid, ids, vals, context=context)  
+
     def copy(self,cr,uid,oid,defaults={},context=None):
         """
             Return new object copied (removing SourceID)
@@ -464,8 +469,8 @@ class plm_relation(osv.osv):
             newOid=self.browse(cr,uid,newId,context=context)
             for bom_line in newOid.bom_lines:
                 lateRevIdC=compType.GetLatestIds(cr,uid,[(bom_line.product_id.engineering_code,False,False)],context=context) # Get Latest revision of each Part
-                self.write(cr,uid,[bom_line.id],{'source_id':False,'name':bom_line.name.replace(' Copy',''),'product_id':lateRevIdC[0]},context=None)
-            self.write(cr,uid,[newId],{'source_id':False,},context=None)
+                self.write(cr,uid,[bom_line.id],{'source_id':False,'name':bom_line.product_id.name,'product_id':lateRevIdC[0]},check=False,context=None)
+            self.write(cr,uid,[newId],{'source_id':False,},check=False,context=None)
         return newId
 #   Overridden methods for this entity
 
