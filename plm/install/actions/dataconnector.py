@@ -103,8 +103,7 @@ class plm_component(osv.osv):
                 'exitorder' : ['name','engineering_revision','description',],
                 'exitTrans' : ['description',],
                 'exitLang'  : ['english','french',],
-                'exitnumber': ['engineering_revision',]
-
+                'exitnumber': ['engineering_revision',],
                 }
 
     @property
@@ -122,12 +121,12 @@ class plm_component(osv.osv):
                     'itemnum'               : 'relpos',
                     'product_qty'           : 'relqty',
                     },
-                 'types':
+                'types':
                     {
                     'itemnum'               : 'int',
                     'product_qty'           : 'float',
                     },
-                'exitnumber': ['engineering_revision',]
+                'exitnumber': ['engineering_revision',],
                }
 
     @property
