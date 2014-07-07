@@ -32,13 +32,14 @@ import logging
 ###
 # map_name : ['LangName','label Out', 'OE Lang']        '
 _LOCALLANGS = {                 
-    'french': ['French_France','fr_FR',],
+    'french':  ['French_France','fr_FR',],
     'italian': ['Italian_Italy','it_IT',],
-    'polish': ['Polish_Poland','pl_PL',],
+    'polish':  ['Polish_Poland','pl_PL',],
+    'svedish': ['Svedish_Svenska','sw_SE',],
     'russian': ['Russian_Russia','ru_RU',],
     'english': ['English USA','en_US',],
     'spanish': ['Spanish_Spain','es_ES',],
-    'german': ['German_Germany','de_DE',],
+    'german':  ['German_Germany','de_DE',],
 }
 ###
 
