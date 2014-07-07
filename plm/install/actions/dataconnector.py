@@ -35,6 +35,7 @@ _LOCALLANGS = {
     'french':  ['French_France','fr_FR',],
     'italian': ['Italian_Italy','it_IT',],
     'polish':  ['Polish_Poland','pl_PL',],
+    'svedish': ['Svedish_Svenska','sw_SE',],
     'russian': ['Russian_Russia','ru_RU',],
     'english': ['English USA','en_US',],
     'spanish': ['Spanish_Spain','es_ES',],
@@ -93,6 +94,12 @@ class plm_component(osv.osv):
                     'engineering_revision'  : 'revprog',
                     'description'           : 'revdes',
                     },
+                'types':
+                    {
+                    'name'                  : 'char',
+                    'engineering_revision'  : 'int',
+                    'description'           : 'char',
+                    },
                 'exitorder' : ['name','engineering_revision','description',],
                 'exitTrans' : ['description',],
                 'exitLang'  : ['engilsh','french',],
@@ -114,8 +121,14 @@ class plm_component(osv.osv):
                     {
                     'itemnum'               : 'relpos',
                     'product_qty'           : 'relqty',
-                    }
-                }
+                    },
+                 'types':
+                    {
+                    'itemnum'               : 'int',
+                    'product_qty'           : 'float',
+                    },
+                'exitnumber': ['engineering_revision',]
+               }
 
     @property
     def get_data_transfer(self):
@@ -258,7 +271,6 @@ class plm_component(osv.osv):
         transfer=self.get_data_transfer
         part_data_transfer=self.get_part_data_transfer
         datamap=part_data_transfer['fields']
-        datatyp=part_data_transfer['types']
         if 'exitorder' in part_data_transfer:
             fieldsListed=part_data_transfer['exitorder']
         else:
@@ -271,9 +283,10 @@ class plm_component(osv.osv):
             if 'db' in transfer:
                 import dbconnector
                 dataTargetTable=part_data_transfer['table']
+                datatyp=part_data_transfer['types']
                 connection=dbconnector.get_connection(transfer['db'])
             
-                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap,datatyp)
+                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap, datatyp)
     
                 if checked:
                     bomTargetTable=bom_data_transfer['table']
