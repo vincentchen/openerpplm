@@ -72,10 +72,16 @@ class plm_component(osv.osv):
                     'engineering_revision'  : 'revprog',
                     'description'           : 'revdes',
                     },
+                'types':
+                    {
+                    'name'                  : 'char',
+                    'engineering_revision'  : 'int',
+                    'description'           : 'char',
+                    },
                 'exitorder' : ['name','engineering_revision','description',],
                 'exitTrans' : ['description',],
-                'exitLang'  : ['engilsh','french',],
-                'exitnumber': ['engineering_revision',]
+                'exitLang'  : ['english','french',],
+                'exitnumber': ['engineering_revision',],
                 }
 
     @property
@@ -92,7 +98,13 @@ class plm_component(osv.osv):
                     {
                     'itemnum'               : 'relpos',
                     'product_qty'           : 'relqty',
-                    }
+                    },
+                 'types':
+                    {
+                    'itemnum'               : 'int',
+                    'product_qty'           : 'float',
+                    },
+                 'exitnumber': ['engineering_revision',],
                 }
 
     @property
@@ -248,21 +260,23 @@ class plm_component(osv.osv):
             if 'db' in transfer:
                 import dbconnector
                 dataTargetTable=part_data_transfer['table']
-                connection=self.get_connection(transfer['db'])
-            
-                checked=self.saveParts(cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap)
+                datatyp=part_data_transfer['types']
+                connection=dbconnector.get_connection(transfer['db'])
+
+                checked=dbconnector.saveParts(self,cr, uid, connection, tmpData.get('datas'), dataTargetTable, datamap, datatyp)
     
                 if checked:
                     bomTargetTable=bom_data_transfer['table']
                     bomdatamap=bom_data_transfer['fields']
+                    bomdatatyp=bom_data_transfer['types']
                     parentName=bom_data_transfer['PName']
                     childName=bom_data_transfer['CName']
                     kindBomname=bom_data_transfer['kind']
-                    operation=self.saveBoms(cr, uid, connection, checked, allIDs, dataTargetTable, datamap, kindBomname, bomTargetTable, parentName, childName, bomdatamap)  
+                    operation=dbconnector.saveBoms(self, cr, uid, connection, checked, allIDs, dataTargetTable, datamap, datatyp, kindBomname, bomTargetTable, parentName, childName, bomdatamap, bomdatatyp)  
                      
                 if connection:
                     connection.quit()
-                    
+
             if 'file' in transfer:
                 bomfieldsListed=bom_data_transfer['fields'].keys()
                 kindBomname=bom_data_transfer['kind']
