@@ -102,7 +102,7 @@ class plm_component(osv.osv):
                     },
                 'exitorder' : ['name','engineering_revision','description',],
                 'exitTrans' : ['description',],
-                'exitLang'  : ['engilsh','french',],
+                'exitLang'  : ['english','french',],
                 'exitnumber': ['engineering_revision',]
 
                 }
