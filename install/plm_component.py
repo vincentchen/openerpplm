@@ -464,12 +464,11 @@ class plm_component(osv.osv):
             else:
                 return existingID
             
-        else:
-            try:
-                return super(plm_component,self).create(cr, uid, vals, context=context)
-            except:
-                raise osv.except_osv(_('Create Entity Error'), _("It has tried to create %r , %r"%(vals['name'],vals)))
-                return False
+        try:
+            return super(plm_component,self).create(cr, uid, vals, context=context)
+        except:
+            raise osv.except_osv(_('Create Entity Error'), _("It has tried to create %r , %r"%(vals['name'],vals)))
+            return False
          
     def write(self, cr, uid, ids, vals, context=None, check=True):
 #         checkState=('confirmed','released','undermodify','obsoleted')
