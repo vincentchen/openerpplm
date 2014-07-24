@@ -149,6 +149,25 @@ body_file=os.path.join(customModulePath,"spare_parts_body.rml")
 if not os.path.exists(body_file):
     body_file=os.path.join(openerpModulePath,"spare_parts_body.rml")
 
+def isPdf(fileName):
+    if (os.path.splitext(fileName)[1].lower()=='.pdf'):
+        return True
+    return False
+
+def getDocumentStream(docRepository,objDoc):
+    """ 
+        Gets the stream of a file
+    """ 
+    content=False
+    try:
+        if (not objDoc.store_fname) and (objDoc.db_datas):
+            content = base64.decodestring(objDoc.db_datas)
+        else:
+            content = file(os.path.join(docRepository, objDoc.store_fname), 'rb').read()
+    except Exception, ex:
+        print "getFileStream : Exception (%s)reading  stream on file : %s." %(str(ex),objDoc.datas_fname)
+    return content
+
 
 class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -258,7 +277,7 @@ class component_spare_parts_report(report_int):
                     packedObjs.append(bom_line.product_id)
                     packedIds.append(bom_line.id)
                 if len(packedIds)>0:
-                    for pageStream in self.getPdfComponentLayout(component):
+                    for pageStream in self.getPdfComponentLayout(cr, component):
                         output.addPage(pageStream)
                     stream,typerep=BODY.create(cr, uid, [BomObject.id], data={'report_type': u'pdf'},context=context) 
                     pageStream=StringIO.StringIO()
@@ -269,12 +288,17 @@ class component_spare_parts_report(report_int):
                             if not packedObj in self.processedObjs:
                                 self.getSparePartsPdfFile(cr,uid,context,packedObj,output,componentTemplate,bomTemplate,recursion)   
  
-    def getPdfComponentLayout(self,component):
+    def getPdfComponentLayout(self, cr, component):
         ret=[]
+        docRepository=self.pool.get('plm.document')._get_filestore(cr)
         for document in component.linkeddocuments:
-            if document.usedforspare and document.printout:
-                #TODO: To Evaluate document type 
-                ret.append( StringIO.StringIO(base64.decodestring(document.printout)))
+            if document.usedforspare:
+                if document.printout:
+                    ret.append(StringIO.StringIO(base64.decodestring(document.printout)))
+                elif isPdf(document.datas_fname):
+                    value=getDocumentStream(docRepository,document)
+                    if value:
+                        ret.append(StringIO.StringIO(value))
         return ret 
     
     def getFirstPage(self,cr, uid, ids,context):
