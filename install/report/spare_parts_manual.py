@@ -177,7 +177,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
                     res['name']=l.name
                     res['item']=l.itemnum
                     res['pname']=l.product_id.name
-                    res['pdesc']=l.product_id.description
+                    res['pdesc']=_(l.product_id.description.strip())
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
