@@ -116,6 +116,41 @@ def _customPath():
     return os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),'custom'),'report')
 customModulePath=_customPath()
 
+def _thisModule():
+    return os.path.splitext(os.path.basename(__file__))[0]
+thisModule=_thisModule()
+
+def _translate(value):
+    return _(value)
+
+###############################################################################################################à
+
+def _createtemplate():
+    """
+        Automatic XML menu creation
+    """
+    filepath=os.path.dirname(__file__)
+    fileName=thisModule+'.xml'
+    fileOut = open(os.path.join(filepath,fileName), 'w')
+    
+    listout=[('report_spare_parts_header','Spare Part Head Page','spare.parts.header','spare_parts_header')]
+    listout.append(('report_spare_parts_body','Spare Part Body','spare.parts.body','spare_parts_body'))
+
+    fileOut.write(u'<?xml version="1.0"?>\n<openerp>\n    <data>\n\n')
+    fileOut.write(u'<!--\n       IMPORTANT : DO NOT CHANGE THIS FILE, IT WILL BE REGENERERATED AUTOMATICALLY\n-->\n\n')
+  
+    for label,description,name,fname in listout:
+        fileOut.write(u'        <report auto="True"\n                header="True"\n                model="product.template"\n')
+        fileOut.write(u'                id="%s"\n                string="%s"\n                name="%s"\n' %(label,description,name))
+        fileOut.write(u'                rml="%s/install/report/%s.rml"\n' %(openerpModule, fname))
+        fileOut.write(u'                report_type="pdf"\n                file=""\n                 />\n')
+    
+    fileOut.write(u'<!--\n       IMPORTANT : DO NOT CHANGE THIS FILE, IT WILL BE REGENERERATED AUTOMATICALLY\n-->\n\n')
+    fileOut.write(u'    </data>\n</openerp>\n')
+    fileOut.close()
+_createtemplate()
+
+###############################################################################################################à
 
 def BomSort(object):
     bomobject=[]
@@ -157,6 +192,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
             'time': time,
             'get_children':self.get_children,
             'bom_type':self.bom_type,
+            'trans':_translate,
         })
 
     def get_children(self, object, level=0):
@@ -201,6 +237,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
 HEADER=report_sxw.report_sxw("report.spare.parts.header", 
                             "product.product", 
                             rml=header_file,
+                            parser=bom_structure_one_sum_custom_report,
                             header='internal')
    
 BODY=report_sxw.report_sxw("report.spare.parts.body", 
@@ -246,10 +283,10 @@ class component_spare_parts_report(report_int):
         if component in self.processedObjs:
             return
         bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','spbom'),('bom_id','=',False)])
-#        if len(bomIds)<1:
-#            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','normal'),('bom_id','=',False)])
-#        if len(bomIds)<1:
-#            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','ebom'),('bom_id','=',False)])
+        if len(bomIds)<1:
+            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','normal'),('bom_id','=',False)])
+        if len(bomIds)<1:
+            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','ebom'),('bom_id','=',False)])
         if len(bomIds)>0:
             BomObject=bomTemplate.browse(cr, uid, bomIds[0], context=context)
             if BomObject:
@@ -260,7 +297,8 @@ class component_spare_parts_report(report_int):
                 if len(packedIds)>0:
                     for pageStream in self.getPdfComponentLayout(component):
                         output.addPage(pageStream)
-                    stream,typerep=BODY.create(cr, uid, [BomObject.id], data={'report_type': u'pdf'},context=context) 
+                    data={'model': 'mrp.bom', '_domain': [['bom_id', '=', False], ['product_id', '=', component.id]], 'id': BomObject.id,'report_type': u'pdf'}
+                    stream,typerep=BODY.create(cr, uid, [BomObject.id], data,context=context) 
                     pageStream=StringIO.StringIO()
                     pageStream.write(stream)
                     output.addPage(pageStream)
@@ -279,7 +317,8 @@ class component_spare_parts_report(report_int):
     
     def getFirstPage(self,cr, uid, ids,context):
         strbuffer = StringIO.StringIO()
-        reportStream,reportType=HEADER.create(cr, uid, ids, data={'report_type': u'pdf'},context=context)
+        data={'model': 'product.product', 'id': ids[0],'report_type': u'pdf'}
+        reportStream,reportType=HEADER.create(cr, uid, ids, data,context=context)
         strbuffer.write(reportStream)
         return strbuffer
           

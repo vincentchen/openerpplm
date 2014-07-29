@@ -142,7 +142,7 @@
             <para style="P3">[[ (o.product_id.engineering_revision) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9">[[ o.product_id.description ]]</para>
+            <para style="terp_default_Bold_9">[[ trans(o.product_id.description) ]]</para>
           </td>
           <td>
             <para style="P7">
@@ -198,3 +198,4 @@
     </section>
   </story>
 </document>
+
