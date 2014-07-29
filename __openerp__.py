@@ -60,6 +60,7 @@
         'install/plmcomparebom/compare_bom_view.xml',
         'install/plmcheckedout/checkout_view.xml',
         'install/report/bom_structure.xml',
+        'install/report/spare_parts_manual.xml',
         'install/report/component_report.xml',
         'install/report/document_report.xml',
         'install/report/checkout_report.xml',
