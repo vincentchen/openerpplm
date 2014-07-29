@@ -283,10 +283,10 @@ class component_spare_parts_report(report_int):
         if component in self.processedObjs:
             return
         bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','spbom'),('bom_id','=',False)])
-        if len(bomIds)<1:
-            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','normal'),('bom_id','=',False)])
-        if len(bomIds)<1:
-            bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','ebom'),('bom_id','=',False)])
+#         if len(bomIds)<1:
+#             bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','normal'),('bom_id','=',False)])
+#         if len(bomIds)<1:
+#             bomIds=bomTemplate.search(cr,uid,[('product_id','=',component.id),('type','=','ebom'),('bom_id','=',False)])
         if len(bomIds)>0:
             BomObject=bomTemplate.browse(cr, uid, bomIds[0], context=context)
             if BomObject:
