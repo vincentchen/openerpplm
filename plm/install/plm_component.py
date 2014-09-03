@@ -469,6 +469,15 @@ class plm_component(osv.osv):
         if (objId):
             self.wf_message_post(cr, uid, ids, body=_('Status moved to: Released.'))
         return objId
+    
+    def createOrUpdate(self, cr, uid, vals, context=None):
+        idsVals=[[vals.get('name'),None,None]]
+        searchId = self.GetLatestIds(cr, uid, idsVals, context)
+        if len(searchId)>0:
+            self.write(cr, uid, searchId, vals, context)
+            return searchId[0]
+        else:
+            return self.create(cr, uid, vals, context)
 
 #   Overridden methods for this entity
     def create(self, cr, uid, vals, context=None):
