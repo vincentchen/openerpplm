@@ -313,6 +313,8 @@ class plm_component(osv.osv):
             for bomid in component.bom_ids:
                 if not (str(bomid.type).lower()==kindName):
                     continue
+                if bomid.bom_id.id:
+                    continue
                 return bomid.bom_lines
             return []
         
