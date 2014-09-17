@@ -112,7 +112,7 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
                 res['item']=l.itemnum
                 res['ancestor']=l.bom_id.product_id
                 res['pname']=l.product_id.name
-                res['pdesc']=_(l.product_id.description)
+                res['pdesc']=_(l.product_id.description.strip())
                 res['pcode']=l.product_id.default_code
                 res['previ']=l.product_id.engineering_revision
                 res['pqty']=l.product_qty
@@ -156,7 +156,7 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
                 res['name']=l.name
                 res['item']=l.itemnum
                 res['pname']=l.product_id.name
-                res['pdesc']=_(l.product_id.description)
+                res['pdesc']=_(l.product_id.description.strip())
                 res['pcode']=l.product_id.default_code
                 res['previ']=l.product_id.engineering_revision
                 res['pqty']=l.product_qty
@@ -208,7 +208,7 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    res['pdesc']=_(l.product_id.description)
+                    res['pdesc']=_(l.product_id.description.strip())
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
@@ -265,7 +265,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
                     res['name']=l.name
                     res['item']=l.itemnum
                     res['pname']=l.product_id.name
-                    res['pdesc']=_(l.product_id.description)
+                    res['pdesc']=_(l.product_id.description.strip())
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty
@@ -317,7 +317,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    res['pdesc']=_(l.product_id.description)
+                    res['pdesc']=_(l.product_id.description.strip())
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
                     res['pqty']=l.product_qty

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+<!--
+       IMPORTANT : DO NOT CHANGE THIS FILE, IT WILL BE REGENERERATED AUTOMATICALLY
+-->
+
+        <report auto="True"
+                header="True"
+                model="product.template"
+                id="report_spare_parts_header"
+                string="Spare Part Head Page"
+                name="spare.parts.header"
+                rml="OpenPLM/install/report/spare_parts_header.rml"
+                report_type="pdf"
+                file=""
+                 />
+        <report auto="True"
+                header="True"
+                model="product.template"
+                id="report_spare_parts_body"
+                string="Spare Part Body"
+                name="spare.parts.body"
+                rml="OpenPLM/install/report/spare_parts_body.rml"
+                report_type="pdf"
+                file=""
+                 />
+<!--
+       IMPORTANT : DO NOT CHANGE THIS FILE, IT WILL BE REGENERERATED AUTOMATICALLY
+-->
+
+    </data>
+</openerp>

@@ -102,7 +102,7 @@
     <para style="terp_header_Centre">Spare Parts Report</para>
     <para style="terp_default_8">[[repeatIn(objects,'o')]]</para>
     <para style="terp_default_Centre_12">[[ o.name ]]</para>
-    <para style="terp_default_Centre_12">[[ o.description ]]</para>
+    <para style="terp_default_Centre_12">[[ trans(o.description) ]]</para>
   </story>
 </document>
 
