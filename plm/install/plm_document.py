@@ -450,7 +450,6 @@ class plm_document(osv.osv):
         """
             Query to return values based on columns selected.
         """
-        objId=False
         expData=[]
         queryFilter, columns = request        
         if len(columns)<1:
@@ -483,8 +482,8 @@ class plm_document(osv.osv):
             Writing messages to follower, on multiple objects
         """
         if not (body==''):
-            for id in ids:
-                self.message_post(cr, uid, [id], body=_(body))
+            for idd in ids:
+                self.message_post(cr, uid, [idd], body=_(body))
 
     def action_draft(self, cr, uid, ids, *args):
         """
