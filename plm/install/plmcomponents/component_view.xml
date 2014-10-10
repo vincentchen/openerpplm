@@ -91,7 +91,7 @@
                     </group>
                     <separator colspan="4" string="Normalization Area"/>
                     <sheet>
-                        <group colspan="4" col="4" name="NormArea">
+                        <group colspan="4" col="4" name="NMArea">
                              <separator/>
                              <group col="2" colspan="2">
                                  <field name="std_description" on_change="on_change_stddesc(std_description)"/>
@@ -207,7 +207,7 @@
 	                     	</group>
 	                     </group>
         	    		<separator colspan="4" col="1" />
-                	    <group colspan="4" col="2" string="Normalization Area" name="NormArea">
+                	    <group colspan="4" col="2" string="Normalization Area" name="NMArea">
                             <separator string="Standard Description" colspan="4"/>
                             <field colspan="4" name="std_description" nolabel="1" on_change="on_change_stddesc(std_description)"/>
                             <newline/>
