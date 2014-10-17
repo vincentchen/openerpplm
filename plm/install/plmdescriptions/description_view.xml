@@ -16,20 +16,22 @@
                     <separator colspan="4" string="Note to help selection"/>
                     <field name="description" select="1" />
                     <field name="sequence"/>
-               		<group colspan="4" col="4" string="Normalization Area">
+ 	               	<group colspan="4" col="4" string="Technical Features" name="TFeatures">
                     	<newline/>
-                    	<separator colspan="4" string="Technical characteristic label and formatting"/>
+                    	<separator colspan="4" string="Technical feature label and formatting"/>
                     	<field name="umc1"/>
                     	<field name="fmt1"/>
                     	<newline/>
-                    	<separator colspan="4" string="Technical characteristic label and formatting"/>
+                    	<separator colspan="4" string="Technical feature label and formatting"/>
                     	<field name="umc2"/>
                     	<field name="fmt2"/>
                     	<newline/>
-                    	<separator colspan="4" string="Technical characteristic label and formatting"/>
+                    	<separator colspan="4" string="Technical feature label and formatting"/>
                     	<field name="umc3"/>
                     	<field name="fmt3"/>
                     	<newline/>
+                	</group>
+               		<group colspan="4" col="4" string="Normalization Area" name="NMArea">
                     	<separator colspan="4" string="Normalized characteristics formatting"/>
                     	<field name="fmtend"/>
                     	<newline/>
@@ -62,6 +64,28 @@
                     <field name="unitab"/>
                    	<field name="sequence"/>
             </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="view_plm_description_search">
+        <field name="name">plm.description.view</field>
+        <field name="model">plm.description</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+ 			<search string="Description">
+	           	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
+	                   	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
+	                  	help="Created latest 7 Days"/>
+	         	<filter icon="terp-go-month" string="Yesterday" separator="1"
+	                 	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
+	            		help="Created yesterday"/>
+	        	<filter icon="terp-go-month" string="Today" separator="1"
+	                 	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
+	                 	help="Created today"/>
+	           	<separator orientation="vertical"/>
+	        	<field name="name"/>
+	        	<field name="description"/>
+	        </search>
         </field>
     </record>
 
