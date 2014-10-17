@@ -34,6 +34,7 @@ class component_custom_report(report_int):
     """
     def create(self, cr, uid, ids, datas, context=None):
         self.pool = pooler.get_pool(cr.dbname)
+        docRepository=self.pool.get('plm.document')._get_filestore(cr)
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
@@ -43,7 +44,7 @@ class component_custom_report(report_int):
         components=componentType.browse(cr, uid, ids, context=context)
         for component in components:
             documents.extend(component.linkeddocuments)
-        return packDocuments(documents,output)
+        return packDocuments(docRepository,documents,output)
 
 component_custom_report('report.product.product.pdf')
 
@@ -53,6 +54,7 @@ class component_one_custom_report(report_int):
     """
     def create(self, cr, uid, ids, datas, context=None):
         self.pool = pooler.get_pool(cr.dbname)
+        docRepository=self.pool.get('plm.document')._get_filestore(cr)
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
@@ -66,7 +68,7 @@ class component_one_custom_report(report_int):
             children=componentType.browse(cr, uid, idcs, context=context)
             for child in children:
                 documents.extend(child.linkeddocuments)
-        return packDocuments(list(set(documents)),output)
+        return packDocuments(docRepository,list(set(documents)),output)
 
 component_one_custom_report('report.one.product.product.pdf')
 
@@ -76,6 +78,7 @@ class component_all_custom_report(report_int):
     """
     def create(self, cr, uid, ids, datas, context=None):
         self.pool = pooler.get_pool(cr.dbname)
+        docRepository=self.pool.get('plm.document')._get_filestore(cr)
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
@@ -89,6 +92,6 @@ class component_all_custom_report(report_int):
             children=componentType.browse(cr, uid, idcs, context=context)
             for child in children:
                 documents.extend(child.linkeddocuments)
-        return packDocuments(list(set(documents)),output)
+        return packDocuments(docRepository,list(set(documents)),output)
 
 component_all_custom_report('report.all.product.product.pdf')

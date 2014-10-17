@@ -34,7 +34,7 @@ class plm_component(osv.osv):
     _name = 'product.template'
     _inherit = 'product.template'
     _columns = {
-                'state':fields.selection(USED_STATES,'Status',readonly="True"),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
                 'engineering_code': fields.char('Part Number',size=64),
                 'engineering_revision': fields.integer('Revision', required=True),
                 'engineering_writable': fields.boolean('Writable'),
@@ -109,12 +109,8 @@ class plm_component_document_rel(osv.osv):
         """
         def cleanStructure(relations):
             res={}
-            latest=None
             for relation in relations:
                 res['document_id'],res['component_id']=relation
-                if latest==res['document_id']:
-                    continue
-                latest=res['document_id']
                 ids=self.search(cr,uid,[('document_id','=',res['document_id']),('component_id','=',res['component_id'])])
                 self.unlink(cr,uid,ids)
 
@@ -168,6 +164,10 @@ class plm_relation(osv.osv):
         ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','!=',False),('type','=','ebom')])
         if not ids:
             ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','!=',False),('type','=','normal')])
+        if not ids:
+            ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','=',False),('type','=','ebom')])
+            if not ids:
+                ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','!=',False),('source_id','=',False),('type','=','normal')])
         for obj in self.browse(cr,uid,ids,context=None):
             if obj.bom_id in counted:
                 continue
@@ -185,6 +185,10 @@ class plm_relation(osv.osv):
         ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','!=',False),('type','=','ebom')])
         if not ids:
             ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','!=',False),('type','=','normal')])
+        if not ids:
+            ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','=',False),('type','=','ebom')])
+            if not ids:
+                ids=self.search(cr,uid,[('product_id','=',pid),('bom_id','=',False),('source_id','=',False),('type','=','normal')])
         for obj in self.browse(cr,uid,list(set(ids)),context=None):
             counted.append(obj)
         return list(set(counted))
@@ -227,12 +231,8 @@ class plm_relation(osv.osv):
         if len(relids)<1:
             return relationDatas
         setobj=self.pool.get('mrp.bom')
-        tmpDatas=setobj.read(cr, uid, relids.values())
-        for tmpData in tmpDatas:
-            bufDatas[tmpData['id']]=tmpData
-
         for keyData in relids.keys():
-            relationDatas[keyData]=bufDatas[relids[keyData]]
+            relationDatas[keyData]=setobj.read(cr, uid, relids[keyData])
         return relationDatas
 
     def _bomid(self, cr, uid, pid, sid=None):
@@ -287,7 +287,6 @@ class plm_relation(osv.osv):
                 self._packed.append(bom_line.product_id.id)
                 output.append([bom_line.product_id.id, innerids])
         return(output)
-    
 
     def GetExploseSum(self, cr, uid, ids, context=None):
         """
@@ -424,6 +423,8 @@ class plm_relation(osv.osv):
                 if ('product_qty' in res):
                     if(type(res['product_qty'])!=types.FloatType) or (res['product_qty']<1e-6):
                         res['product_qty']=1.0
+                if not ('product_uom' in res):
+                    res['product_uom']=1
                 return self.create(cr, uid, res)
             except:
                 logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
@@ -457,6 +458,9 @@ class plm_relation(osv.osv):
         return weight
 
 #   Overridden methods for this entity
+    def write(self, cr, uid, ids, vals, check=True, context=None):
+        return super(plm_relation,self).write(cr, uid, ids, vals, context=context)  
+
     def copy(self,cr,uid,oid,defaults={},context=None):
         """
             Return new object copied (removing SourceID)
@@ -467,8 +471,8 @@ class plm_relation(osv.osv):
             newOid=self.browse(cr,uid,newId,context=context)
             for bom_line in newOid.bom_lines:
                 lateRevIdC=compType.GetLatestIds(cr,uid,[(bom_line.product_id.engineering_code,False,False)],context=context) # Get Latest revision of each Part
-                self.write(cr,uid,[bom_line.id],{'source_id':False,'name':bom_line.name.replace(' Copy',''),'product_id':lateRevIdC[0]},context=None)
-            self.write(cr,uid,[newId],{'source_id':False,},context=None)
+                self.write(cr,uid,[bom_line.id],{'source_id':False,'name':bom_line.product_id.name,'product_id':lateRevIdC[0]},check=False,context=None)
+            self.write(cr,uid,[newId],{'source_id':False,},check=False,context=None)
         return newId
 
     def _check_product(self, cr, uid, ids, context=None):

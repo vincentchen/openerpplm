@@ -22,9 +22,13 @@
 {
     'name': 'Product Lifecycle Management',
     'version': '1.0',
-    'category': 'Tools',
-    'depends': ['base', 'process','board','document','product','mrp'],
     'author': 'OmniaSolutions',
+    'website': 'http://www.omniasolutions.eu',
+    'category': 'Product Lifecycle Management',
+    'sequence': 15,
+    'summary': 'PLM Integration with main CAD editors',
+    'images': ['images/EngineeringPart.jpeg','images/OpenComponent.jpeg','images/OpenDocument.jpeg'],
+    'depends': ['base', 'process','board','document','product','mrp'],
     'description': """
 Manage Product Lifecycle Management in OpenERP
 ==============================================
@@ -56,10 +60,13 @@ Supported Editors :
         * ThinkDesign 2009.3 (and above)
         * SolidWorks 2011 (and above)
         * Inventor 2011 (and above)
-        
+        * SolidEdge ST3 (and above)
+
+    * Category : CAE / Electrical CAD
+    
+        * SPAC 2013 (needs SDProget connector license)
+       
     """,
-    'website': 'http://www.omniasolutions.eu',
-    'images': ['images/EngineeringPart.jpeg','images/OpenComponent.jpeg','images/OpenDocument.jpeg'],
     'init_xml': [
         ],
     'update_xml': [
@@ -70,6 +77,7 @@ Supported Editors :
         'install/plmdocrelations/document_relations.xml',
         'install/plmcomponents/component_view.xml',
         'install/plmcomponents/component_workflow.xml',
+        'install/plmdescriptions/description_view.xml',
         'install/plmdescriptions/description_sequence.xml',
         'install/plmsparebom/sparebom_view.xml',
         'install/plmsparebom/description_view.xml',

@@ -39,69 +39,7 @@ class plm_component(osv.osv):
     }
 
 #   Internal methods
-    def _extract_data(self,cr,uid,ids,allIDs, anag_fields=False, rel_fields=False):
-        """
-            action to be executed for Transmitted state.
-            Transmit the object to ERP Metodo
-        """
-        if not anag_fields:
-            anag_fields=['name','description']
-        if not rel_fields:
-            rel_fields=['bom_id','product_id','product_qty','itemnum']
 
-        outputpath=os.environ.get('TEMP')
-        tmppws=os.environ.get('OPENPLMOUTPUTPATH')
-        if tmppws!=None and os.path.exists(tmppws):
-            outputpath=tmppws
-
-        if outputpath==None:
-            return True
-        if not os.path.exists(outputpath):
-            raise osv.except_osv(_('Export Data Error'), _("Requested writing path (%s) doesn't exist." %(outputpath)))
-            return False 
-        fname=datetime.now().isoformat(' ').replace('.','').replace(':','').replace(' ','').replace('-','')+'.csv'
-        filename=os.path.join(outputpath,fname)
-        expData=self.export_data(cr, uid, allIDs,anag_fields)
-        if not self._export_csv(filename, anag_fields, expData, True):
-            raise osv.except_osv(_('Export Data Error'), _("Writing operations on file (%s) have failed." %(filename)))
-            return False
-        bomType=self.pool.get('mrp.bom')
-        for oic in self.browse(cr, uid, ids, context=None):
-            fname=str(oic.name)+'.csv'
-            filename=os.path.join(outputpath,fname)
-            relIDs=self._getExplodedBom(cr, uid, [oic.id], 1, 0)
-            if len(relIDs)>0:
-                expData=bomType.export_data(cr, uid, relIDs,rel_fields)
-                if not self._export_csv(filename, rel_fields, expData, True):
-                    raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
-                    return False
-        return True
-
-    def _export_csv(self, fname, fields, result, write_title=False):
-        import csv
-        if not 'datas' in result:
-            logging.error("_export_csv : No 'datas' in result.")
-            return False
-        try:
-            fp = file(fname, 'wb+')
-            writer = csv.writer(fp)
-            if write_title:
-                writer.writerow(fields)
-            results=result['datas']
-            for datas in results:
-                row = []
-                for data in datas:
-                    if type(data)==types.StringType:
-                        row.append(data.replace('\n',' ').replace('\t',' '))
-                    else:
-                        row.append(data or '')
-                writer.writerow(row)
-            fp.close()
-            return True
-        except IOError, (errno, strerror):
-            logging.error("_export_csv : IOError : "+str(errno)+" ("+str(strerror)+").")
-            return False
-           
     def _getbyrevision(self, cr, uid, name, revision):
         result=None
         results=self.search(cr,uid,[('engineering_code','=',name),('engineering_revision','=',revision)])
@@ -173,6 +111,8 @@ class plm_component(osv.osv):
             exitValues['name']=newEnt.name
             exitValues['engineering_code']=newEnt.engineering_code
             exitValues['engineering_revision']=newEnt.engineering_revision
+            exitValues['engineering_writable']=True
+            exitValues['state']='draft'
         return exitValues
 
     def newVersion(self,cr,uid,ids,context=None):
@@ -219,20 +159,22 @@ class plm_component(osv.osv):
         """
         newID=None
         newIndex=0
-        for oldObject in self.browse(cr, uid, ids, context=context):
-            newIndex=int(oldObject.engineering_revision)+1
-            defaults={}
-            defaults['engineering_writable']=False
-            defaults['state']='undermodify'
-            self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
-            # store updated infos in "revision" object
-            defaults['name']=oldObject.name                 # copy function needs an explicit name value
-            defaults['engineering_revision']=newIndex
-            defaults['engineering_writable']=True
-            defaults['state']='draft'
-            defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
-            newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
-            # create a new "old revision" object
+        for tmpObject in self.browse(cr, uid, ids, context=context):
+            latestIDs=self.GetLatestIds(cr, uid,[(tmpObject.engineering_code,tmpObject.engineering_revision,False)], context=context)
+            for oldObject in self.browse(cr, uid, latestIDs, context=context):
+	            newIndex=int(oldObject.engineering_revision)+1
+	            defaults={}
+	            defaults['engineering_writable']=False
+	            defaults['state']='undermodify'
+	            self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
+	            # store updated infos in "revision" object
+	            defaults['name']=oldObject.name                 # copy function needs an explicit name value
+	            defaults['engineering_revision']=newIndex
+	            defaults['engineering_writable']=True
+	            defaults['state']='draft'
+	            defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
+	            newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
+	            # create a new "old revision" object
             break
         return (newID, newIndex) 
 
@@ -263,7 +205,7 @@ class plm_component(osv.osv):
                     if self._iswritable(cr,uid,objPart):
                         del(part['lastupdate'])
                         if not self.write(cr,uid,[existingID], part , context=context, check=True):
-                            raise osv.except_osv(_('Update Part Error'), _("Part %s cannot be updated" %(str(part['engineering_code']))))
+                            raise osv.except_osv(_('Update Part Error'), _("Part %r cannot be updated" %(part['engineering_code'])))
                         hasSaved=True
                 part['name']=objPart.name
             part['componentID']=existingID
@@ -304,12 +246,8 @@ class plm_component(osv.osv):
         if not checkObj:
             return False
         bomType=self.pool.get('mrp.bom')
-        if checkObj.engineering_revision:
-            objBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('engineering_revision','=',checkObj.engineering_revision),('type','=','normal'),('bom_id','=',False)])
-            idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('engineering_revision','=',checkObj.engineering_revision),('type','=','ebom'),('bom_id','=',False)])
-        else:
-            objBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('type','=','normal'),('bom_id','=',False)])
-            idBoms=bomType.search(cr, uid, [('name','=',checkObj.name),('type','=','ebom'),('bom_id','=',False)])
+        objBoms=bomType.search(cr, uid, [('product_id','=',idd),('type','=','normal'),('bom_id','=',False)])
+        idBoms=bomType.search(cr, uid, [('product_id','=',idd),('type','=','ebom'),('bom_id','=',False)])
 
         if not objBoms:
             if idBoms:
@@ -322,7 +260,7 @@ class plm_component(osv.osv):
                     for bom_line in list(set(oidBom.bom_lines) ^ set(ok_rows)):
                         bomType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
-                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.name.replace(' Copy',''),'product_qty':bom_line.product_qty,},context=None)
+                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
                         self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         else:
             for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_lines:
@@ -332,7 +270,7 @@ class plm_component(osv.osv):
     def _summarizeBom(self, cr, uid, datarows):
         dic={}
         for datarow in datarows:
-            key=str(datarow.product_id.name)
+            key=datarow.product_id.name
             if key in dic:
                 dic[key].product_qty=float(dic[key].product_qty)+float(datarow.product_qty)
             else:
@@ -410,13 +348,13 @@ class plm_component(osv.osv):
     def _iswritable(self, cr, user, oid):
         checkState=('draft')
         if not oid.engineering_writable:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") not writable.")
+            logging.warning("_iswritable : Part (%r - %d) is not writable." %(oid.engineering_code,oid.engineering_revision))
             return False
         if not oid.state in checkState:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") in status ; "+str(oid.state)+".")
+            logging.warning("_iswritable : Part (%r - %d) is in status %r." %(oid.engineering_code,oid.engineering_revision,oid.state))
             return False
         if oid.engineering_code == False:
-            logging.warning("_iswritable : Part ("+str(oid.name)+"-"+str(oid.engineering_revision)+") without Engineering P/N.")
+            logging.warning("_iswritable : Part (%r - %d) is without Engineering P/N." %(oid.name,oid.engineering_revision))
             return False
         return True  
 
@@ -497,33 +435,43 @@ class plm_component(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if not vals:
             return False
-        existingIDs=self.search(cr, uid, [('name','=',vals['name'])], order = 'engineering_revision', context=context)
-        if 'engineering_code' in vals:
-            if vals['engineering_code'] == False:
+        if ('name' in vals):
+            if not vals['name']:
+                return False
+            existingIDs=self.search(cr, uid, [('name','=',vals['name'])], order = 'engineering_revision', context=context)
+            if 'engineering_code' in vals:
+                if vals['engineering_code'] == False:
+                    vals['engineering_code'] = vals['name']
+            else:
                 vals['engineering_code'] = vals['name']
-        else:
-            vals['engineering_code'] = vals['name']
-        if ('name' in vals) and ('engineering_revision' in vals):
-            if vals['engineering_revision'] > 0:
-                vals['name']=vals['name'].replace(' (copy)','')
-        if len(existingIDs)>0:
-            return existingIDs[len(existingIDs)-1]           #TODO : Manage search for highest revisonid
-        else:
+    
+            if existingIDs:
+                existingID=existingIDs[len(existingIDs)-1]
+                if ('engineering_revision' in vals):
+                    existObj=self.browse(cr,uid,existingID,context=context)
+                    if existObj:
+                        if vals['engineering_revision'] > existObj.engineering_revision:
+                            vals['name']=existObj.name
+                        else:
+                            return existingID
+                else:
+                    return existingID
+            
             try:
                 return super(plm_component,self).create(cr, uid, vals, context=context)
-            except:
-                raise Exception(_("It has tried to create %s , %s"%(str(vals['name']),str(vals))))
-                return False
-         
+            except Exception ,ex:
+                raise Exception(_("It has tried to create with values : (%r)."%(vals)))
+        return False
+
     def write(self, cr, uid, ids, vals, context=None, check=True):
-        checkState=('confirmed','released','undermodify','obsoleted')
+#        checkState=('confirmed','released','undermodify','obsoleted')
 #        if check:
 #            for customObject in self.browse(cr, uid, ids, context=context):
 #                if not customObject.engineering_writable:
-#                    raise osv.except_osv(_('Edit Entity Error'), _("No changes are allowed on entity (%s)." %(customObject.name)))
+##                    raise osv.except_osv(_('Edit Entity Error'), _("No changes are allowed on entity (%s)." %(customObject.name)))
 #                    return False
 #                if customObject.state in checkState:
-#                    raise osv.except_osv(_('Edit Entity Error'), _("The active state does not allow you to make save action on entity (%s)." %(customObject.name)))
+##                    raise osv.except_osv(_('Edit Entity Error'), _("The active state does not allow you to make save action on entity (%s)." %(customObject.name)))
 #                    return False
 #                if customObject.engineering_code == False:
 #                    vals['engineering_code'] = customObject.name
@@ -559,7 +507,7 @@ class plm_component(osv.osv):
                 oldObject=self.browse(cr, uid, existingID[0], context=context)
                 if oldObject.state in checkState:
                     if not self.write(cr, uid, [oldObject.id], values, context, check=False):
-                        logging.warning("unlink : Unable to update state to old component ("+str(oldObject.engineering_code)+"-"+str(oldObject.engineering_revision)+").")
+                        logging.warning("unlink : Unable to update state to old component (%r - %d)." %(oldObject.engineering_code,oldObject.engineering_revision))
                         return False
         return super(plm_component,self).unlink(cr, uid, ids, context=context)
 

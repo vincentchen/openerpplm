@@ -87,7 +87,10 @@ class plm_document(osv.osv):
             try:
                 isCheckedOutToMe=self._is_checkedout_for_me(cr, uid, objDoc.id, context)
                 if not(objDoc.datas_fname in listfiles):
-                    value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
+                    if (not objDoc.store_fname) and (objDoc.db_datas):
+                        value = objDoc.db_datas
+                    else:
+                        value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                     result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                 else:
                     if forceFlag:
@@ -96,13 +99,16 @@ class plm_document(osv.osv):
                         timefile=time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]),'%Y-%m-%d %H:%M:%S').timetuple())
                         isNewer=(timeSaved-timefile)>5
                     if (isNewer and not(isCheckedOutToMe)):
-                        value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
+                        if (not objDoc.store_fname) and (objDoc.db_datas):
+                            value = objDoc.db_datas
+                        else:
+                            value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                         result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                     else:
-                        result.append((objDoc.id,objDoc.datas_fname,None, isCheckedOutToMe, timeDoc))
+                        result.append((objDoc.id,objDoc.datas_fname,False, isCheckedOutToMe, timeDoc))
             except Exception, ex:
                 logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
-                result.append((objDoc.id,objDoc.datas_fname,None, True, self.getServerTime(cr, uid, ids)))
+                result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
             
     def _data_get(self, cr, uid, ids, name, arg, context):
@@ -222,6 +228,8 @@ class plm_document(osv.osv):
                 collectable = isNewer and not(isCheckedOutToMe)
             else:
                 collectable = True
+            if (objDoc.file_size<1) and (objDoc.datas):
+                objDoc.file_size=len(objDoc.datas)
             result.append((objDoc.id, objDoc.datas_fname, objDoc.file_size, collectable, isCheckedOutToMe, timeDoc))
         return list(set(result))
             
@@ -317,14 +325,16 @@ class plm_document(osv.osv):
             create a new revision of the document
         """
         newID=None
-        for oldObject in self.browse(cr,uid,ids,context=context):
-            self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context,check=False)
-            defaults={}
-            defaults['name']=oldObject.name
-            defaults['revisionid']=int(oldObject.revisionid)+1
-            defaults['writable']=True
-            defaults['state']='draft'
-            newID=super(plm_document,self).copy(cr,uid,oldObject.id,defaults,context=context)
+        for tmpObject in self.browse(cr, uid, ids, context=context):
+            latestIDs=self.GetLatestIds(cr, uid,[(tmpObject.name,tmpObject.revisionid,False)], context=context)
+            for oldObject in self.browse(cr, uid, latestIDs, context=context):
+                self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context,check=False)
+                defaults={}
+                defaults['name']=oldObject.name
+                defaults['revisionid']=int(oldObject.revisionid)+1
+                defaults['writable']=True
+                defaults['state']='draft'
+                newID=super(plm_document,self).copy(cr,uid,oldObject.id,defaults,context=context)
             break
         return (newID, defaults['revisionid']) 
     
@@ -427,7 +437,6 @@ class plm_document(osv.osv):
         """
             Query to return values based on columns selected.
         """
-        objId=False
         expData=[]
         queryFilter, columns = request        
         if len(columns)<1:
@@ -514,6 +523,37 @@ class plm_document(osv.osv):
         return False
 
 #   Overridden methods for this entity
+    def _get_filestore(self, cr):
+        dms_Root_Path=tools.config.get('document_path', os.path.join(tools.config['root_path'], 'filestore'))
+        return os.path.join(dms_Root_Path, cr.dbname)
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        # Grab ids, bypassing 'count'
+        ids = osv.osv.search(self,cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=False)
+        if not ids:
+            return 0 if count else []
+
+        # Filter out documents that are in directories that the user is not allowed to read.
+        # Must use pure SQL to avoid access rules exceptions (we want to remove the records,
+        # not fail), and the records have been filtered in parent's search() anyway.
+        cr.execute('SELECT id, parent_id from plm_document WHERE id in %s', (tuple(ids),))
+
+        # cont a dict of parent -> attach
+        parents = {}
+        for attach_id, attach_parent in cr.fetchall():
+            parents.setdefault(attach_parent, []).append(attach_id)
+        parent_ids = parents.keys()
+
+        # filter parents
+        visible_parent_ids = self.pool.get('document.directory').search(cr, uid, [('id', 'in', list(parent_ids))])
+
+        # null parents means allowed
+        ids = parents.get(None,[])
+        for parent_id in visible_parent_ids:
+            ids.extend(parents[parent_id])
+
+        return len(ids) if count else ids
+
     def write(self, cr, uid, ids, vals, context=None, check=True):
         checkState=('confirmed','released','undermodify','obsoleted')
         if check:
@@ -569,13 +609,13 @@ class plm_document(osv.osv):
 #   Overridden methods for this entity
 
     _columns = {
-                'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used for Spare Part Manual"),
+                'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
                 'writable': fields.boolean('Writable'),
                 'datas': fields.function(_data_get,method=True,fnct_inv=_data_set,string='File Content',type="binary"),
-                'printout': fields.binary('Printout Content'),
-                'preview': fields.binary('Preview Content'),
-                'state':fields.selection(USED_STATES,'Status',readonly="True",required=True),
+                'printout': fields.binary('Printout Content', help="Print PDF content."),
+                'preview': fields.binary('Preview Content', help="Static preview."),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
     }    
 
     _defaults = {
@@ -808,6 +848,16 @@ class plm_checkout(osv.osv):
         ('documentid', 'unique (documentid)', 'The documentid must be unique !') 
     ]
 
+    def _adjustRelations(self, cr, uid, oids, userid=False):
+        docRelType=self.pool.get('plm.document.relation')
+        if userid:
+            ids=docRelType.search(cr,uid,[('child_id','in',oids),('userid','=',False)])
+        else:
+            ids=docRelType.search(cr,uid,[('child_id','in',oids)])
+        if ids:
+            values={'userid':userid,}
+            docRelType.write(cr, uid, ids, values)
+
     def create(self, cr, uid, vals, context=None):
         if context!=None and context!={}:
             return False
@@ -818,6 +868,7 @@ class plm_checkout(osv.osv):
             logging.warning("create : Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+").")
             raise osv.except_osv(_('Check-Out Error'), _("Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+")."))
             return False
+        self._adjustRelations(cr, uid, [docID.id], uid)
         return super(plm_checkout,self).create(cr, uid, vals, context=context)   
          
     def unlink(self, cr, uid, ids, context=None):
@@ -828,9 +879,11 @@ class plm_checkout(osv.osv):
                 return False
         documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
+        docids=[]
         for checkObj in checkObjs:
             checkObj.documentid.writable=False
             values={'writable':False,}
+            docids.append(checkObj.documentid.id)
             if not documentType.write(cr, uid, [checkObj.documentid.id], values):
                 logging.warning("unlink : Unable to check-in the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag.")
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag."))
@@ -848,9 +901,11 @@ class plm_document_relation(osv.osv):
                 'configuration':fields.char('Configuration Name',size=1024),
                 'link_kind': fields.char('Kind of Link',size=64, required=True),
                 'create_date':fields.datetime('Date Created', readonly=True),
+                'userid':fields.many2one('res.users', 'CheckOut User',readonly="True"), 
                }
     _defaults = {
-                 'link_kind': lambda *a: 'HiTree'
+                 'link_kind': lambda *a: 'HiTree',
+                 'userid': lambda *a: False,
     }
     _sql_constraints = [
         ('relation_uniq', 'unique (parent_id,child_id,link_kind)', 'The Document Relation must be unique !') 
@@ -864,14 +919,14 @@ class plm_document_relation(osv.osv):
             res={}
             for relation in relations:
                 res['parent_id'],res['child_id'],res['configuration'],res['link_kind']=relation
+                link=[('link_kind','=',res['link_kind'])]
                 if (res['link_kind']=='LyTree') or (res['link_kind']=='RfTree'):
-                    to_remove=res['child_id']
-                    criteria='child_id'
+                    criteria=[('child_id','=',res['child_id'])]
                 else:
-                    to_remove=res['parent_id']
-                    criteria='parent_id'
-                ids=self.search(cr,uid,[(criteria,'=',to_remove),('link_kind','=',res['link_kind'])])
+                    criteria=[('parent_id','=',res['parent_id']),('child_id','=',res['child_id'])]
+                ids=self.search(cr,uid,criteria+link)
                 self.unlink(cr,uid,ids)
+
 
         def saveChild(args):
             """
@@ -911,6 +966,7 @@ class plm_backupdoc(osv.osv):
                 'existingfile':fields.char('Physical Document Location',size=1024), 
                 'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
                 'revisionid': fields.related('documentid','revisionid',type="integer",relation="plm.document",string="Revision",store=False),
+                'state': fields.related('documentid','state',type="char",relation="plm.document",string="Status",store=False),
                 'printout': fields.binary('Printout Content'),
                 'preview': fields.binary('Preview Content'),
     }

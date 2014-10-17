@@ -34,6 +34,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle,Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from report import report_sxw
 from operator import itemgetter
+from tools.translate import _
 
 # NOTE : TO BE ADDED TO FINAL CONFIGURATION. NOT IN STANDARD PYTHON
 from report.pyPdf import PdfFileWriter, PdfFileReader
@@ -148,6 +149,25 @@ body_file=os.path.join(customModulePath,"spare_parts_body.rml")
 if not os.path.exists(body_file):
     body_file=os.path.join(openerpModulePath,"spare_parts_body.rml")
 
+def isPdf(fileName):
+    if (os.path.splitext(fileName)[1].lower()=='.pdf'):
+        return True
+    return False
+
+def getDocumentStream(docRepository,objDoc):
+    """ 
+        Gets the stream of a file
+    """ 
+    content=False
+    try:
+        if (not objDoc.store_fname) and (objDoc.db_datas):
+            content = base64.decodestring(objDoc.db_datas)
+        else:
+            content = file(os.path.join(docRepository, objDoc.store_fname), 'rb').read()
+    except Exception, ex:
+        print "getFileStream : Exception (%s)reading  stream on file : %s." %(str(ex),objDoc.datas_fname)
+    return content
+
 
 class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -155,6 +175,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'get_children':self.get_children,
+            'bom_type':self.bom_type,
         })
 
     def get_children(self, object, level=0):
@@ -192,6 +213,10 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
 
         return result
 
+    def bom_type(self, object):
+        result=dict(self.pool.get(object._model._name).fields_get(self.cr, self.uid)['type']['selection']).get(object.type,'')
+        return _(result)
+
 HEADER=report_sxw.report_sxw("report.spare.parts.header", 
                             "product.product", 
                             rml=header_file,
@@ -208,6 +233,9 @@ class component_spare_parts_report(report_int):
         Calculates the bom structure spare parts manual
     """   
     def create(self, cr, uid, ids, datas, context=None):
+        recursion=True
+        if self._Service__name == 'report.product.product.spare.parts.pdf.one':
+            recursion=False
         self.processedObjs=[]
         self.pool = pooler.get_pool(cr.dbname)
         componentType=self.pool.get('product.product')
@@ -221,7 +249,7 @@ class component_spare_parts_report(report_int):
             self.processedObjs=[]
             buf=self.getFirstPage(cr, uid, [component.id],context)
             output.addPage(buf)
-            self.getSparePartsPdfFile(cr, uid, context, component, output, componentType, bomType)
+            self.getSparePartsPdfFile(cr, uid, context, component, output, componentType, bomType,recursion)
         if output != None:
             pdf_string = StringIO.StringIO()
             output.collector.write(pdf_string)
@@ -231,7 +259,7 @@ class component_spare_parts_report(report_int):
             return (self.obj.pdf, 'pdf')
         return (False, '')    
    
-    def getSparePartsPdfFile(self, cr, uid, context, component, output, componentTemplate, bomTemplate):
+    def getSparePartsPdfFile(self, cr, uid, context, component, output, componentTemplate, bomTemplate,recursion):
         packedObjs=[]
         packedIds=[]
         if component in self.processedObjs:
@@ -249,22 +277,28 @@ class component_spare_parts_report(report_int):
                     packedObjs.append(bom_line.product_id)
                     packedIds.append(bom_line.id)
                 if len(packedIds)>0:
-                    for pageStream in self.getPdfComponentLayout(component):
+                    for pageStream in self.getPdfComponentLayout(cr, component):
                         output.addPage(pageStream)
                     stream,typerep=BODY.create(cr, uid, [BomObject.id], data={'report_type': u'pdf'},context=context) 
                     pageStream=StringIO.StringIO()
                     pageStream.write(stream)
                     output.addPage(pageStream)
-                    for packedObj in packedObjs:
-                        if not packedObj in self.processedObjs:
-                            self.getSparePartsPdfFile(cr,uid,context,packedObj,output,componentTemplate,bomTemplate)   
+                    if recursion:
+                        for packedObj in packedObjs:
+                            if not packedObj in self.processedObjs:
+                                self.getSparePartsPdfFile(cr,uid,context,packedObj,output,componentTemplate,bomTemplate,recursion)   
  
-    def getPdfComponentLayout(self,component):
+    def getPdfComponentLayout(self, cr, component):
         ret=[]
+        docRepository=self.pool.get('plm.document')._get_filestore(cr)
         for document in component.linkeddocuments:
-            if document.usedforspare and document.printout:
-                #TODO: To Evaluate document type 
-                ret.append( StringIO.StringIO(base64.decodestring(document.printout)))
+            if document.usedforspare:
+                if document.printout:
+                    ret.append(StringIO.StringIO(base64.decodestring(document.printout)))
+                elif isPdf(document.datas_fname):
+                    value=getDocumentStream(docRepository,document)
+                    if value:
+                        ret.append(StringIO.StringIO(value))
         return ret 
     
     def getFirstPage(self,cr, uid, ids,context):
@@ -276,3 +310,5 @@ class component_spare_parts_report(report_int):
 
 
 component_spare_parts_report('report.product.product.spare.parts.pdf')
+
+component_spare_parts_report('report.product.product.spare.parts.pdf.one')

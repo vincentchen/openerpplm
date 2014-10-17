@@ -1,3 +1,5 @@
+import os
+import base64
 import StringIO
 from reportlab.pdfgen import canvas
 
@@ -6,7 +8,26 @@ from report.pyPdf import PdfFileWriter, PdfFileReader
 # NOTE : TO BE ADDED TO FINAL CONFIGURATION. NOT IN STANDARD PYTHON
 
 from report.render import render
-import base64
+
+def isPdf(fileName):
+    if (os.path.splitext(fileName)[1].lower()=='.pdf'):
+        return True
+    return False
+
+def getDocumentStream(docRepository,objDoc):
+    """ 
+        Gets the stream of a file
+    """ 
+    content=False
+    try:
+        if (not objDoc.store_fname) and (objDoc.db_datas):
+            content = base64.decodestring(objDoc.db_datas)
+        else:
+            content = file(os.path.join(docRepository, objDoc.store_fname), 'rb').read()
+    except Exception, ex:
+        print "getFileStream : Exception (%s)reading  stream on file : %s." %(str(ex),objDoc.datas_fname)
+    return content
+
 class BookCollector(object):
     def __init__(self,jumpFirst=True,customTest=False,bottomHeight=20):
         """
@@ -73,7 +94,7 @@ class external_pdf(render):
     def _render(self):
         return self.pdf
             
-def packDocuments(documents,bookCollector):
+def packDocuments(docRepository,documents,bookCollector):
     """
         pack the documenta for paper size
     """
@@ -84,9 +105,17 @@ def packDocuments(documents,bookCollector):
     output3 = [] 
     output4 = []
     for document in documents:
-        if document.printout:
-            if not document.id in packed:   
+        if not document.id in packed:
+            Flag=False 
+            if document.printout:
                 input1 = StringIO.StringIO(base64.decodestring(document.printout))
+                Flag=True
+            elif isPdf(document.datas_fname):
+                value=getDocumentStream(docRepository,document)
+                if value:
+                    input1 = StringIO.StringIO(value)
+                    Flag=True
+            if Flag:
                 page=PdfFileReader(input1)
                 orientation,paper=paperFormat(page.getPage(0).mediaBox)
                 if(paper==0)  :
