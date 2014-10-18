@@ -30,17 +30,85 @@ import logging
 # To be adequated to plm.document class states
 USED_STATES=[('draft','Draft'),('confirmed','Confirmed'),('transmitted','Transmitted'),('released','Released'),('undermodify','UnderModify'),('obsoleted','Obsoleted'),('reactivated','Reactivated')]
 
+class plm_config_settings(osv.osv):
+    _name = 'plm.config.settings'
+    _inherit = 'res.config.settings'
+
+    _columns = {
+       'plm_service_id': fields.char('Register PLM module, insert your Service ID.',size=128,  help="Insert the Service ID and register your PLM module. Ask it to OmniaSolutions."),
+       'activated_id': fields.char('Activated PLM client',size=128,  help="Listed activated Client."),
+       'active_editor':fields.char('Client Editor Name',size=128,  help="Used Editor Name"),
+       'active_node':fields.char('OS machine name',size=128,  help="Editor Machine name"),
+       'active_os':fields.char('OS name',size=128,  help="Editor OS name"),
+       'active_os_rel':fields.char('OS release',size=128,  help="Editor OS release"),
+       'active_os_ver':fields.char('OS version',size=128,  help="Editor OS version"),
+       'active_os_arch':fields.char('OS architecture',size=128,  help="Editor OS architecture"),
+       'node_id':fields.char('Registered PLM client',size=128,  help="Listed registered Client."),
+    }
+ 
+    def GetServiceIds(self, cr, uid, oids, default=None, context=None):
+        """
+            Get all Service Ids registered.
+        """
+        ids=[]
+        partIds=self.search(cr,uid,[('activated_id','=',False)],context=context)
+        for part in self.browse(cr, uid, partIds):
+            ids.append(part.plm_service_id)
+        return list(set(ids))
+ 
+    def RegisterActiveId(self, cr, uid, vals, default=None, context=None):
+        """
+            Get all Service Ids registered.  [serviceID, activation, activeEditor, (system, node, release, version, machine, processor) ]
+        """
+        defaults={}
+        serviceID, activation, activeEditor, platformData, nodeId=vals
+        if activation:
+            defaults['plm_service_id']=serviceID
+            defaults['activated_id']=activation
+            defaults['active_editor']=activeEditor
+            defaults['active_os']=platformData[0]
+            defaults['active_node']=platformData[1]
+            defaults['active_os_rel']=platformData[2]
+            defaults['active_os_ver']=platformData[3]
+            defaults['active_os_arch']=platformData[4]
+            defaults['node_id']=nodeId
+    
+            partIds=self.search(cr,uid,[('plm_service_id','=',serviceID),('activated_id','=',activation)],context=context)
+    
+            if partIds:
+                for partId  in partIds:
+                    self.write(cr, uid, [partId], defaults, context=context)
+                    return False
+            
+            self.create(cr, uid, defaults, context=context)
+        return False
+   
+    def GetActiveServiceId(self, cr, uid, vals, default=None, context=None):
+        """
+            Get all Service Ids registered.  [serviceID, activation, activeEditor, (system, node, release, version, machine, processor) ]
+        """
+        results=[]
+        nodeId, activation, _, _ =vals
+        partIds=self.search(cr,uid,[('node_id','=',nodeId),('activated_id','=',activation)],context=context)
+        for partId  in self.browse(cr, uid, partIds):
+            results.append(partId.plm_service_id)
+            
+        return results
+
+plm_config_settings()
+    
+    
 class plm_component(osv.osv):
     _name = 'product.template'
     _inherit = 'product.template'
     _columns = {
-                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
-                'engineering_code': fields.char('Part Number',size=64),
-                'engineering_revision': fields.integer('Revision', required=True),
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product in its LifeCycle.", readonly="True"),
+                'engineering_code': fields.char('Part Number',help="This is engineering reference to manage a different P/N from item Name.",size=64),
+                'engineering_revision': fields.integer('Revision', required=True,help="The revision of the product."),
                 'engineering_writable': fields.boolean('Writable'),
-                'engineering_material': fields.char('Raw Material',size=128,required=False,help="Raw material for current product"),
+                'engineering_material': fields.char('Raw Material',size=128,required=False,help="Raw material for current product, only description for titleblock."),
 #                'engineering_treatment': fields.char('Treatment',size=64,required=False,help="Thermal treatment for current product"),
-                'engineering_surface': fields.char('Surface Finishing',size=128,required=False,help="Surface finishing for current product"),
+                'engineering_surface': fields.char('Surface Finishing',size=128,required=False,help="Surface finishing for current product, only description for titleblock."),
      }   
     _defaults = {
                  'state': lambda *a: 'draft',
@@ -109,8 +177,12 @@ class plm_component_document_rel(osv.osv):
         """
         def cleanStructure(relations):
             res={}
+            latest=None
             for relation in relations:
                 res['document_id'],res['component_id']=relation
+                if latest==res['document_id']:
+                    continue
+                latest=res['document_id']
                 ids=self.search(cr,uid,[('document_id','=',res['document_id']),('component_id','=',res['component_id'])])
                 self.unlink(cr,uid,ids)
 
@@ -140,11 +212,11 @@ class plm_relation(osv.osv):
     _name = 'mrp.bom'
     _inherit = 'mrp.bom'
     _columns = {
-                'create_date': fields.datetime('Date Created', readonly=True),
-                'source_id': fields.many2one('plm.document','name',ondelete='no action', readonly=True,help="This is the document object that declares this BoM."),
-                'type': fields.selection([('normal','Normal BoM'),('phantom','Sets / Phantom'),('ebom','Engineering BoM'),('spbom','Spare BoM')], 'BoM Type', required=True, help=
+                'create_date': fields.datetime(_('Creation Date'), readonly=True),
+                'source_id': fields.many2one('plm.document','name',ondelete='no action',readonly=True,help='This is the document object that declares this BoM.'),
+                'type': fields.selection([('normal','Normal BoM'),('phantom','Sets / Phantom'),('ebom','Engineering BoM'),('spbom','Spare BoM')], _('BoM Type'), required=True, help=
                     "Use a phantom bill of material in raw materials lines that have to be " \
-                    "automatically computed in on eproduction order and not one per level." \
+                    "automatically computed on a production order and not one per level." \
                     "If you put \"Phantom/Set\" at the root level of a bill of material " \
                     "it is considered as a set or pack: the products are replaced by the components " \
                     "between the sale order to the picking without going through the production order." \
@@ -212,13 +284,15 @@ class plm_relation(osv.osv):
         compType=self.pool.get('product.product')
         tmpDatas=compType.read(cr, uid, tmpids)
         for tmpData in tmpDatas:
+            for keyData in tmpData.keys():
+                if tmpData[keyData]==None:
+                    del tmpData[keyData]
             prtDatas[str(tmpData['id'])]=tmpData
         return prtDatas
 
     def _getpackreldatas(self, cr, uid, relDatas, prtDatas):
         relids={}
         relationDatas={}
-        bufDatas={}
         tmpbuf=(((str(relDatas).replace('[','')).replace(']','')).replace('(','')).replace(')','').split(',')
         tmpids=[int(tmp) for tmp in tmpbuf if len(tmp.strip()) > 0]
         if len(tmpids)<1:
@@ -267,7 +341,7 @@ class plm_relation(osv.osv):
     
     def GetExplose(self, cr, uid, ids, context=None):
         """
-            Return a list of all children in a Bom (all levels)
+            Returns a list of all children in a Bom (all levels)
         """
         self._packed=[]
         relDatas=[ids[0],self._explodebom(cr, uid, self._bomid(cr, uid, ids[0]), False)]
@@ -276,7 +350,7 @@ class plm_relation(osv.osv):
 
     def _explodebom(self, cr, uid, bids, check=True):
         """
-            Explodes a bom entity  (all levels)
+            Explodes a bom entity  ( check=False : all levels, check=True : one level )
         """
         output=[]
         for bid in bids:

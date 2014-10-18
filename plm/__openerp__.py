@@ -71,6 +71,7 @@ Supported Editors :
         ],
     'update_xml': [
         'board_plm_view.xml',
+        'install/res_config_view.xml',
         'install/plmdocuments/document_view.xml',
         'install/plmdocuments/document_workflow.xml',
         'install/plmdocuments/backupdoc_view.xml',
