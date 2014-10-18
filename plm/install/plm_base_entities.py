@@ -32,7 +32,9 @@ USED_STATES=[('draft','Draft'),('confirmed','Confirmed'),('transmitted','Transmi
 
 class plm_config_settings(osv.osv):
     _name = 'plm.config.settings'
-    _inherit = 'res.config.settings'
+    _description = "PLM Settings"
+    _table = "plm_config_settings"
+    _order = 'plm_service_id'
 
     _columns = {
        'plm_service_id': fields.char('Register PLM module, insert your Service ID.',size=128,  help="Insert the Service ID and register your PLM module. Ask it to OmniaSolutions."),
