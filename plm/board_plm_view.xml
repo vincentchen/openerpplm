@@ -43,14 +43,29 @@
             </field>
         </record>
 
+    <record model="ir.ui.view" id="view_component_status">
+            <field name="name">report.plm_component.graph</field>
+            <field name="model">report.plm_component</field>
+            <field name="type">graph</field>
+            <field name="arch" type="xml">
+                <graph string="Component Status" type="pivot">
+                    <field name="count_component_draft" operator="+"/>
+                    <field name="count_component_confirmed" operator="+"/>
+                    <field name="count_component_released" operator="+"/>
+                    <field name="count_component_modified" operator="+"/>
+                    <field name="count_component_obsoleted" operator="+"/>
+                </graph>
+            </field>
+    </record>
+
     <record model="ir.ui.view" id="view_size_month">
             <field name="name">report.plm_document.user.graph</field>
             <field name="model">report.plm_document.file</field>
             <field name="type">graph</field>
             <field name="arch" type="xml">
-                <graph string="File Size by Month" type="bar">
+                <graph string="Files by Month" type="bar">
                     <field name="month"/>
-                    <field name="file_size" operator="+"/>
+                    <field name="nbr" operator="+"/>
                 </graph>
             </field>
     </record>
@@ -65,7 +80,7 @@
         </record>
 
         <record model="ir.actions.act_window" id="action_view_size_month">
-            <field name="name">File Size by Month</field>
+            <field name="name">Files by Month</field>
             <field name="res_model">report.plm_document.file</field>
             <field name="view_id" ref="view_size_month"></field>
             <field name="view_type">form</field>
@@ -85,8 +100,13 @@
                                 view_mode="tree,form"/>
                         </column>
                         <column>
-                            <action string="File Size by Month"
-                                name="%(action_view_size_month)d"
+                            <action string="Files by Month"
+                                name="%(action_view_file_month)d"
+                                view_mode="graph,tree"/>
+                        </column>
+                        <column>
+                            <action string="Component Status"
+                                name="%(action_view_component_status)d"
                                 view_mode="graph,tree"/>
                         </column>
                      </board>
