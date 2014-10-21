@@ -46,7 +46,7 @@
 "group_plm_viewuser","access_vw_product_template","product_template","product.template",1,0,0,0
 "group_plm_viewuser","access_vw_ir_attachment","ir_attachment","ir.attachment",1,0,0,0
 "group_plm_viewuser","access_vw_plm_document","plm_document","plm.document",1,0,0,0
-"group_plm_viewuser","access_vw_report_plm_component","report_plm_component","report.plm_component",1,1,1,1
+"group_plm_viewuser","access_vw_report_plm_component","report_plm_component","report.plm_component",1,0,0,0
 "group_plm_viewuser","access_vw_report_plm_document","report_plm_document","report.plm_document.user",1,0,0,0
 "group_plm_viewuser","access_vw_report_plm_document_file","report_plm_document_file","report.plm_document.file",1,0,0,0
 "group_plm_viewuser","access_vw_stock_warehouse_orderpoint","stock_warehouse_orderpoint","stock.warehouse.orderpoint",1,0,0,0
