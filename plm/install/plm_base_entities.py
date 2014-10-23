@@ -217,6 +217,7 @@ class plm_relation_line(osv.osv):
                     "it is considered as a set or pack: the products are replaced by the components " \
                     "between the sale order to the picking without going through the production order." \
                     "The normal BoM will generate one production order per BoM level."),
+                'configuration': fields.char('Configuration',size=255,help="Configuration that declares this BoM."),
                 'itemnum': fields.integer(_('CAD Item Position'),help="This is the item reference position into the CAD document that declares this BoM."),
                 'itemlbl': fields.char(_('CAD Item Position Label'),size=64)
                 }
@@ -225,7 +226,8 @@ class plm_relation_line(osv.osv):
     }
     
     _order = 'itemnum'
-
+        
+plm_relation_line()
 
 class plm_relation(osv.osv):
     _name = 'mrp.bom'
