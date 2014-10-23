@@ -71,12 +71,42 @@ class plm_component(osv.osv):
             result[prod_obj.id]=list(set(prod_ids))
         return result
 
+    def _child_part_compute(self, cr, uid, ids, name, arg, context={}):
+        """ Gets children parts.
+        @param self: The object pointer
+        @param cr: The current row, from the database cursor,
+        @param uid: The current user ID for security checks
+        @param ids: List of selected IDs
+        @param name: Name of the field
+        @param arg: User defined argument
+        @param context: A standard dictionary for contextual values
+        @return:  Dictionary of values
+        """
+        result={}
+        prod_ids=[]
+        if context is None:
+            context = {}
+        bom_line_objType = self.pool.get('mrp.bom.line')
+        bom_objType = self.pool.get('mrp.bom')
+        prod_objs = self.browse(cr, uid, ids, context=context)
+        for prod_obj in prod_objs:
+            tmp_ids = bom_objType.search(cr, uid, [('product_tmpl_id','=',prod_obj.id)])
+            bom_objs = bom_objType.browse(cr, uid, tmp_ids, context=context)
+            for bom_obj in bom_objs:
+                bom_line_ids = bom_line_objType.search(cr, uid, [('bom_id','=',bom_obj.id)])
+                bom_line_objs = bom_line_objType.browse(cr, uid, bom_line_ids, context=context)
+                for bom_line_obj in bom_line_objs:
+                    prod_ids.append(bom_line_obj.product_id.id)
+            result[prod_obj.id]=list(set(prod_ids))
+        return result
+
     _columns = {
         	    'linkeddocuments':fields.many2many('plm.document', 'plm_component_document_rel','component_id','document_id', 'Linked Docs'),  
                 'tmp_material': fields.many2one('plm.material','Raw Material', required=False, change_default=True, help="Select raw material for current product"),
 #                'tmp_treatment': fields.many2one('plm.treatment','Thermal Treatment', required=False, change_default=True, help="Select thermal treatment for current product"),
                 'tmp_surface': fields.many2one('plm.finishing','Surface Finishing', required=False, change_default=True, help="Select surface finishing for current product"),
                 'father_part_ids': fields.function(_father_part_compute, relation='product.product', method=True, string="BoM Hierarchy", type='many2many', store =False),
+                'child_part_ids': fields.function(_child_part_compute, relation='product.product', method=True, string="BoM Hierarchy", type='many2many', store =False),
               }
 
     def on_change_tmpmater(self, cr, uid, ids, tmp_material=False):

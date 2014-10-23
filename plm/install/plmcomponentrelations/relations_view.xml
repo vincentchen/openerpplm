@@ -207,8 +207,7 @@
             </field>
         </record>
 
- 
-         <record id="plm_bom_tree_structure" model="ir.ui.view">
+		<record id="plm_bom_tree_structure" model="ir.ui.view">
             <field name="name">plm.bom.tree</field>
             <field name="model">mrp.bom</field>
             <field name="field_parent">child_complete_ids</field>
@@ -220,14 +219,44 @@
                     <field name="code" invisible="1"/>
                     <field name="source_id" string="Source Relation Document"/>
                     <field name="weight_net"/>
-                    <field name="create_date" select="True"/>
+                    <field name="create_date"/>
                     <field name="type"/>
                 </tree>
             </field>
-        </record>
-        
+        </record> 
 
-<!-- Tree Structure Actions on Product -->
+          <record id="plm_bom_line_tree_structure" model="ir.ui.view">
+            <field name="name">plm.bom.line.tree</field>
+            <field name="model">mrp.bom.line</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Bill of Materials">
+                    <field name="bom_id" string="Father Name"/>
+                    <field name="product_id" string="Child Name"/>
+                    <field name="engineering_revision" string="Revision"/>
+                    <field name="description"/>
+                    <field name="source_id" string="Source Relation Document"/>
+                    <field name="weight_net"/>
+                    <field name="create_date"/>
+                    <field name="type"/>
+                </tree>
+            </field>
+        </record> 
+
+<!-- Tree Structure on Product -->
+
+        <record id="mrp_part_tree_view" model="ir.ui.view">
+            <field name="name">mrp.part.tree</field>
+            <field name="model">product.product</field>
+            <field name="field_parent">child_part_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Bill of Materials">
+                    <field name="product_tmpl_id" string="Component Name"/>
+                    <field name="engineering_revision" string="Revision"/>
+                    <field name="description"/>
+                </tree>
+            </field>
+        </record>
 
         <act_window
             id="action_product_bom_structure"
@@ -236,10 +265,9 @@
             context="{'default_product_id': active_id}"
             view_type="tree"
             view_mode="tree"
-            view_id="plm_bom_tree_structure"
-            res_model="mrp.bom"
+            view_id="mrp_part_tree_view"
+            res_model="product.product"
             src_model="product.product"/>
-
 
 <!-- Tree Structure Actions on MRP -->
             
@@ -259,7 +287,6 @@
             <field eval="'ir.actions.act_window,'+str(action20)" name="value"/>
         </record>
         
-
         <record id="action2" model="ir.actions.act_window">
             <field name="name">Bill of Materials Structure</field>
             <field name="type">ir.actions.act_window</field>
@@ -275,8 +302,7 @@
             <field name="name">Bill of Materials Structure</field>
             <field eval="'ir.actions.act_window,'+str(action2)" name="value"/>
         </record>
-        
-        
+   
 </data>
 </openerp>
 
