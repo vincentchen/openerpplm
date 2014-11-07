@@ -387,10 +387,10 @@ class plm_component(osv.osv):
                 row = []
                 for data in datas:
                     if type(data)==types.StringType:
-                        row.append(data.replace('\n',' ').replace('\t',' '))
+                        row.append(str(data).replace('\n',' ').replace('\t',' '))
                     else:
-                        row.append(data or '')
-                writer.writerow("%r" %(row))
+                        row.append(str(data) or '')
+                writer.writerow(row)
             fp.close()
             os.chmod(fname, stat.S_IRWXU|stat.S_IRWXO|stat.S_IRWXG)
             return True
