@@ -43,14 +43,29 @@
             </field>
         </record>
 
-    <record model="ir.ui.view" id="view_size_month">
+    <record model="ir.ui.view" id="view_component_status">
+            <field name="name">report.plm_component.graph</field>
+            <field name="model">report.plm_component</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Component Status" >
+                    <field name="count_component_draft" />
+                    <field name="count_component_confirmed" />
+                    <field name="count_component_released" />
+                    <field name="count_component_modified" />
+                    <field name="count_component_obsoleted" />
+                </tree>
+            </field>
+    </record>
+
+    <record model="ir.ui.view" id="view_file_month">
             <field name="name">report.plm_document.user.graph</field>
             <field name="model">report.plm_document.file</field>
             <field name="type">graph</field>
             <field name="arch" type="xml">
-                <graph string="File Size by Month" type="bar">
+                <graph string="Files by Month" type="bar">
                     <field name="month"/>
-                    <field name="file_size" operator="+"/>
+                    <field name="nbr" operator="+"/>
                 </graph>
             </field>
     </record>
@@ -64,10 +79,18 @@
             <field name="search_view_id" ref="view_report_document_user_search"/>
         </record>
 
-        <record model="ir.actions.act_window" id="action_view_size_month">
-            <field name="name">File Size by Month</field>
+        <record model="ir.actions.act_window" id="action_view_file_month">
+            <field name="name">Files by Month</field>
             <field name="res_model">report.plm_document.file</field>
-            <field name="view_id" ref="view_size_month"></field>
+            <field name="view_id" ref="view_file_month"></field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_view_component_status">
+            <field name="name">Component Status</field>
+            <field name="res_model">report.plm_component</field>
+            <field name="view_id" ref="view_component_status"></field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
         </record>
@@ -78,16 +101,21 @@
              <field name="type">form</field>
              <field name="arch" type="xml">
                 <form string="Document board">
-                     <board style="2-1" >
+                     <board style="1-1-1" >
                         <column>
                             <action string="New Documents"
                                 name="%(action_view_all_document_tree1)d"
                                 view_mode="tree,form"/>
                         </column>
                         <column>
-                            <action string="File Size by Month"
-                                name="%(action_view_size_month)d"
+                            <action string="Files by Month"
+                                name="%(action_view_file_month)d"
                                 view_mode="graph,tree"/>
+                        </column>
+                        <column>
+                            <action string="Component Status"
+                                name="%(action_view_component_status)d"
+                                view_mode="tree"/>
                         </column>
                      </board>
                  </form>
