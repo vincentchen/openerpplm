@@ -386,8 +386,8 @@ class plm_component(osv.osv):
             for datas in results:
                 row = []
                 for data in datas:
-                    if type(data)==types.StringType:
-                        row.append(str(data).replace('\n',' ').replace('\t',' '))
+                    if (type(data) is types.StringType) or (type(data) is types.UnicodeType):
+                        row.append(unicode(data).replace('\n',' ').replace('\t',' '))
                     else:
                         row.append(str(data) or '')
                 writer.writerow(row)
