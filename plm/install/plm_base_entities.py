@@ -348,14 +348,6 @@ class plm_relation(osv.osv):
         """
             Save EBom relations
         """
-        def cleanStructure(sourceID=None):
-            """
-                Clean relations having sourceID
-            """
-            if sourceID==None:
-                return None
-            ids=self.search(cr,uid,[('source_id','=',sourceID)])
-            self.unlink(cr,uid,ids)
 
         def toCleanRelations(parentName, relations):
             """
