@@ -105,11 +105,15 @@ class plm_component_document_rel(osv.osv):
             Save Document relations
         """
         def cleanStructure(relations):
-            res={}
-            for relation in relations:
-                res['document_id'],res['component_id']=relation
-                ids=self.search(cr,uid,[('document_id','=',res['document_id']),('component_id','=',res['component_id'])])
-                self.unlink(cr,uid,ids)
+            res=[]
+            for document_id,component_id in relations:
+                latest=(document_id,component_id)
+                if latest in res:
+                    continue
+                res.append(latest)
+                ids=self.search(cr,uid,[('document_id','=',document_id),('component_id','=',component_id)])
+                if ids:
+                    self.unlink(cr,uid,ids)
 
         def saveChild(args):
             """
@@ -348,14 +352,6 @@ class plm_relation(osv.osv):
         """
             Save EBom relations
         """
-        def cleanStructure(sourceID=None):
-            """
-                Clean relations having sourceID
-            """
-            if sourceID==None:
-                return None
-            ids=self.search(cr,uid,[('source_id','=',sourceID)])
-            self.unlink(cr,uid,ids)
 
         def toCleanRelations(parentName, relations):
             """
