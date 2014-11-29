@@ -389,7 +389,7 @@ class plm_component(osv.osv):
                     if (type(data) is types.StringType):
                         row.append(str(data).replace('\n',' ').replace('\t',' '))
                     if (type(data) is types.UnicodeType):
-                        row.append(unicode(str(data),'windows-1252').replace('\n',' ').replace('\t',' '))
+                        row.append(unicode(str(data),'utf8').replace('\n',' ').replace('\t',' '))
                     else:
                         row.append(str(data) or '')
                 writer.writerow(row)
