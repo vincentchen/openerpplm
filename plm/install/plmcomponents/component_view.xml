@@ -79,20 +79,20 @@
         <field name="arch" type="xml">
             <notebook position="inside">
                  <page string="Engineering Infos">
-                     <group colspan="8" col="8" string="Part Number Area">
+                     <group colspan="8" col="8" string="Part Number Area"  name="PNArea">
                          <group colspan="4" col="4">
                              <field name="engineering_code" select="1" attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
                              <field name="engineering_revision" readonly="True" colspan="2"/>
                          </group>
                          <newline/>
                      </group>
-      	             <separator colspan="4" col="1" string="WorkFlow Status"/>
+      	             <separator colspan="4" col="1" string="LifeCycle Area" name="LCArea"/>
                      <group col="4" colspan="2">
                          <button name="release" states="confirmed" string="Release Component" icon="gtk-apply"/>
                          <button name="correct" states="confirmed" string="Correct Component" icon="gtk-cancel"/>
                          <button name="confirm" states="draft" string="Confirm Component" icon="gtk-go-forward"/>
                      </group>
-                     <group colspan="4" col="2" string="Normalization Area">
+                     <group colspan="4" col="2" string="Normalization Area" name="NMArea">
                          <separator string="Standard Description" colspan="4"/>
                          <field colspan="4" name="std_description" nolabel="1" on_change="on_change_stddesc(std_description)"/>
                          <newline/>
@@ -105,13 +105,13 @@
                              <field name="std_umc3"  attrs="{'readonly':[('std_umc3','=',False)]}" />
                              <field name="std_value3" attrs="{'readonly':[('std_umc3','=',False)]}" on_change="on_change_stdvalue(std_description, std_umc1, std_value1, std_umc2, std_value2, std_umc3, std_value3)"/>
                          </group>
-                         <group colspan="4" col="4">
+                         <group colspan="4" col="4"  name="TechSpec">
                              <field name="tmp_material" colspan="2" on_change="on_change_tmpmater(tmp_material)"/>
                              <field name="tmp_surface" colspan="2" on_change="on_change_tmpsurface(tmp_surface)"/>
                          </group>
                      </group>
-                     <group colspan="4" col="4">
-                         <separator string="Technical Specifications" colspan="4"/>
+                     <group colspan="4" col="4" name="TBlock">
+                         <separator string="TitleBlock Informations" colspan="4"/>
                          <field name="engineering_material" colspan="2"/>
                          <field name="engineering_surface" colspan="2"/>
                          <newline/>
@@ -185,21 +185,21 @@
                  </group>
                  <notebook colspan="4">
                		<page string="Engineering Infos">
-                   		<group colspan="8" col="8" string="Part Number Area">
+                   		<group colspan="8" col="8" string="Part Number Area" name="PNArea">
                      		<group colspan="4" col="4">
                       			<field name="engineering_code" select="1" attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
                        			<field name="engineering_revision" readonly="True" colspan="2"/>
                    			</group>
                     		<newline/>
                    		</group>
-         	    		<separator colspan="4" col="1" string="WorkFlow Status"/>
+         	    		<separator colspan="4" col="1" string="LifeCycle Area" name="LCArea"/>
                         <field name="state" colspan="2"/>
                         <group col="4" colspan="2">
                             <button name="release" states="confirmed" string="Release Component" icon="gtk-apply"/>
                             <button name="correct" states="confirmed" string="Correct Component" icon="gtk-cancel"/>
                             <button name="confirm" states="draft" string="Confirm Component" icon="gtk-go-forward"/>
                         </group>
-                	    <group colspan="4" col="2" string="Normalization Area">
+                	    <group colspan="4" col="2" string="Normalization Area" name="NMArea">
                             <separator string="Standard Description" colspan="4"/>
                             <field colspan="4" name="std_description" nolabel="1" on_change="on_change_stddesc(std_description)"/>
                             <newline/>
@@ -212,19 +212,28 @@
                 	    		<field name="std_umc3"  attrs="{'readonly':[('std_umc3','=',False)]}" />
                 	    		<field name="std_value3" attrs="{'readonly':[('std_umc3','=',False)]}" on_change="on_change_stdvalue(std_description, std_umc1, std_value1, std_umc2, std_value2, std_umc3, std_value3)"/>
                   	    	</group>
-                    		<group colspan="4" col="4">
+                    		<group colspan="4" col="4"  name="TechSpec">
                    				<field name="tmp_material" colspan="2" on_change="on_change_tmpmater(tmp_material)"/>
                  				<field name="tmp_surface" colspan="2" on_change="on_change_tmpsurface(tmp_surface)"/>
                      		</group>
+                     		<group colspan="4" col="4"  name="TechSpec">
+	  	                        <group colspan="2" col="2" name="Weigth">
+		                     		<separator/>
+		                            <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
+	                      		</group>
+	 	                        <group colspan="2" col="2" name="uom">
+		                          	<separator string="Unit of Measure" colspan="2"/>
+		                            <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)"/>
+		                            <field name="uom_po_id" groups="base.group_extended"/>
+	  	                        </group>
+  	                        </group>
                  	    </group>
-                    	<group colspan="4" col="4">
-                            <separator string="Technical Specifications" colspan="4"/>
+                    	<group colspan="4" col="4" name="TBlock">
+                            <separator string="TitleBlock Informations" colspan="4"/>
                    			<field name="engineering_material" colspan="2"/>
                 			<field name="engineering_surface" colspan="2"/>
                             <newline/>
-                            <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
-                            <field name="uom_id"/>
-                		</group>
+                 		</group>
                    </page>
                    <page string="Descriptions">
                         <separator string="Description"/>
