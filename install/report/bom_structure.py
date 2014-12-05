@@ -112,7 +112,7 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
                 res['item']=l.itemnum
                 res['ancestor']=l.bom_id.product_id
                 res['pname']=l.product_id.name
-                if (l.product_id.description.strip()):
+                if (l.product_id.description):
                     res['pdesc']=_(l.product_id.description.strip())
                 else:
                     res['pdesc']=''
@@ -159,7 +159,7 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
                 res['name']=l.name
                 res['item']=l.itemnum
                 res['pname']=l.product_id.name
-                if (l.product_id.description.strip()):
+                if (l.product_id.description):
                     res['pdesc']=_(l.product_id.description.strip())
                 else:
                     res['pdesc']=''
@@ -214,7 +214,7 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    if (l.product_id.description.strip()):
+                    if (l.product_id.description):
                         res['pdesc']=_(l.product_id.description.strip())
                     else:
                         res['pdesc']=''
@@ -274,7 +274,7 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
                     res['name']=l.name
                     res['item']=l.itemnum
                     res['pname']=l.product_id.name
-                    if (l.product_id.description.strip()):
+                    if (l.product_id.description):
                         res['pdesc']=_(l.product_id.description.strip())
                     else:
                         res['pdesc']=''
@@ -329,7 +329,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
                     res['item']=l.itemnum
                     res['pfather']=l.bom_id.product_id.name
                     res['pname']=l.product_id.name
-                    if (l.product_id.description.strip()):
+                    if (l.product_id.description):
                         res['pdesc']=_(l.product_id.description.strip())
                     else:
                         res['pdesc']=''
