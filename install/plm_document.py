@@ -444,14 +444,15 @@ class plm_document(osv.osv):
         """
             Check if a document is checked-in 
         """
+        ret=True
         documents=self.browse(cr, uid, ids, context=context)
         checkoutType=self.pool.get('plm.checkout')
              
         for document in documents:
             if checkoutType.search(cr, uid, [('documentid','=',document.id)], context=context):
                 logging.warning(_("The document %s - %s has not checked-in" %(str(document.name),str(document.revisionid))))
-                return False
-        return True
+                ret = False
+        return ret
  
     def action_draft(self, cr, uid, ids, *args):
         """
@@ -798,8 +799,15 @@ class plm_checkout(osv.osv):
             return False
         documentType=self.pool.get('ir.attachment')
         docID=documentType.browse(cr, uid, vals['documentid'])
+        if not docID.state=='draft':
+            logging.warning("create : The required document ("+str(docID.name)+"-"+str(docID.revisionid)+") is already checked-out.")
+            return False
+        ids=self.search(cr,uid,[('documentid','=',vals['documentid'])])
+        if ids:
+            logging.warning("create : The required document ("+str(docID.name)+"-"+str(docID.revisionid)+") is already checked-out.")
+            return False
         values={'writable':True,}
-        if not documentType.write(cr, uid, [docID.id], values):
+        if not documentType.write(cr, uid, [docID.id], values, check=False):
             logging.warning("create : Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+").")
             raise osv.except_osv(_('Check-Out Error'), _("Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+")."))
             return False
