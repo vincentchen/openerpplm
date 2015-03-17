@@ -381,6 +381,7 @@ class plm_relation(osv.osv):
                 Processes relations  
             """
             sourceID=None
+            bomID=False
             subRelations=[(a, b, c, d, e, f) for a, b, c, d, e, f in relations if a == parentName]
             if len(subRelations)<1: # no relation to save 
                 return None
