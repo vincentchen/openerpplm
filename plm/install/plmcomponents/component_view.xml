@@ -35,33 +35,31 @@
         <field name="priority" eval="10"/>
         <field name="arch" type="xml">
 			<search string="Product">
-                   	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
-                           	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
-                          	help="Created latest 7 Days"/>
-                 	<filter icon="terp-go-month" string="Yesterday" separator="1"
-                         	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
-                    		help="Created yesterday"/>
-                	<filter icon="terp-go-month" string="Today" separator="1"
-                         	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
-                         	help="Created today"/>
-                   	<separator orientation="vertical"/>
-	            	<field name="name"/>
-	            	<field name="description"/>
-                   	<separator orientation="vertical"/>
-                    <filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
-                    <filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
-                    <filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
-                    <filter string="Latest" name="latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
-                   	<separator orientation="vertical"/>
-                    <group expand="0" string="Group by..." groups="base.group_extended">
-                       <filter string="Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}"/>
-                       <separator orientation="vertical"/>
-                       <filter string="Default UOM" icon="terp-mrp" domain="[]" context="{'group_by' : 'uom_id'}"/>
-                       <separator orientation="vertical"/>
-                       <filter string="Type" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'type'}"/>
-                   </group>
-                </search>
-         </field>
+	           	<filter icon="terp-go-month" string="Latest 7 Days" separator="1"
+	                   	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=1)).strftime('%%Y-%%m-%%d'))]"
+	                  	help="Created latest 7 Days"/>
+	         	<filter icon="terp-go-month" string="Yesterday" separator="1"
+	                 	domain="[('create_date','&lt;=', (datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"
+	            		help="Created yesterday"/>
+	        	<filter icon="terp-go-month" string="Today" separator="1"
+	                 	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()).strftime('%%Y-%%m-%%d'))]"
+	                 	help="Created today"/>
+				<field name="state">
+	                <filter string="Confirmed" icon="terp-stock_symbol-selection" domain="[('state', '=', 'confirmed')]"/>
+	                <filter string="Released" icon="terp-stock_symbol-selection" domain="[('state', 'in', ['released','undermodify'])]"/>
+	                <filter string="Obsoleted" icon="terp-stock_symbol-selection" domain="[('state', '=', 'obsoleted')]"/>
+	                <filter string="Latest" name="latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
+		        </field>
+	            <group expand="0" string="Group by..." >
+	                <filter string="Status" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'state'}"/>
+	               	<group groups="base.group_extended">
+						<filter string="Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}"/>
+	                   	<filter string="Default UOM" icon="terp-mrp" domain="[]" context="{'group_by' : 'uom_id'}"/>
+               			<filter string="Type" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'type'}"/>
+                	</group>
+	            </group>
+        	</search>
+    	</field>
     </record>
 
 
