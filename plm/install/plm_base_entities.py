@@ -385,16 +385,18 @@ class plm_relation(osv.osv):
             if len(subRelations)<1: # no relation to save 
                 return None
             parentName, parentID, tmpChildName, tmpChildID, sourceID, tempRelArgs=subRelations[0]
-            bomID=saveChild(parentName, parentID, sourceID, kindBom='ebom')
-            for rel in subRelations:
-                #print "Save Relation ", rel
-                parentName, parentID, childName, childID, sourceID, relArgs=rel
-                if parentName == childName:
-                    logging.error('toCompute : Father (%s) refers to himself' %(str(parentName)))
-                    raise Exception('saveChild.toCompute : Father "%s" refers to himself' %(str(parentName)))
-
-                tmpBomId=saveChild(childName, childID, sourceID, bomID, kindBom='ebom', args=relArgs)
-                tmpBomId=toCompute(childName, relations)
+            ids=self.search(cr,uid,[('product_id','=',parentID),('source_id','=',sourceID)])
+            if not ids:
+                bomID=saveChild(parentName, parentID, sourceID, kindBom='ebom')
+                for rel in subRelations:
+                    #print "Save Relation ", rel
+                    parentName, parentID, childName, childID, sourceID, relArgs=rel
+                    if parentName == childName:
+                        logging.error('toCompute : Father (%s) refers to himself' %(str(parentName)))
+                        raise Exception('saveChild.toCompute : Father "%s" refers to himself' %(str(parentName)))
+    
+                    tmpBomId=saveChild(childName, childID, sourceID, bomID, kindBom='ebom', args=relArgs)
+                    tmpBomId=toCompute(childName, relations)
             return bomID
 
         def saveChild(name,  partID, sourceID, bomID=None, kindBom=None, args=None):
