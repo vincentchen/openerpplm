@@ -26,6 +26,7 @@ from osv import osv, fields
 from tools.translate import _
 import logging
 
+import openerp.addons.decimal_precision as dp
 
 # To be adequated to plm.document class states
 USED_STATES=[('draft','Draft'),('confirmed','Confirmed'),('transmitted','Transmitted'),('released','Released'),('undermodify','UnderModify'),('obsoleted','Obsoleted'),('reactivated','Reactivated')]
@@ -151,10 +152,12 @@ class plm_relation(osv.osv):
                     "between the sale order to the picking without going through the production order." \
                     "The normal BoM will generate one production order per BoM level."),
                 'itemnum': fields.integer(_('Cad Item Position')),
-                'itemlbl': fields.char(_('Cad Item Position Label'),size=64)
+                'itemlbl': fields.char(_('Cad Item Position Label'),size=64),
+                'weight_net': fields.float('Weight',digits_compute=dp.get_precision('Stock Weight'), help="The BoM net weight in Kg."),
                 }
     _defaults = {
         'product_uom' : 1,
+        'weight_net' : 0.0,
     }
 
     def init(self, cr):
@@ -398,6 +401,7 @@ class plm_relation(osv.osv):
     
                     tmpBomId=saveChild(childName, childID, sourceID, bomID, kindBom='ebom', args=relArgs)
                     tmpBomId=toCompute(childName, relations)
+                self.RebaseProductWeight(cr, uid, bomID, self.RebaseBomWeight(cr, uid, bomID))
             return bomID
 
         def saveChild(name,  partID, sourceID, bomID=None, kindBom=None, args=None):
@@ -431,32 +435,44 @@ class plm_relation(osv.osv):
         parentName, parentID, childName, childID, sourceID, relArgs=relations[0]
         toCleanRelations(parentName, relations)
         tmpBomId=toCompute(parentName, relations)
-        weight=self.RebaseWeight(cr, uid, self.browse(cr,uid,tmpBomId).child_complete_ids)
         return False
     
-    def RebaseWeight(self, cr, uid, bomObjects, context=None):
+    def _sumBomWeight(self, bomObj):
         """
-            Evaluate net weight for assembly, based on net weight of each part  
+            Evaluates net weight for assembly, based on BoM object
         """
         weight=0.0
-        values={}
-        ancestor=None
-        for obj in bomObjects:
-            ancestor=obj.bom_id.product_id
-            if obj.child_complete_ids:
-                weight+=self.RebaseWeight(cr, uid, obj.child_complete_ids)
-            else:
-                weight+=(obj.product_qty * obj.product_id.weight_net)
-        if (ancestor!=None):
-            values['weight_net']=weight
-            partType=self.pool.get(ancestor._table_name)
-            partType.write(cr,uid,[ancestor.id],values,check=False)
+        for bom_line in bomObj.bom_lines:
+            weight+=(bom_line.product_qty * bom_line.product_id.product_tmpl_id.weight_net)
         return weight
+
+    def RebaseProductWeight(self, cr, uid, parentBomID, weight=0.0):
+        """
+            Evaluates net weight for assembly, based on product ID
+        """
+        if not(parentBomID==None) or parentBomID:
+            bomObj=self.browse(cr,uid,parentBomID,context=None)
+            self.pool.get('product.product').write(cr,uid,[bomObj.product_id.id],{'weight_net': weight})
+
+    def RebaseBomWeight(self, cr, uid, bomID, context=None):
+        """
+            Evaluates net weight for assembly, based on BoM ID
+        """
+        weight=0.0
+        if  bomID:
+            for bomId in self.browse(cr, uid, bomID, context):
+                weight=self._sumBomWeight(bomId)
+                super(plm_relation,self).write(cr, uid, [bomId.id], {'weight_net': weight}, context=context)
+        return weight
+
 
 #   Overridden methods for this entity
     def write(self, cr, uid, ids, vals, check=True, context=None):
-        return super(plm_relation,self).write(cr, uid, ids, vals, context=context)  
-
+        ret = super(plm_relation,self).write(cr, uid, ids, vals, context=context)  
+        for bomId in self.browse(cr,uid,ids,context=None):
+            self.RebaseBomWeight(cr, uid, bomId.id, context=context)
+        return ret
+    
     def copy(self,cr,uid,oid,defaults={},context=None):
         """
             Return new object copied (removing SourceID)
