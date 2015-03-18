@@ -16,6 +16,7 @@
                     <field name="product_uom"/>
                     <field name="product_qty"/>
                     <field name="name" select="1"/>
+                    <field name="weight_net"/>
                     <field name="code" select="1"/>
                     <newline/>
                     <field name="product_uos" groups="product.group_uos"/>
@@ -60,8 +61,8 @@
                     <field name="source_id" select="True" string="Source Relation Document"/>
         			<field name="type"/>
        				<field name="product_qty"/>
+                    <field name="weight_net_line"/>
                     <field name="product_uom"/>
-                    <field name="weight_net"/>
                     <field name="method"/>
                     <field name="routing_id" groups="mrp.group_mrp_routings"/>
                     <field name="create_date" select="True"/>
@@ -134,7 +135,7 @@
                     <field name="source_id" string="Source Relation Document"/>
                 </field>
         		<field name="product_qty" position="after">
-                   <field name="weight_net"/>
+                   <field name="weight_net_line"/>
                    <field name="product_uom"/>
         		</field>
         		<field name="type" position="before">
@@ -246,7 +247,7 @@
                     <field name="source_id" string="Source Relation Document"/>
                     <field name="product_qty"/>
                     <field name="product_uom"/>
-                    <field name="weight_net"/>
+                    <field name="weight_net_line"/>
                     <field name="create_date" select="True"/>
                     <field name="type"/>
                     <field name="method" groups="mrp.group_mrp_routings"/>

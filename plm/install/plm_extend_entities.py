@@ -156,7 +156,7 @@ class plm_relation(osv.osv):
                 'state': fields.related('product_id','state',type="char",relation="product.template",string="Status",store=False),
                 'engineering_revision': fields.related('product_id','engineering_revision',type="char",relation="product.template",string="Revision",store=False),
                 'description': fields.related('product_id','description',type="char",relation="product.template",string="Description",store=False),
-                'weight_net': fields.related('product_id','weight_net',type="float",relation="product.product",string="Weight Net",store=False),
+                'weight_net_line': fields.related('product_id','weight_net',type="float",relation="product.product",string="Weight Net",store=False),
                 'child_complete_ids': fields.function(_child_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                 'father_complete_ids': fields.function(_father_compute, relation='mrp.bom', method=True, string="BoM Hierarchy", type='many2many'),
                }
