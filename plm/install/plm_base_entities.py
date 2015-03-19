@@ -460,7 +460,7 @@ class plm_relation(osv.osv):
         """
         weight=0.0
         if  bomID:
-            for bomId in self.browse(cr, uid, bomID, context):
+            for bomId in self.browse(cr, uid, [bomID], context):
                 weight=self._sumBomWeight(bomId)
                 super(plm_relation,self).write(cr, uid, [bomId.id], {'weight_net': weight}, context=context)
         return weight
