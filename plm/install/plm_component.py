@@ -186,7 +186,7 @@ class plm_component(osv.osv):
                 defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
                 newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
-                self.write(cr,uid,[newID],{'engineering_writable':False,'name':oldObject.name},check=False,context=None)
+                self.write(cr,uid,[newID],{'name':oldObject.name},check=False,context=None)
                 # create a new "old revision" object
                 break
             break
@@ -262,8 +262,8 @@ class plm_component(osv.osv):
             return False
         bomType=self.pool.get('mrp.bom')
         bomLType=self.pool.get('mrp.bom.line')
-        objBoms=bomType.search(cr, uid, [('product_tmpl_id','=',idd),('type','=','normal')])
-        idBoms=bomType.search(cr, uid, [('product_tmpl_id','=',idd),('type','=','ebom')])
+        objBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','normal')])
+        idBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','ebom')])
 
         if not objBoms:
             if idBoms:
@@ -318,9 +318,8 @@ class plm_component(osv.osv):
     
     def action_create_normalBom_WF(self, cr, uid, ids, context=None):
         """
-            Create a new Nornmal Bom if doesn't exist (action callable from code)
+            Create a new Normal Bom if doesn't exist (action callable from code)
         """
-        
         for idd in ids:
             self.processedIds=[]
             self._create_normalBom(cr, uid, idd, context)
@@ -529,7 +528,7 @@ class plm_component(osv.osv):
             try:
                 return super(plm_component,self).create(cr, uid, vals, context=context)
             except Exception ,ex:
-                raise Exception(_("It has tried to create with values : (%r)."%(vals)))
+                raise Exception(" (%r). It has tried to create with values : (%r)."%(ex,vals))
         return False
 
     def write(self, cr, uid, ids, vals, context=None, check=True):

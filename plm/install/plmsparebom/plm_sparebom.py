@@ -36,7 +36,19 @@ class plm_temporary(osv.osv_memory):
         """
         if not 'active_id' in context:
             return False
-        self.pool.get('product.product').action_create_spareBom_WF(cr, uid, context['active_ids'])
+        if not 'active_ids' in context:
+            return False
+        
+        productType=self.pool.get('product.product')
+        for idd in context['active_ids']:
+            checkObj=productType.browse(cr, uid, idd, context)
+            if not checkObj:
+                continue
+            objBoms=self.pool.get('mrp.bom').search(cr, uid, [('product_tmpl_id','=',idd),('type','=','spbom')])
+            if objBoms:
+                raise osv.except_osv(_('Creating a new Spare Bom Error.'), _("BoM for Part %r already exists." %(checkObj.name)))
+
+        productType.action_create_spareBom_WF(cr, uid, context['active_ids'])
 
         return {
               'name': _('Bill of Materials'),
@@ -81,10 +93,10 @@ class plm_component(osv.osv):
             sourceBomType=context['sourceBomType']
         bomType=self.pool.get('mrp.bom')
         bomLType=self.pool.get('mrp.bom.line')
-        objBoms=bomType.search(cr, uid, [('product_id','=',idd),('type','=','spbom')])
-        idBoms=bomType.search(cr, uid, [('product_id','=',idd),('type','=','normal')])
+        objBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','spbom')])
+        idBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','normal')])
         if not idBoms:
-            idBoms=bomType.search(cr, uid, [('product_id','=',idd),('type','=',sourceBomType)])
+            idBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=',sourceBomType)])
 
         defaults={}
         if not objBoms:
@@ -103,7 +115,7 @@ class plm_component(osv.osv):
                     bomLType.write(cr,uid,[bom_line.id],{'type':'spbom','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
                     self._create_spareBom(cr, uid, bom_line.product_id.id, context)
         else:
-            for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_lines:
+            for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_line_ids:
                 self._create_spareBom(cr, uid, bom_line.product_id.id, context=context)
         return False
 
