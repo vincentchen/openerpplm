@@ -320,7 +320,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
                     res['pdesc']=_(l.product_id.description)
                     res['pcode']=l.product_id.default_code
                     res['previ']=l.product_id.engineering_revision
-                    res['pqty']=l.product_qty
+                    res['pqty']=l.product_qty*fth_qty
                     res['uname']=l.product_uom.name
                     res['pweight']=l.product_id.weight_net
                     res['code']=l.code
