@@ -61,7 +61,7 @@ class report_plm_document_user(osv.osv):
                      min(d.type) as type,
                      f.write_date as change_date
                  FROM plm_document f
-                     left join document_directory d on (f.parent_id=d.id and d.name<>'')
+                     left join document_directory d on (f.parent_id=d.id and d.name<>'' and f.type='binary')
                      inner join res_users u on (f.user_id=u.id)
                  group by to_char(f.create_date, 'YYYY'), to_char(f.create_date, 'MM'),to_char(f.create_date, 'DD'),d.name,f.parent_id,d.type,f.create_date,f.user_id,f.file_size,u.login,d.type,f.write_date,f.datas_fname
              )
@@ -83,8 +83,8 @@ class report_plm_files_partner(osv.osv):
                                   ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
      }
     def init(self, cr):
-         tools.drop_view_if_exists(cr, 'report_plm_files_partner')
-         cr.execute("""
+        tools.drop_view_if_exists(cr, 'report_plm_files_partner')
+        cr.execute("""
             CREATE VIEW report_plm_files_partner as (
                 SELECT min(f.id) AS id,
                        COUNT(*) AS nbr,
