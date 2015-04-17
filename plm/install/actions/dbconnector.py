@@ -27,7 +27,9 @@ from osv import osv, fields
 import logging
 
 def normalize(value):
-    if type(value)==types.StringType or type(value)==types.UnicodeType:
+    if (type(value) is types.StringType):
+        return str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip()
+    elif (type(value) is types.UnicodeType):
         return unicode(str(value).replace('"','\"').replace("'",'\"').replace("%","%%").strip(), 'Latin1')
     else:
         return str(value).strip()
@@ -74,14 +76,26 @@ def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap, dat
                         namesString+="%s %s" %(separator,datamap[column])
                         valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%Y-%m-%d %H:%M:%S"))
                 elif (datatyp[column] == 'int'):
+                    if not prtDict[column]:
+                        tmpVal=0
+                    else:
+                        tmpVal=prtDict[column]
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %d" %(separator,int(prtDict[column]))
+                    valuesString+="%s %d" %(separator,int(tmpVal))
                 elif (datatyp[column] == 'bool'):
+                    if not prtDict[column]:
+                        tmpVal=0
+                    else:
+                        tmpVal=prtDict[column]
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %d" %(separator,int(prtDict[column]))
+                    valuesString+="%s %d" %(separator,int(tmpVal))
                 elif (datatyp[column] =='float'):
+                    if not prtDict[column]:
+                        tmpVal=0.0
+                    else:
+                        tmpVal=prtDict[column]
                     namesString+="%s %s" %(separator,datamap[column])
-                    valuesString+="%s %f" %(separator,float(prtDict[column]))
+                    valuesString+="%s %f" %(separator,float(tmpVal))
                 elif (datatyp[column] == 'char'):
                     namesString+="%s %s" %(separator,datamap[column])
                     valuesString+="%s '%s'" %(separator,normalize(prtDict[column]).replace("False",''))
