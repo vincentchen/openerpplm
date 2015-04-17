@@ -72,9 +72,11 @@ def saveParts(ObjectOE, cr, uid, connection, prtInfos, targetTable, datamap, dat
             valuesString=""
             for column in prtDict.keys():
                 if (datatyp[column] == 'datetime'):
+                    namesString+="%s %s" %(separator,datamap[column])
                     if prtDict[column]:
-                        namesString+="%s %s" %(separator,datamap[column])
                         valuesString+="%s '%s'" %(separator,datetime.strptime(prtDict[column],"%Y-%m-%d %H:%M:%S"))
+                    else:
+                        valuesString+="%s '%s'" %(separator,datetime.strptime(datetime.now(),"%Y-%m-%d %H:%M:%S"))
                 elif (datatyp[column] == 'int'):
                     if not prtDict[column]:
                         tmpVal=0
