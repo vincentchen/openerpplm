@@ -274,8 +274,8 @@ class plm_component(osv.osv):
                     for bom_line in list(set(oidBom.bom_lines) ^ set(ok_rows)):
                         bomType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
-                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
-                        self._create_normalBom(cr, uid, bom_line.product_id.id, context)
+                        bomType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},check=False,context=None)
+                        self._create_normalBom(cr, uid, bom_line.product_id.id,context)
         else:
             for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_lines:
                 self._create_normalBom(cr, uid, bom_line.product_id.id, context)
