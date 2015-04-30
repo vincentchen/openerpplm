@@ -32,6 +32,7 @@ import logging
 #STATESRELEASABLE=['confirmed','transmitted','released','undermodify','obsoleted']
 
 class plm_component(osv.osv):
+    _name = 'product.product'
     _inherit = 'product.product'
     _columns = {
                 'create_date': fields.datetime('Date Created', readonly=True),
