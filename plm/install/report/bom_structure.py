@@ -335,7 +335,7 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
                     res['code']=l.code
                     res['level']=level
                     if l.child_complete_ids:
-                        _get_rec(l.child_complete_ids,level+1,l.product_qty)
+                        _get_rec(l.child_complete_ids,level+1,l.product_qty*fth_qty)
                     else:
                         result.append(res)
                         listed[l.name]=self.keyIndex
