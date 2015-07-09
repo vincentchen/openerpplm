@@ -460,7 +460,6 @@ class plm_document(osv.osv):
         """
             Query to return values based on columns selected.
         """
-        objId=False
         expData=[]
         queryFilter, columns = request        
         if len(columns)<1:
@@ -493,8 +492,8 @@ class plm_document(osv.osv):
             Writing messages to follower, on multiple objects
         """
         if not (body==''):
-            for id in ids:
-                self.message_post(cr, uid, [id], body=_(body))
+            for idd in ids:
+                self.message_post(cr, uid, [idd], body=_(body))
 
     def action_draft(self, cr, uid, ids, *args):
         """
@@ -660,7 +659,8 @@ class plm_document(osv.osv):
             if len(res):
                 return False
         return True
-    
+#   Overridden methods for this entity
+
     _columns = {
                 'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
@@ -931,7 +931,14 @@ class plm_checkout(osv.osv):
          
     def unlink(self, cr, uid, ids, context=None):
         if context!=None and context!={}:
-            if uid!=1:
+            res = False
+            groupType=self.pool.get('res.groups')
+            for gId in groupType.search(cr,uid,[('name','=','PLM / Administrator')],context=context):
+                for user in groupType.browse(cr, uid, gId, context).users:
+                    if uid == user.id or uid==1:
+                        res = True
+                        break
+            if not res:
                 logging.warning("unlink : Unable to Check-In the required document.\n You aren't authorized in this context.")
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the required document.\n You aren't authorized in this context."))
                 return False
