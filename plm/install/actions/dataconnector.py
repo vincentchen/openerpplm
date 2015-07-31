@@ -265,14 +265,14 @@ class plm_component(osv.osv):
         return ""
 
     def TransferData(self, cr, uid, ids=False, context=None):
-         """
+        """
             Exposed method to execute data transfer to other systems.
         """ 
 #         Reset default encoding. to allow to work fine also as service.
         reload(sys)
         sys.setdefaultencoding('utf-8')
 #         Reset default encoding. to allow to work fine also as service.
-       operation=False
+        operation=False
         reportStatus='Failed'
         updateDate=self.get_last_session
         logging.debug("[TransferData] Start : %s" %(str(updateDate)))
