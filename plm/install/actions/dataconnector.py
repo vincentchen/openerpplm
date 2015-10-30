@@ -469,7 +469,7 @@ class plm_component(osv.osv):
                     if (type(data) is types.UnicodeType):
                         value=data.decode('utf8','ignore').replace('\n','').replace('\t','').strip()
                     else:
-                        value=(str(data) or '').strip()
+                        value=(str(data).strip() or '')
                     fieldName=fields[count]
                     if fieldName in partLengths.keys():
                         fieldLen=partLengths[fieldName]
@@ -477,7 +477,6 @@ class plm_component(osv.osv):
                         fieldLen=bomLengths[fieldName]                        
                     if (fieldLen<0):
                         continue
-                    valueLen=len(value)
                     row +=value.ljust(fieldLen)[:fieldLen]
                     count+=1
                 fp.write(row+'\n')
@@ -522,7 +521,7 @@ class plm_component(osv.osv):
                     if (type(data) is types.UnicodeType):
                         row.append(data.decode('utf8','ignore').replace('\n','').replace('\t','').strip())
                     else:
-                        row.append(str(data) or '')
+                        row.append(str(data).strip() or '')
                 writer.writerow(row)
             fp.close()
             os.chmod(fname, stat.S_IRWXU|stat.S_IRWXO|stat.S_IRWXG)
