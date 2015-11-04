@@ -659,7 +659,16 @@ class plm_document(osv.osv):
                 return False
         return True
 #   Overridden methods for this entity
-
+    def _get_checkout_state(self, cr, uid, ids, field_name, args, context={}):
+        outVal = {} # {id:value}
+        for docId in ids:
+            chechRes = self.getCheckedOut(cr, uid, docId, None, context)
+            if chechRes:
+                outVal[docId] = str(chechRes[2])
+            else:
+                outVal[docId] = ''
+        return outVal
+        
     _columns = {
                 'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
@@ -668,6 +677,7 @@ class plm_document(osv.osv):
                 'printout': fields.binary('Printout Content', help="Print PDF content."),
                 'preview': fields.binary('Preview Content', help="Static preview."),
                 'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
+                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checkout User")
     }    
 
     _defaults = {
@@ -881,7 +891,7 @@ class plm_document(osv.osv):
         checkoutIDs=checkoutType.search(cr,uid,[('documentid', '=',oid)])
         for checkoutID in checkoutIDs:
             objDoc=checkoutType.browse(cr,uid,checkoutID)
-            return(objDoc.documentid.name,objDoc.documentid.revisionid,self.getUserSign(cr,objDoc.userid.id,1),objDoc.hostname)
+            return(objDoc.documentid.name, objDoc.documentid.revisionid, self.getUserSign(cr,objDoc.userid.id,1), objDoc.hostname)
         return False
 
 plm_document()
