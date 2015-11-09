@@ -237,8 +237,10 @@ class plm_document(osv.osv):
                 else:
                     collectable = True
                 if (objDoc.file_size<1) and (objDoc.datas):
-                    objDoc.file_size=len(objDoc.datas)
-                result.append((objDoc.id, objDoc.datas_fname, objDoc.file_size, collectable, isCheckedOutToMe, timeDoc))
+                    file_size=len(objDoc.datas)
+                else:
+                    file_size=objDoc.file_size
+                result.append((objDoc.id, objDoc.datas_fname, file_size, collectable, isCheckedOutToMe, timeDoc))
         return list(set(result))
             
     def copy(self,cr,uid,oid,defaults={},context=None):
@@ -570,6 +572,9 @@ class plm_document(osv.osv):
             return objId
         return False
 
+    def blindwrite(self, cr, uid, ids, vals, context=None,):
+        return super(plm_document,self).write(cr, uid, ids, vals, context=context, check=False)
+
 #   Overridden methods for this entity
     def _get_filestore(self, cr):
         dms_Root_Path=tools.config.get('document_path', os.path.join(tools.config['root_path'], 'filestore'))
@@ -654,7 +659,16 @@ class plm_document(osv.osv):
                 return False
         return True
 #   Overridden methods for this entity
-
+    def _get_checkout_state(self, cr, uid, ids, field_name, args, context={}):
+        outVal = {} # {id:value}
+        for docId in ids:
+            chechRes = self.getCheckedOut(cr, uid, docId, None, context)
+            if chechRes:
+                outVal[docId] = str(chechRes[2])
+            else:
+                outVal[docId] = ''
+        return outVal
+        
     _columns = {
                 'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
@@ -663,6 +677,7 @@ class plm_document(osv.osv):
                 'printout': fields.binary('Printout Content', help="Print PDF content."),
                 'preview': fields.binary('Preview Content', help="Static preview."),
                 'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
+                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checkout User")
     }    
 
     _defaults = {
@@ -876,7 +891,7 @@ class plm_document(osv.osv):
         checkoutIDs=checkoutType.search(cr,uid,[('documentid', '=',oid)])
         for checkoutID in checkoutIDs:
             objDoc=checkoutType.browse(cr,uid,checkoutID)
-            return(objDoc.documentid.name,objDoc.documentid.revisionid,self.getUserSign(cr,objDoc.userid.id,1),objDoc.hostname)
+            return(objDoc.documentid.name, objDoc.documentid.revisionid, self.getUserSign(cr,objDoc.userid.id,1), objDoc.hostname)
         return False
 
 plm_document()
@@ -925,7 +940,14 @@ class plm_checkout(osv.osv):
          
     def unlink(self, cr, uid, ids, context=None):
         if context!=None and context!={}:
-            if uid!=1:
+            res = False
+            groupType=self.pool.get('res.groups')
+            for gId in groupType.search(cr,uid,[('name','=','PLM / Administrator')],context=context):
+                for user in groupType.browse(cr, uid, gId, context).users:
+                    if uid == user.id or uid==1:
+                        res = True
+                        break
+            if not res:
                 logging.warning("unlink : Unable to Check-In the required document.\n You aren't authorized in this context.")
                 raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the required document.\n You aren't authorized in this context."))
                 return False

@@ -20,7 +20,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import os
+import os,sys
 import types
 import cPickle as pickle
 from datetime import datetime
@@ -90,6 +90,8 @@ class plm_component(osv.osv):
         return {
                 'table' : 'PARTS',                          # Used with 'db' transfer
                 'status': ['released',],
+                'fixed' : True,                             # Uses fixded format (specify lenghts)
+                'append' : True,                            # append to existing transfer files (only for part data)
                 'fields':
                     {
                     'name'                  : 'revname',
@@ -101,6 +103,12 @@ class plm_component(osv.osv):
                     'name'                  : 'char',
                     'engineering_revision'  : 'int',
                     'description'           : 'char',
+                    },
+               'lengths':
+                    {
+                    'name'                  : 10,
+                    'engineering_revision'  : 2,
+                    'description'           : 40,
                     },
                 'exitorder' : ['name','engineering_revision','description',],
                 'exitTrans' : ['description',],
@@ -118,6 +126,7 @@ class plm_component(osv.osv):
                 'table': 'BOMS',                           # Destination table name. Used with 'db' transfer
                 'PName': 'parent',                         # Parent column name.     Used with 'db' transfer
                 'CName': 'child',                          # Child column name.      Used with 'db' transfer
+                'fixed' : True,                            # Uses fixded format (specify lenghts)
                 'fields':
                     {
                     'itemnum'               : 'relpos',
@@ -127,6 +136,13 @@ class plm_component(osv.osv):
                     {
                     'itemnum'               : 'int',
                     'product_qty'           : 'float',
+                    },
+                'lengths':
+                    {
+                    'parent'                : 10,           # To be considered also if not mapped explicitely
+                    'child'                 : 10,           # To be considered also if not mapped explicitely
+                    'itemnum'               : 2,
+                    'product_qty'           : 5,
                     },
                 'exitnumber': ['engineering_revision',],
                }
@@ -181,6 +197,7 @@ class plm_component(osv.osv):
                 os.unlink(fileName)
         else:
             self._set_last_session
+#         return "2015-01-01 12:00:00"
         return lastDate.strftime('%Y-%m-%d %H:%M:%S')
 
     @property
@@ -229,7 +246,7 @@ class plm_component(osv.osv):
             for rowData in tmpDataPack['datas']:
                 rectData=[]
                 for fieldName in fieldNames:
-                    dataValue=rowData[indexFields[fieldName]]
+                    dataValue=rowData[fieldName]
                     if not dataValue:
                         if fieldName in fieldsNumeric:
                             rectData.append(0)
@@ -266,21 +283,35 @@ class plm_component(osv.osv):
         """
             Exposed method to execute data transfer to other systems.
         """ 
+#         Reset default encoding. to allow to work fine also as service.
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+#         Reset default encoding. to allow to work fine also as service.
         operation=False
+        fixedformat=False
+        queueFiles=False
         reportStatus='Failed'
         updateDate=self._get_last_session
         logging.debug("[TransferData] Start : %s" %(str(updateDate)))
         transfer=self.get_data_transfer
         part_data_transfer=self.get_part_data_transfer
+        bom_data_transfer=self.get_bom_data_transfer
         datamap=part_data_transfer['fields']
+        if 'fixed' in part_data_transfer:
+            fixedformat=part_data_transfer['fixed']            
+            if 'lengths' in part_data_transfer:
+                partfieldsLength=part_data_transfer['lengths']
+            else:
+                partfieldsLength=False
         if 'exitorder' in part_data_transfer:
             fieldsListed=part_data_transfer['exitorder']
+        if 'append' in part_data_transfer:
+            queueFiles=part_data_transfer['append']
         else:
             fieldsListed=datamap.keys()
         allIDs=self._query_data(cr, uid, updateDate, part_data_transfer['status'])
-        tmpData=self._exportData(cr, uid, allIDs, fieldsListed)
+        tmpData=self._exportData(cr, uid, allIDs, fieldsListed, bom_data_transfer['kind'])
         if tmpData.get('datas'):
-            bom_data_transfer=self.get_bom_data_transfer
             tmpData=self._rectify_data(cr, uid, tmpData, part_data_transfer)
             if 'db' in transfer:
                 import dbconnector
@@ -301,8 +332,12 @@ class plm_component(osv.osv):
                      
             if 'file' in transfer:
                 bomfieldsListed=bom_data_transfer['fields'].keys()
+                if 'lengths' in bom_data_transfer:
+                    bomfieldsLength=bom_data_transfer['lengths']
+                else:
+                    bomfieldsLength=False
                 kindBomname=bom_data_transfer['kind']
-                operation=self._extract_data(cr, uid, allIDs, kindBomname, tmpData, fieldsListed, bomfieldsListed, transfer['file'])
+                operation=self._extract_data(cr, uid, allIDs, queueFiles, fixedformat, kindBomname, tmpData, fieldsListed, bomfieldsListed, transfer['file'],partLengths=partfieldsLength,bomLengths=bomfieldsLength)
 
         if operation:
             updateDate=self._set_last_session
@@ -325,7 +360,7 @@ class plm_component(osv.osv):
         allIDs.extend(self.search(cr,uid,[('create_date','>',updateDate),('state','in',statusList)],order='engineering_revision'))
         return list(set(allIDs))
 
-    def _extract_data(self,cr,uid,allIDs, kindBomname='normal', anag_Data={}, anag_fields=False, rel_fields=False, transferdata={}):
+    def _extract_data(self,cr,uid,allIDs, queueFiles, fixedformat, kindBomname='normal', anag_Data={}, anag_fields=False, rel_fields=False, transferdata={},partLengths={},bomLengths={}):
         """
             action to be executed for Transmitted state.
             Transmit the object to ERP Metodo
@@ -333,9 +368,9 @@ class plm_component(osv.osv):
         
         def getChildrenBom(component, kindName):
             for bomid in component.bom_ids:
-                if not (str(bomid.type).lower()==kindName):
+                if not (str(bomid.type).lower()==kindName.lower()):
                     continue
-                return bomid.bom_lines
+                return bomid.bom_line_ids
             return []
         
         if not anag_fields:
@@ -351,11 +386,13 @@ class plm_component(osv.osv):
             exte='csv'
             fname=datetime.now().isoformat(' ').replace('.','').replace(':','').replace(' ','').replace('-','')+'.'+exte
             bomname="bom"
+            delimiter=','
         else:
             outputpath=transferdata['directory']
             exte="%s" %(str(transferdata['exte']))
             fname="%s.%s" %(str(transferdata['name']),exte)
             bomname="%s" %(str(transferdata['bomname']))
+            delimiter="%s" %(str(transferdata['separator']))
             
         if outputpath==None:
             return True
@@ -364,9 +401,14 @@ class plm_component(osv.osv):
             return False 
 
         filename=os.path.join(outputpath,fname)
-        if not self._export_csv(filename, anag_Data['labels'], anag_Data, True):
-            raise osv.except_osv(_('Export Data Error'), _("Writing operations on file (%s) have failed." %(filename)))
-            return False
+        if fixedformat and (partLengths and bomLengths):
+            if not self._export_fixed(filename, anag_Data['labels'], anag_Data, False, partLengths, bomLengths,queueFiles):
+                raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
+                return False
+        else:
+            if not self._export_csv(filename, anag_Data['labels'], anag_Data, True, delimiter, queueFiles):
+                raise osv.except_osv(_('Export Data Error'), _("Writing operations on file (%s) have failed." %(filename)))
+                return False
         
         ext_fields=['parent','child']
         ext_fields.extend(rel_fields)
@@ -382,12 +424,17 @@ class plm_component(osv.osv):
             if dataSet:
                 expData={'datas': dataSet}
                 
-                if not self._export_csv(filename, ext_fields, expData, True):
-                    raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
-                    return False
+                if fixedformat and (partLengths and bomLengths):
+                    if not self._export_fixed(filename, ext_fields, expData, False, partLengths, bomLengths):
+                        raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
+                        return False
+                else:
+                    if not self._export_csv(filename, ext_fields, expData, True, delimiter, False):
+                        raise osv.except_osv(_('Export Data Error'), _("No Bom extraction files was generated, about entity (%s)." %(fname)))
+                        return False
         return True
 
-    def _export_csv(self, fname, fields=[], result={}, write_title=False):
+    def _export_fixed(self, fname, fields=[], result={}, write_title=False, partLengths={}, bomLengths={}, appendFlag=False):
         import csv, stat
         if not ('datas' in result) or not result:
             logging.error("_export_csv : No 'datas' in result.")
@@ -398,21 +445,41 @@ class plm_component(osv.osv):
             return False
         
         try:
-            fp = file(fname, 'wb+')
-            writer = csv.writer(fp)
-            if write_title:
-                writer.writerow(fields)
+            existsFile=False
+            if os.path.exists(fname):
+                existsFile=True
+            operational='wb+'
+            if appendFlag:
+                operational='ab+'
+            fp = file(fname, operational)
+#             if write_title:
+#                 if not appendFlag:
+#                     writer.writerow(fields)
+#                 else:
+#                     if not existsFile:
+#                         writer.writerow(fields)
             results=result['datas']
             for datas in results:
-                row = []
+                row = ""
+                count=0
                 for data in datas:
+                    fieldLen=-1
                     if (type(data) is types.StringType):
-                        row.append(str(data).replace('\n',' ').replace('\t',' '))
+                        value=str(data).replace('\n',' ').replace('\t','').strip()
                     if (type(data) is types.UnicodeType):
-                        row.append(unicode(str(data),'utf8').replace('\n',' ').replace('\t',' '))
+                        value=data.decode('utf8','ignore').replace('\n','').replace('\t','').strip()
                     else:
-                        row.append(str(data) or '')
-                writer.writerow("%r" %(row))
+                        value=(str(data).strip() or '')
+                    fieldName=fields[count]
+                    if fieldName in partLengths.keys():
+                        fieldLen=partLengths[fieldName]
+                    elif fieldName in bomLengths.keys():
+                        fieldLen=bomLengths[fieldName]                        
+                    if (fieldLen<0):
+                        continue
+                    row +=value.ljust(fieldLen)[:fieldLen]
+                    count+=1
+                fp.write(row+'\n')
             fp.close()
             os.chmod(fname, stat.S_IRWXU|stat.S_IRWXO|stat.S_IRWXG)
             return True
@@ -420,25 +487,64 @@ class plm_component(osv.osv):
             logging.error("_export_csv : IOError : "+str(errno)+" ("+str(strerror)+").")
             return False
 
-    def _exportData(self, cr, uid, ids, fields=[]):
+    def _export_csv(self, fname, fields=[], result={}, write_title=False, delimiter=',', appendFlag=False):
+        import csv, stat
+        if not ('datas' in result) or not result:
+            logging.error("_export_csv : No 'datas' in result.")
+            return False
+
+        if not fields:
+            logging.error("_export_csv : No 'fields' in result.")
+            return False
+        
+        try:
+            existsFile=False
+            if os.path.exists(fname):
+                existsFile=True
+            operational='wb+'
+            if appendFlag:
+                operational='ab+'
+            fp = file(fname, operational)
+            writer = csv.writer(fp,delimiter=delimiter)
+            if write_title:
+                if not appendFlag:
+                    writer.writerow(fields)
+                else:
+                    if not existsFile:
+                        writer.writerow(fields)
+            results=result['datas']
+            for datas in results:
+                row = []
+                for data in datas:
+                    if (type(data) is types.StringType):
+                        row.append(str(data).replace('\n','').replace('\t','').strip())
+                    if (type(data) is types.UnicodeType):
+                        row.append(data.decode('utf8','ignore').replace('\n','').replace('\t','').strip())
+                    else:
+                        row.append(str(data).strip() or '')
+                writer.writerow(row)
+            fp.close()
+            os.chmod(fname, stat.S_IRWXU|stat.S_IRWXO|stat.S_IRWXG)
+            return True
+        except IOError, (errno, strerror):
+            logging.error("_export_csv : IOError : "+str(errno)+" ("+str(strerror)+").")
+            return False
+
+    def _exportData(self, cr, uid, ids, fields=[], bomType='normal'):
         """
             Export data about product and BoM
         """
         listData=[]
-        oid=self.browse(cr,uid,ids,context=None)
-        if oid:
-            if len(oid.bom_line_ids):
-                prod_names=oid.bom_line_ids[0].product_id._all_columns.keys()
-                bom_names=oid.bom_line_ids[0]._all_columns.keys()
-                for bom_line in oid.bom_line_ids:
-                    row_data={}
-                    for field in fields:
-                        if field in prod_names:
-                            row_data[field]=bom_line.product_id[field]
-                        if field in bom_names:
-                            row_data[field]=bom_line[field]
-                    if row_data:
-                        listData.append(row_data)
+        oids=self.browse(cr,uid,ids,context=None)
+        for oid in oids:
+            row_data={}
+            prod_names=oid._all_columns.keys()
+            for field in fields:
+                if field in prod_names:
+                    row_data[field]=oid[field]
+            if row_data:
+                listData.append(row_data)
+                
         return {'datas':listData}
 
 plm_component()
