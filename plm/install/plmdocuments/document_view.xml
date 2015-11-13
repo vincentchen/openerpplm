@@ -110,6 +110,7 @@
                 <field name="name" select="True"/>
                 <field name="revisionid" select="True"/>
                 <field name="state" select="True"/>
+                <field name="parent_id"/>
                 <field name="checkout_user"/>
                 <field name="datas_fname" select="True"/>
                 <field name="create_uid" select="True"/>
