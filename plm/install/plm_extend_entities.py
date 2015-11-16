@@ -243,9 +243,11 @@ class plm_document_relation(osv.osv):
                 'parent_preview': fields.related('parent_id','preview',type="binary",relation="plm.document",string="Preview",store=False),
                 'parent_state': fields.related('parent_id','state',type="char",relation="plm.document",string="Status",store=False),
                 'parent_revision': fields.related('parent_id','revisionid',type="integer",relation="plm.document",string="Revision",store=False),
+                'parent_checkedout': fields.related('parent_id','checkout_user',type="char",relation="plm.document",string="Checked-Out To",store=False),
                 'child_preview': fields.related('child_id','preview',type="binary",relation="plm.document",string="Preview",store=False),
                 'child_state': fields.related('child_id','state',type="char",relation="plm.document",string="Status",store=False),
                 'child_revision': fields.related('child_id','revisionid',type="integer",relation="plm.document",string="Revision",store=False),
+                'child_checkedout': fields.related('child_id','checkout_user',type="char",relation="plm.document",string="Checked-Out To",store=False),
               }
 plm_document_relation()
 

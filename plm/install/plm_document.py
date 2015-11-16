@@ -677,7 +677,7 @@ class plm_document(osv.osv):
                 'printout': fields.binary('Printout Content', help="Print PDF content."),
                 'preview': fields.binary('Preview Content', help="Static preview."),
                 'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
-                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checkout User")
+                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checked-Out to")
     }    
 
     _defaults = {
