@@ -128,6 +128,7 @@ class plm_relation(osv.osv):
         """
         if properties is None:
             properties = []
+        domain = ['&',('type', '=', bomType)]
         if product_id:
             domain = ['&',('type', '=', bomType)]
             if not product_tmpl_id:
