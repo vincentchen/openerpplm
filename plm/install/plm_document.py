@@ -676,8 +676,11 @@ class plm_document(osv.osv):
         
     def _is_checkout(self, cr, uid, ids, field_name, args, context={}):
         outRes = {}
-        for _id, username in self._get_checkout_state(cr, uid, ids, field_name, args, context).items():
-            outRes[_id] = len(username)==0          # I don't know why but if "len(username)==0" is True field becomes False and otherwise
+        for docId in ids:
+            outRes[docId] = False
+            chechRes = self.getCheckedOut(cr, uid, docId, None, context)
+            if chechRes:
+                outRes[docId] = True
         return outRes
         
     _columns = {
@@ -689,7 +692,7 @@ class plm_document(osv.osv):
                 'preview': fields.binary('Preview Content', help="Static preview."),
                 'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
                 'checkout_user':fields.function(_get_checkout_state, type='char', string="Checked-Out to"),
-                 'is_checkout':fields.function(_is_checkout, type='boolean', string="Is Checked-Out", store=True)
+                'is_checkout':fields.function(_is_checkout, type='boolean', string="Is Checked-Out", store=False)
     }    
 
     _defaults = {
