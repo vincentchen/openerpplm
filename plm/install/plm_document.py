@@ -236,7 +236,12 @@ class plm_document(osv.osv):
                     collectable = isNewer and not(isCheckedOutToMe)
                 else:
                     collectable = True
-                if (objDoc.file_size<1) and (objDoc.datas):
+                objDatas = False
+                try:
+                    objDatas = objDoc.datas
+                except Exception,ex:
+                    logging.error('Document with "id": %s  and "name": %s may contains no data!!         Exception: %s' % (objDoc.id, objDoc.name, ex))
+                if (objDoc.file_size<1) and (objDatas):
                     file_size=len(objDoc.datas)
                 else:
                     file_size=objDoc.file_size
@@ -669,6 +674,12 @@ class plm_document(osv.osv):
                 outVal[docId] = ''
         return outVal
         
+    def _is_checkout(self, cr, uid, ids, field_name, args, context={}):
+        outRes = {}
+        for _id, username in self._get_checkout_state(cr, uid, ids, field_name, args, context).items():
+            outRes[_id] = len(username)==0          # I don't know why but if "len(username)==0" is True field becomes False and otherwise
+        return outRes
+        
     _columns = {
                 'usedforspare': fields.boolean('Used for Spare',help="Drawings marked here will be used printing Spare Part Manual report."),
                 'revisionid': fields.integer('Revision Index', required=True),
@@ -676,8 +687,9 @@ class plm_document(osv.osv):
                 'datas': fields.function(_data_get,method=True,fnct_inv=_data_set,string='File Content',type="binary"),
                 'printout': fields.binary('Printout Content', help="Print PDF content."),
                 'preview': fields.binary('Preview Content', help="Static preview."),
-                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True", required=True),
-                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checked-Out to")
+                'state':fields.selection(USED_STATES,'Status', help="The status of the product.", readonly="True"),
+                'checkout_user':fields.function(_get_checkout_state, type='char', string="Checked-Out to"),
+                 'is_checkout':fields.function(_is_checkout, type='boolean', string="Is Checked-Out", store=True)
     }    
 
     _defaults = {
