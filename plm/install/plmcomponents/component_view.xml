@@ -78,10 +78,12 @@
         <field name="arch" type="xml">
 			<xpath expr="//sheet" position="before">
              	<header>
-	                <button name="release" states="confirmed" string="Release Component" type="workflow" icon="gtk-apply" class="oe_highlight"/>
-	                <button name="correct" states="confirmed" string="Correct Component" type="workflow" icon="gtk-cancel" />
-	                <button name="confirm" states="draft" string="Confirm Component" type="workflow" icon="gtk-go-forward" class="oe_highlight"/>
-	                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,released" statusbar_colors='{"undermodify":"red","obsoleted":"red"}' />
+         			<group name="WFArea">
+		                <button name="release" states="confirmed" string="Release Component" type="workflow" icon="gtk-apply" class="oe_highlight"/>
+		                <button name="correct" states="confirmed" string="Correct Component" type="workflow" icon="gtk-cancel" />
+		                <button name="confirm" states="draft" string="Confirm Component" type="workflow" icon="gtk-go-forward" class="oe_highlight"/>
+		                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,released" statusbar_colors='{"undermodify":"red","obsoleted":"red"}' />
+                    </group>
 	            </header>
             </xpath>
             
@@ -292,7 +294,8 @@
     <menuitem name="Search on Engineering Parts" 
               action="action_plm_component_base"
               id="menu_base_component"
-              parent="plm_component_menu_view"/>
+              parent="plm_component_menu_view"
+              groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
 
 </data>
 </openerp>

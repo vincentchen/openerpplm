@@ -2,8 +2,9 @@
 <openerp>
 <data>
 
-    <menuitem name="Component Relations View" id="plm_menu_relation" parent="plm_menu" sequence="12"/>
- 
+    <menuitem name="Component Relations View" id="plm_menu_relation" parent="plm_menu" sequence="12"
+                 groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
+    
 <!-- View customization on MRP -->
 
         <record id="plm_bom_component_tree_view" model="ir.ui.view">

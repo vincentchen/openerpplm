@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <menuitem name="Documents View" id="plm_document_form" parent="plm_menu" sequence="11"/>
+    <menuitem name="Documents View" id="plm_document_form" parent="plm_menu" sequence="11"
+    		groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
+    		
     <record model="ir.ui.view" id="view_plm_document">
         <field name="name">plm.document</field>
         <field name="model">plm.document</field>
