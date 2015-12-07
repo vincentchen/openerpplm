@@ -2,7 +2,8 @@
 <openerp>
 <data>
     
-    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
+    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"
+    				groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
 
     <record model="ir.ui.view" id="plm_component_tree">
         <field name="name">plm.component</field>
@@ -294,8 +295,7 @@
     <menuitem name="Search on Engineering Parts" 
               action="action_plm_component_base"
               id="menu_base_component"
-              parent="plm_component_menu_view"
-              groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
+              parent="plm_component_menu_view"/>
 
 </data>
 </openerp>
