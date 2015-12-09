@@ -250,7 +250,9 @@
                         <field colspan="4" name="description_purchase" nolabel="1"/>
                    </page>
                    <page string="Linked Documents">
-                        <field name="linkeddocuments"/>
+                		<group name="LKDocs">
+	                        <field name="linkeddocuments"/>
+                  		</group>
                    </page>
                 </notebook>
             </form>
