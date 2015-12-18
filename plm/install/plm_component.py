@@ -100,6 +100,7 @@ class plm_component(osv.osv):
 
 ##  Customized Automations
     def on_change_name(self, cr, uid, oid, name=False, engineering_code=False):
+        print 'on_change name'
         if name:
             results=self.search(cr,uid,[('name','=',name)])
             if len(results) > 0:
