@@ -606,7 +606,8 @@ class plm_component(osv.osv):
         if values:
             values = values[0]
         if language and values:
-            toRead = filter(lambda x: isinstance(x,str) and x !='',values.values()) # Where computed only string and not null string values (for performance improvement)
+            toRead = filter(lambda x: type(x) in [str, unicode] and x,values.values()) # Where computed only string and not null string values (for performance improvement)
+            toRead = list(set(toRead))                                                 # Remove duplicates
             for fieldName, valueToTranslate in values.items():
                 if valueToTranslate not in toRead:
                     continue
