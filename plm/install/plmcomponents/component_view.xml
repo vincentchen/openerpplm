@@ -2,7 +2,8 @@
 <openerp>
 <data>
     
-    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"/>
+    <menuitem id="plm_component_menu_view" name="Components View" parent="plm_menu" sequence="10"
+    				groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
 
     <record model="ir.ui.view" id="plm_component_tree">
         <field name="name">plm.component</field>
@@ -78,10 +79,12 @@
         <field name="arch" type="xml">
 			<xpath expr="//sheet" position="before">
              	<header>
-	                <button name="release" states="confirmed" string="Release Component" type="workflow" icon="gtk-apply" class="oe_highlight"/>
-	                <button name="correct" states="confirmed" string="Correct Component" type="workflow" icon="gtk-cancel" />
-	                <button name="confirm" states="draft" string="Confirm Component" type="workflow" icon="gtk-go-forward" class="oe_highlight"/>
-	                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,released" statusbar_colors='{"undermodify":"red","obsoleted":"red"}' />
+         			<group name="WFArea">
+		                <button name="release" states="confirmed" string="Release Component" type="workflow" icon="gtk-apply" class="oe_highlight"/>
+		                <button name="correct" states="confirmed" string="Correct Component" type="workflow" icon="gtk-cancel" />
+		                <button name="confirm" states="draft" string="Confirm Component" type="workflow" icon="gtk-go-forward" class="oe_highlight"/>
+		                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,released" statusbar_colors='{"undermodify":"red","obsoleted":"red"}' />
+                    </group>
 	            </header>
             </xpath>
             
@@ -89,8 +92,8 @@
                 <page string="Engineering Infos">
                     <group colspan="4" col="4" string="Part Number Area">
                         <group colspan="4" col="4" name="PNArea">
-                            <field name="engineering_code" select="1" attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
-                            <field name="engineering_revision" readonly="True" colspan="2"/>
+                            <field name="engineering_code" 		select="1" 		attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
+                            <field name="engineering_revision" 	readonly="True" colspan="2"/>
                         </group>
                     </group>
                     <separator colspan="4" string="Normalization Area"/>
@@ -99,19 +102,19 @@
 							<group colspan="4" col="4" name="DescArea">
 								<separator string="Standard Description" colspan="4"/>
 							    <group col="4" colspan="2">
-							        <field name="std_description" nolabel="1" on_change="on_change_stddesc(std_description)"/>
+							        <field name="std_description" attrs="{'readonly':[('state','=','released')]}"  nolabel="1" on_change="on_change_stddesc(std_description)"/>
 							    </group>
                         	</group>
                             <group colspan="4" col="4" name="TechSpec">
                             	<separator string="Technical Specifications" colspan="4"/>
-                                <field name="tmp_material" on_change="on_change_tmpmater(tmp_material)"/>
-                                <field name="tmp_surface"  on_change="on_change_tmpsurface(tmp_surface)"/>
+                                <field name="tmp_material" attrs="{'readonly':[('state','=','released')]}"  on_change="on_change_tmpmater(tmp_material)"/>
+                                <field name="tmp_surface"  attrs="{'readonly':[('state','=','released')]}"  on_change="on_change_tmpsurface(tmp_surface)"/>
                         	</group>
                         </group>
                         <group colspan="4" col="4" name="TBlock">
                             <separator string="TitleBlock Informations" colspan="4"/>
-                            <field name="engineering_material"/>
-                            <field name="engineering_surface"/>
+                            <field name="engineering_material" attrs="{'readonly':[('state','=','released')]}" />
+                            <field name="engineering_surface" attrs="{'readonly':[('state','=','released')]}" />
                             <newline/>
                         </group>
                     </sheet>
@@ -199,55 +202,51 @@
 								<separator string="LifeCycle Status" colspan="2"/>
 								<field name="state"/>
 		                    </group>
-	                     	<group col="2" colspan="2">
-	     	             		<separator colspan="2" string="WorkFlow Actions"/>
-		                        <button name="release" states="confirmed" string="Release Component" icon="gtk-apply"/>
-		                        <button name="correct" states="confirmed" string="Correct Component" icon="gtk-cancel"/>
-		                        <button name="confirm" states="draft" string="Confirm Component" icon="gtk-go-forward"/>
-	                     	</group>
 	                     </group>
         	    		<separator colspan="4" col="1" />
                 	    <group colspan="4" col="4" string="Normalization Area" name="NMArea">
 							<group colspan="4" col="4" name="DescArea">
 								<separator string="Standard Description" colspan="4"/>
 							    <group col="1" colspan="4">
-							        <field name="std_description" nolabel="1" on_change="on_change_stddesc(std_description)"/>
+							        <field name="std_description" attrs="{'readonly':[('state','=','released')]}" nolabel="1" on_change="on_change_stddesc(std_description)"/>
 							    </group>
                         	</group>
                     		<group colspan="4" col="4" name="TechSpec">
-                   				<field name="tmp_material" colspan="2" on_change="on_change_tmpmater(tmp_material)"/>
-                 				<field name="tmp_surface" colspan="2" on_change="on_change_tmpsurface(tmp_surface)"/>
+                   				<field name="tmp_material" 	colspan="2" attrs="{'readonly':[('state','=','released')]}" on_change="on_change_tmpmater(tmp_material)"/>
+                 				<field name="tmp_surface" 	colspan="2" attrs="{'readonly':[('state','=','released')]}" on_change="on_change_tmpsurface(tmp_surface)"/>
                      		</group>
                     		<group colspan="4" col="4">
 	 	                        <group colspan="2" col="2" name="Weigth">
 		                     		<separator string="Weight" />
-		                            <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
+		                            <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service'),('state','=','released')]}"/>
 	                      		</group>
 	 	                        <group colspan="2" col="2" name="uom">
 		                          	<separator string="Unit of Measure" colspan="2"/>
-		                            <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)"/>
-		                            <field name="uom_po_id" groups="base.group_extended"/>
+		                            <field name="uom_id" 	attrs="{'readonly':[('state','=','released')]}" on_change="onchange_uom(uom_id,uom_po_id)"/>
+		                            <field name="uom_po_id" attrs="{'readonly':[('state','=','released')]}" groups="base.group_extended"/>
 	  	                        </group>
   	                        </group>
                  	    </group>
                     	<group colspan="4" col="4">
                     		<group colspan="4" col="4" name="TBlock">
 	                            <separator string="TitleBlock Informations" colspan="4"/>
-	                   			<field name="engineering_material" colspan="2"/>
-	                			<field name="engineering_surface" colspan="2"/>
+	                   			<field name="engineering_material" 	attrs="{'readonly':[('state','=','released')]}" colspan="2"/>
+	                			<field name="engineering_surface" 	attrs="{'readonly':[('state','=','released')]}" colspan="2"/>
                      		</group>
                  		</group>
                    </page>
                    <page string="Descriptions">
                         <separator string="Description"/>
-                        <field colspan="4" name="description" nolabel="1"/>
+                        <field colspan="4" name="description" 			nolabel="1"/>
                         <separator string="Sale Description"/>
-                        <field colspan="4" name="description_sale" nolabel="1"/>
+                        <field colspan="4" name="description_sale" 		nolabel="1"/>
                         <separator string="Purchase Description"/>
-                        <field colspan="4" name="description_purchase" nolabel="1"/>
+                        <field colspan="4" name="description_purchase" 	nolabel="1"/>
                    </page>
                    <page string="Linked Documents">
-                        <field name="linkeddocuments"/>
+                		<group name="LKDocs">
+	                        <field name="linkeddocuments"/>
+                  		</group>
                    </page>
                 </notebook>
             </form>

@@ -34,6 +34,7 @@ USEDIC_STATES=dict(USED_STATES)
 #STATESRELEASABLE=['confirmed','transmitted','released','undermodify','obsoleted']
 
 class plm_component(osv.osv):
+    _name = 'product.product'
     _inherit = 'product.product'
     _columns = {
                 'create_date': fields.datetime('Date Created', readonly=True),
@@ -99,6 +100,7 @@ class plm_component(osv.osv):
 
 ##  Customized Automations
     def on_change_name(self, cr, uid, oid, name=False, engineering_code=False):
+        print 'on_change name'
         if name:
             results=self.search(cr,uid,[('name','=',name)])
             if len(results) > 0:
@@ -121,6 +123,8 @@ class plm_component(osv.osv):
             exitValues['name']=newEnt.name
             exitValues['engineering_code']=newEnt.engineering_code
             exitValues['engineering_revision']=newEnt.engineering_revision
+            exitValues['engineering_writable']=True
+            exitValues['state']='draft'
         return exitValues
 
 #     def newVersion(self,cr,uid,ids,context=None):
@@ -215,13 +219,13 @@ class plm_component(osv.osv):
             else:
                 existingID=existingID[0]
                 objPart=self.browse(cr, uid, existingID, context=context)
+                part['name']=objPart.name
                 if (self.getUpdTime(objPart)<datetime.strptime(part['lastupdate'],'%Y-%m-%d %H:%M:%S')):
                     if self._iswritable(cr,uid,objPart):
                         del(part['lastupdate'])
                         if not self.write(cr,uid,[existingID], part , context=context, check=True):
                             raise osv.except_osv(_('Update Part Error'), _("Part %r cannot be updated" %(part['engineering_code'])))
                         hasSaved=True
-                part['name']=objPart.name
             part['componentID']=existingID
             part['hasSaved']=hasSaved
             retValues.append(part)

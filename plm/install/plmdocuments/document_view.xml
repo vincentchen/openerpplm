@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <menuitem name="Documents View" id="plm_document_form" parent="plm_menu" sequence="11"/>
+    <menuitem name="Documents View" id="plm_document_form" parent="plm_menu" sequence="11"
+    		groups="group_plm_admin,group_plm_integrationuser,group_plm_viewuser"/>
+    		
     <record model="ir.ui.view" id="view_plm_document">
         <field name="name">plm.document</field>
         <field name="model">plm.document</field>
@@ -10,14 +12,15 @@
         <field name="arch" type="xml">
             <form string="Document"  version="7.0">
                <header>
-                    <button name="release" states="confirmed" string="Release Document" icon="gtk-apply" class="oe_highlight"/>
+                    <button name="release" states="confirmed" string="Release Document" icon="gtk-apply" class="oe_highlight" attrs="{'invisible': ['|',('is_checkout','=',True)]}"/>
                     <button name="correct" states="confirmed" string="Correct Document" icon="gtk-cancel"/>
-                    <button name="confirm" states="draft" string="Confirm Document" icon="gtk-go-forward" class="oe_highlight"/>
+                    <button name="confirm"  states="draft" string="Confirm Document" icon="gtk-go-forward" class="oe_highlight" attrs="{'invisible': ['|',('is_checkout','=',True)]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,released" statusbar_colors='{"undermodify":"red","obsoleted":"red"}' readonly="1"/>
                </header>
                <sheet>
+               		
 	               <label for="name" class="oe_edit_only"/>
-	               <group colspan="4" col="4" name="DocData">
+	               <group colspan="4" col="4" name="DocData"> 
 	 					<group colspan="4" col="4">
 		 					<group colspan="2" col="2">
 			                    <field name="name" select="1" attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
@@ -53,6 +56,10 @@
 		                        <group col="2" colspan="2">
 		                            <field name="write_uid" readonly="1"/>
 		                            <field name="write_date" readonly="1"/>
+		                        </group>
+		                        <group col="2" colspan="2">
+		                        	<field name="checkout_user" colspan="2"/>
+		                        	<field name="is_checkout" colspan="2"/>
 		                        </group>
 	                        </group>
                             <group col="2" colspan="2" string="Attached To">
@@ -110,7 +117,6 @@
                 <field name="name" select="True"/>
                 <field name="revisionid" select="True"/>
                 <field name="state" select="True"/>
-                <field name="parent_id"/>
                 <field name="checkout_user"/>
                 <field name="datas_fname" select="True"/>
                 <field name="create_uid" select="True"/>
