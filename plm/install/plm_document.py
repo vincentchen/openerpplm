@@ -572,8 +572,12 @@ class plm_document(osv.osv):
             return objId
         return False
 
-    def blindwrite(self, cr, uid, ids, vals, context=None,):
-        return super(plm_document,self).write(cr, uid, ids, vals, context=context, check=False)
+    def blindwrite(self, cr, uid, ids, vals, context=None):
+        """
+            blind write for xml-rpc call for recovering porpouse
+            DO NOT USE FOR COMMON USE !!!!
+        """
+        return self.write(cr, uid, ids, vals, context=context, check=False)
 
 #   Overridden methods for this entity
     def _get_filestore(self, cr):
