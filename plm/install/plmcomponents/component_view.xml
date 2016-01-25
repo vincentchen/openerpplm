@@ -75,7 +75,7 @@
         <field name="model">product.product</field>
         <field name="inherit_id" ref="product.product_normal_form_view"/>
         <field name="type">form</field>
-        <field name="priority" eval="10"/>
+        <field name="priority" eval="5"/>
         <field name="arch" type="xml">
 			<xpath expr="//sheet" position="before">
              	<header>
@@ -96,8 +96,7 @@
                             <field name="engineering_revision" 	readonly="True" colspan="2"/>
                         </group>
                     </group>
-                    <separator colspan="4" string="Normalization Area"/>
-                    <sheet>
+                    <sheet name="info_sheet">
                         <group colspan="4" col="4" name="NMArea">
 							<group colspan="4" col="4" name="DescArea">
 								<separator string="Standard Description" colspan="4"/>
@@ -197,12 +196,10 @@
                    			</group>
                    		</group>
          	    		<separator colspan="4" col="1" />
-	                    <group col="4" colspan="4" string="LifeCycle Area" name="LCArea">
-		                    <group col="2" colspan="2">
-								<separator string="LifeCycle Status" colspan="2"/>
-								<field name="state"/>
-		                    </group>
-	                     </group>
+	                    <group col="2" colspan="2">
+							<separator string="LifeCycle Status" colspan="2"/>
+							<field name="state"/>
+	                    </group>
         	    		<separator colspan="4" col="1" />
                 	    <group colspan="4" col="4" string="Normalization Area" name="NMArea">
 							<group colspan="4" col="4" name="DescArea">
