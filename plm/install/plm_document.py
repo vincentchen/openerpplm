@@ -929,7 +929,7 @@ class plm_checkout(osv.osv):
         'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S")
     }
     _sql_constraints = [
-        ('documentid', 'unique (documentid)', 'The documentid must be unique !') 
+        ('documentid', 'unique (documentid)', _('The documentid must be unique !'))
     ]
 
     def _adjustRelations(self, cr, uid, oids, userid=False):
@@ -1005,7 +1005,7 @@ class plm_document_relation(osv.osv):
                  'userid': lambda *a: False,
     }
     _sql_constraints = [
-        ('relation_uniq', 'unique (parent_id,child_id,link_kind)', 'The Document Relation must be unique !') 
+        ('relation_uniq', 'unique (parent_id,child_id,link_kind)', _('The Document Relation must be unique !')) 
     ]
 
     def SaveStructure(self, cr, uid, relations, level=0, currlevel=0):
@@ -1039,10 +1039,10 @@ class plm_document_relation(osv.osv):
                             self.create(cr, uid, res)
                 else:
                     logging.error("saveChild : Unable to create a relation between documents. One of documents involved doesn't exist. Arguments(" + str(relation) +") ")
-                    raise Exception("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist.")
+                    raise Exception(_("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist."))
             except Exception,ex:
                 logging.error("saveChild : Unable to create a relation. Arguments (%s) Exception (%s)" %(str(relation), str(ex)))
-                raise Exception("saveChild: Unable to create a relation.")
+                raise Exception(_("saveChild: Unable to create a relation."))
             
         savedItems=[]
         if len(relations)<1: # no relation to save 
