@@ -162,31 +162,31 @@ class plm_document(osv.osv):
                                               'printout': printout,
                                               'preview': preview
                                              }, context=context)
-    
+
                 return True
-            except Exception,ex :
+            except Exception, ex:
                 raise except_orm(_('Error in _data_set'), str(ex))
         else:
             return True
-        
+
     def _explodedocs(self, cr, uid, oid, kinds, listed_documents=[], recursion=True):
-        result=[]
-        if (oid in listed_documents):
-            return result
-        documentRelation=self.pool.get('plm.document.relation')
-        docRelIds=documentRelation.search(cr,uid,[('parent_id', '=',oid),('link_kind', 'in',kinds)])
-        if len(docRelIds)==0:
-            return result
-        children=documentRelation.browse(cr,uid,docRelIds)
-        for child in children:
-            if recursion:
-                listed_documents.append(oid)
-                result.extend(self._explodedocs(cr, uid, child.child_id.id, kinds, listed_documents,recursion))
-            result.append(child.child_id.id)
+        result = []
+        documentRelation = self.pool.get('plm.document.relation')
+
+        def getAllDocumentChildId(fromID, kinds):
+            docRelIds = documentRelation.search(cr, uid, [('parent_id', '=', fromID), ('link_kind', 'in', kinds)])
+            children = documentRelation.browse(cr, uid, docRelIds)
+            for child in children:
+                idToAdd = child.child_id.id
+                if idToAdd not in result:
+                    result.append(idToAdd)
+                    if recursion:
+                        getAllDocumentChildId(idToAdd, kinds)
+        getAllDocumentChildId(oid, kinds)
         return result
 
     def _relateddocs(self, cr, uid, oid, kinds, listed_documents=[], recursion=True):
-        result=[]
+        result = []
         if (oid in listed_documents):
             return result
         documentRelation=self.pool.get('plm.document.relation')
@@ -768,31 +768,25 @@ class plm_document(osv.osv):
         """
             Evaluate documents to return
         """
-        forceFlag=False
-        listed_models=[]
-        listed_documents=[]
-        oid, listedFiles, selection = request        
-        if selection == False:
-            selection=1
-        if selection<0:
-            forceFlag=True
-            selection=selection*(-1)
-
-        kind='LyTree'   # Get relations due to layout connected
-        docArray=self._relateddocs(cr, uid, oid, [kind], listed_documents)
-
-        kind='HiTree'   # Get Hierarchical tree relations due to children
-        modArray=self._explodedocs(cr, uid, oid, [kind], listed_models)
-        for item in docArray:
-            if item not in modArray:
-                modArray.append(item)
-        docArray=modArray  
+        forceFlag = False
+        listed_models = []
+        listed_documents = []
+        outIds = []
+        oid, listedFiles, selection = request
+        outIds.append(oid)
+        if selection is False:
+            selection = 1
+        if selection < 0:
+            forceFlag = True
+            selection = selection * (-1)
+        # Get relations due to layout connected
+        docArray = self._relateddocs(cr, uid, oid, ['LyTree'], listed_documents)
+        # Get Hierarchical tree relations due to children
+        modArray = self._explodedocs(cr, uid, oid, ['HiTree'], listed_models)
+        outIds = list(set(outIds + modArray + docArray))
         if selection == 2:
-            docArray=self._getlastrev(cr, uid, docArray, context)
-        
-        if not oid in docArray:
-            docArray.append(oid)     # Add requested document to package
-        return self._data_check_files(cr, uid, docArray, listedFiles, forceFlag, context)
+            outIds = self._getlastrev(cr, uid, outIds, context)
+        return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
     def GetSomeFiles(self, cr, uid, request, default=None, context=None):
         """
@@ -929,7 +923,7 @@ class plm_checkout(osv.osv):
         'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S")
     }
     _sql_constraints = [
-        ('documentid', 'unique (documentid)', 'The documentid must be unique !') 
+        ('documentid', 'unique (documentid)', _('The documentid must be unique !'))
     ]
 
     def _adjustRelations(self, cr, uid, oids, userid=False):
@@ -1005,7 +999,7 @@ class plm_document_relation(osv.osv):
                  'userid': lambda *a: False,
     }
     _sql_constraints = [
-        ('relation_uniq', 'unique (parent_id,child_id,link_kind)', 'The Document Relation must be unique !') 
+        ('relation_uniq', 'unique (parent_id,child_id,link_kind)', _('The Document Relation must be unique !')) 
     ]
 
     def SaveStructure(self, cr, uid, relations, level=0, currlevel=0):
@@ -1039,10 +1033,10 @@ class plm_document_relation(osv.osv):
                             self.create(cr, uid, res)
                 else:
                     logging.error("saveChild : Unable to create a relation between documents. One of documents involved doesn't exist. Arguments(" + str(relation) +") ")
-                    raise Exception("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist.")
+                    raise Exception(_("saveChild: Unable to create a relation between documents. One of documents involved doesn't exist."))
             except Exception,ex:
                 logging.error("saveChild : Unable to create a relation. Arguments (%s) Exception (%s)" %(str(relation), str(ex)))
-                raise Exception("saveChild: Unable to create a relation.")
+                raise Exception(_("saveChild: Unable to create a relation."))
             
         savedItems=[]
         if len(relations)<1: # no relation to save 
