@@ -122,7 +122,7 @@ class plm_component(osv.osv):
             exitValues['_id']=newID
             exitValues['name']=newEnt.name
             exitValues['engineering_code']=newEnt.engineering_code
-            exitValues['engineering_revision']=newEnt.engineering_revision
+            exitValues['engineering_revision']=newEnt.engineering_revision  # Always equal to 0 because forced by copy overload method
             exitValues['engineering_writable']=True
             exitValues['state']='draft'
         return exitValues

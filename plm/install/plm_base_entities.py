@@ -287,8 +287,7 @@ class plm_relation(osv.osv):
 
     def _getpackdatas(self, cr, uid, relDatas):
         prtDatas={}
-        tmpbuf=(((str(relDatas).replace('[','')).replace(']','')).replace('(','')).replace(')','').split(',')
-        tmpids=[int(tmp) for tmp in tmpbuf if len(tmp.strip()) > 0]
+        tmpids = self.getListIdsFromStructure(relDatas)
         if len(tmpids)<1:
             return prtDatas
         compType=self.pool.get('product.product')
@@ -300,23 +299,33 @@ class plm_relation(osv.osv):
             prtDatas[str(tmpData['id'])]=tmpData
         return prtDatas
 
+    def getListIdsFromStructure(self, structure):
+        '''
+            Convert from [id1,[[id2,[]]]] to [id1,id2]
+        '''
+        outList = []
+        if len(structure) == 2:
+            treeListIds = structure[1]
+            outList.append(structure[0])
+            if treeListIds:
+                outList.extend(self.getListIdsFromStructure(treeListIds[0]))
+        return outList
+        
     def _getpackreldatas(self, cr, uid, relDatas, prtDatas):
         relids={}
         relationDatas={}
-        tmpbuf=(((str(relDatas).replace('[','')).replace(']','')).replace('(','')).replace(')','').split(',')
-        tmpids=[int(tmp) for tmp in tmpbuf if len(tmp.strip()) > 0]
-        if len(tmpids)<1:
+        tmpids = self.getListIdsFromStructure(relDatas)
+        if len(tmpids) < 1:
             return prtDatas
         for keyData in prtDatas.keys():
-            tmpData=prtDatas[keyData]
-            if len(tmpData['bom_ids'])>0:
-                relids[keyData]=tmpData['bom_ids'][0]
-
-        if len(relids)<1:
+            tmpData = prtDatas[keyData]
+            if len(tmpData['bom_ids']) > 0:
+                relids[keyData] = tmpData['bom_ids'][0]
+        if len(relids) < 1:
             return relationDatas
-        setobj=self.pool.get('mrp.bom')
+        setobj = self.pool.get('mrp.bom')
         for keyData in relids.keys():
-            relationDatas[keyData]=setobj.read(cr, uid, relids[keyData])
+            relationDatas[keyData] = setobj.read(cr, uid, relids[keyData])
         return relationDatas
 
     def GetWhereUsed(self, cr, uid, ids, context=None):
@@ -354,51 +363,63 @@ class plm_relation(osv.osv):
             for bom_line in bid.bom_line_ids:
                 if check and (bom_line.product_id.id in self._packed):
                     continue
-                innerids=self._explodebom(cr, uid, self._getbom(cr, uid, bom_line.product_id.id), check)
+                innerids=self._explodebom(cr, uid, self._getbom(cr, uid, bom_line.product_id.product_tmpl_id.id), check)
                 self._packed.append(bom_line.product_id.id)
                 output.append([bom_line.product_id.id, innerids])
         return(output)
 
+    def GetTmpltIdFromProductId(self, cr, uid, product_id=False):
+        if not product_id:
+            return False
+        tmplDict = self.pool.get('product.product').read(cr , uid, product_id, ['product_tmpl_id'])  #tmplDict = {'product_tmpl_id': (tmpl_id, u'name'), 'id': product_product_id}
+        tmplTuple = tmplDict.get('product_tmpl_id', {})
+        if len(tmplTuple) == 2:
+            return tmplTuple[0]
+        
     def GetExploseSum(self, cr, uid, ids, context=None):
         """
             Return a list of all children in a Bom taken once (all levels)
         """
         self._packed=[]
-        relDatas=[ids[0],self._explodebom(cr, uid, self._getbom(cr, uid, ids[0]), True)]
-        prtDatas=self._getpackdatas(cr, uid, relDatas)
+        prodTmplId      = self.GetTmpltIdFromProductId(cr, uid, ids[0])
+        bomId           = self._getbom(cr, uid, prodTmplId)
+        explosedBomIds  = self._explodebom(cr, uid, bomId, True)
+        relDatas        = [ids[0],explosedBomIds]
+        prtDatas        = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
     def _implodebom(self, cr, uid, bomObjs):
         """
             Execute implosion for a a bom object
         """
-        pids=[]
+        pids = []
         for bomObj in bomObjs:
             if not bomObj.bom_id:
                 continue
             if bomObj.bom_id.id in self._packed:
                 continue
             self._packed.append(bomObj.bom_id.id)
-            bomFthObj=self.browse(cr,uid,[bomObj.bom_id.id],context=None)
-            innerids=self._implodebom(cr, uid, self._getinbom(cr, uid, bomFthObj.product_tmpl_id.id))
-            pids.append((bomFthObj.product_tmpl_id.id,innerids))
+            bomFthObj   = self.browse(cr,uid,[bomObj.bom_id.id],context=None)
+            innerids    = self._implodebom(cr, uid, self._getinbom(cr, uid, bomFthObj.product_id.id))
+            pids.append((bomFthObj.product_id.id,innerids))
         return (pids)
 
     def GetWhereUsedSum(self, cr, uid, ids, context=None):
         """
             Return a list of all fathers of a Part (all levels)
         """
-        self._packed=[]
-        relDatas=[]
+        self._packed = []
+        relDatas = []
         if len(ids)<1:
             return None
-        sid=False
+        sid = False
         if len(ids)>1:
-            sid=ids[1]
-        oid=ids[0]
+            sid = ids[1]
+        oid = ids[0]
         relDatas.append(oid)
-        relDatas.append(self._implodebom(cr, uid, self._getinbom(cr, uid, oid, sid)))
-        prtDatas=self._getpackdatas(cr, uid, relDatas)
+        bomId       = self._getinbom(cr, uid, oid, sid)
+        relDatas.append(self._implodebom(cr, uid, bomId))
+        prtDatas    = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
     def GetExplodedBom(self, cr, uid, ids, level=0, currlevel=0):
