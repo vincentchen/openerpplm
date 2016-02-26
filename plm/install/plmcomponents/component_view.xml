@@ -9,18 +9,18 @@
         <field name="name">plm.component</field>
         <field name="model">product.product</field>
         <field name="type">tree</field>
-        <field name="priority" eval="10"/>
+        <field name="priority" eval="5"/>
         <field name="arch" type="xml">
             <tree string="Parts">
-                <field name="name" 						select="True"/>
-                <field name="engineering_code" 			select="True" />
+                <field name="name" 								select="True"/>
+                <field name="engineering_code" 				select="True"/>
                 <field name="engineering_revision"/>
-                <field name="state" 					select="True"/>
-                <field name="description" 				select="True" />
+                <field name="state" 									select="True"/>
+                <field name="description" 						select="True"/>
                 <field name="engineering_writable" 		invisible="1"/>
                 <field name="engineering_material" 		select="True"/>
-                <field name="engineering_surface" 		select="True"/>
-                <field name="linkeddocuments" 			invisible="True"/>
+                <field name="engineering_surface" 			select="True"/>
+                <field name="linkeddocuments" 				invisible="True"/>
                 <field name="std_umc1"/>
                 <field name="std_value1"/>
                 <field name="std_umc2"/>
@@ -130,7 +130,7 @@
         <field name="name">plm.base.component</field>
         <field name="model">product.product</field>
         <field name="type">tree</field>
-        <field name="priority" eval="15"/>
+        <field name="priority" eval="5"/>
         <field name="arch" type="xml">
             <tree string="Engineering Parts">
                 <field name="name" 					select="True"		/>
