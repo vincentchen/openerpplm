@@ -25,23 +25,29 @@ import random
 import string
 import base64
 import time
+import logging
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4,cm
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle,Paragraph
+from reportlab.lib.pagesizes import A4, cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from operator import itemgetter
 from book_collector import BookCollector
-from pyPdf import PdfFileWriter, PdfFileReader
+
+try:
+    from PyPDF2 import PdfFileWriter, PdfFileReader
+except:
+    logging.warning("PyPDF2 not installed ")
+    from pyPdf import PdfFileWriter, PdfFileReader
 
 from openerp.report.render import render
 from openerp.report.interface import report_int
 from openerp.report import report_sxw
 from openerp import pooler
 
-#constant
-FIRST_LEVEL=0
-BOM_SHOW_FIELDS=['Position','Code','Description','Quantity']
+#  constant
+FIRST_LEVEL = 0
+BOM_SHOW_FIELDS = ['Position','Code','Description','Quantity']
 
 def PageCellHeader(text):
     styleSheet = getSampleStyleSheet()
