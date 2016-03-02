@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OmniaSolutions, Your own solutions
@@ -143,7 +143,7 @@ class plm_component(osv.osv):
         ids=self.GetLatestIds(cr, uid, partData, context)
         return self.read(cr, uid, list(set(ids)), attribNames)
 
-    def GetLatestIds(self,cr,uid,vals,context=None):
+    def GetLatestIds(self,cr,uid,vals,context=None, other=False):
         """
             Get Last/Requested revision of given items (by name, revision, update time)
         """

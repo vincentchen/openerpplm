@@ -598,7 +598,10 @@ class plm_document(osv.osv):
         # Filter out documents that are in directories that the user is not allowed to read.
         # Must use pure SQL to avoid access rules exceptions (we want to remove the records,
         # not fail), and the records have been filtered in parent's search() anyway.
-        cr.execute('SELECT id, parent_id from plm_document WHERE id in %s', (tuple(ids),))
+        toExec = 'SELECT id, parent_id from plm_document WHERE id in ' + str(tuple(ids)).replace(',)', ')')
+        if order:
+            toExec = toExec + ' order by %s' %(order)
+        cr.execute(toExec)
 
         # cont a dict of parent -> attach
         parents = {}
@@ -736,7 +739,7 @@ class plm_document(osv.osv):
         ids=self.GetLatestIds(cr, uid, docData, context)
         return self.read(cr, uid, list(set(ids)), attribNames)
 
-    def GetLatestIds(self,cr,uid,vals,context=None):
+    def GetLatestIds(self,cr,uid,vals,context=None, other=False):
         """
             Get Last/Requested revision of given items (by name, revision, update time)
         """
