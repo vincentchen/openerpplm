@@ -463,7 +463,7 @@ class plm_document(osv.osv):
         cr.execute("delete from plm_document where store_fname=NULL and type='binary'")
         return True 
 
-    def QueryLast(self, cr, uid, request=([],[]), default=None, context=None):
+    def QueryLast(self, cr, uid, request=[], _request='', context=None):
         """
             Query to return values based on columns selected.
         """
@@ -632,6 +632,9 @@ class plm_document(osv.osv):
         values={'state':'released',}
         checkState=('undermodify','obsoleted')
         for checkObj in self.browse(cr, uid, ids, context=context):
+            if not context.get('odooplm_forceunlink',False):
+                if checkObj.is_checkout:
+                    raise osv.except_osv(_('Unlink Entity Error'), _("The document is in check out state by user %r" % (checkObj.checkout_user)))
             existingID = self.search(cr, uid, [('name', '=', checkObj.name),('revisionid', '=', checkObj.revisionid-1)])
             if len(existingID)>0:
                 oldObject=self.browse(cr, uid, existingID[0], context=context)
@@ -940,8 +943,6 @@ class plm_checkout(osv.osv):
             docRelType.write(cr, uid, ids, values)
 
     def create(self, cr, uid, vals, context=None):
-        if context!=None and context!={}:
-            return False
         documentType=self.pool.get('plm.document')
         docID=documentType.browse(cr, uid, vals['documentid'])
         values={'writable':True,}
@@ -955,18 +956,6 @@ class plm_checkout(osv.osv):
         return newID
          
     def unlink(self, cr, uid, ids, context=None):
-        if context!=None and context!={}:
-            res = False
-            groupType=self.pool.get('res.groups')
-            for gId in groupType.search(cr,uid,[('name','=','PLM / Administrator')],context=context):
-                for user in groupType.browse(cr, uid, gId, context).users:
-                    if uid == user.id or uid==1:
-                        res = True
-                        break
-            if not res:
-                logging.warning("unlink : Unable to Check-In the required document.\n You aren't authorized in this context.")
-                raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the required document.\n You aren't authorized in this context."))
-                return False
         documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
         docids=[]

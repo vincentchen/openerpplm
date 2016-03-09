@@ -305,10 +305,9 @@ class plm_relation(osv.osv):
         '''
         outList = []
         if len(structure) == 2:
-            treeListIds = structure[1]
             outList.append(structure[0])
-            if treeListIds:
-                outList.extend(self.getListIdsFromStructure(treeListIds[0]))
+            for item in structure[1]:
+                outList.extend(self.getListIdsFromStructure(item))
         return outList
         
     def _getpackreldatas(self, cr, uid, relDatas, prtDatas):
