@@ -871,9 +871,9 @@ class plm_document(osv.osv):
        
         documents=self.browse(cr, uid, read_docs, context=context)
         for document in documents:
-            related_documents.append([document.id,document.name,''])    # The third parameter is set as '' to compatibility rule
+            related_documents.append([document.id, document.name, document.preview])    # The third parameter is set as '' to compatibility rule
         return related_documents
-
+    
     def getServerTime(self, cr, uid, oid, default=None, context=None):
         """
             calculate the server db time 
