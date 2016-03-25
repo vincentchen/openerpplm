@@ -463,7 +463,7 @@ class plm_document(osv.osv):
         cr.execute("delete from plm_document where store_fname=NULL and type='binary'")
         return True 
 
-    def QueryLast(self, cr, uid, request=[], _request='', context=None):
+    def QueryLast(self, cr, uid, request=([],[]), default=None, context=None):
         """
             Query to return values based on columns selected.
         """
@@ -871,9 +871,9 @@ class plm_document(osv.osv):
        
         documents=self.browse(cr, uid, read_docs, context=context)
         for document in documents:
-            related_documents.append([document.id, document.name, document.preview])    # The third parameter is set as '' to compatibility rule
+            related_documents.append([document.id,document.name,''])    # The third parameter is set as '' to compatibility rule
         return related_documents
-    
+
     def getServerTime(self, cr, uid, oid, default=None, context=None):
         """
             calculate the server db time 
@@ -956,6 +956,16 @@ class plm_checkout(osv.osv):
         return newID
          
     def unlink(self, cr, uid, ids, context=None):
+        groupType=self.pool.get('res.groups')
+        for gId in groupType.search(cr,uid,[('name','=','PLM / Administrator')],context=context):
+            for user in groupType.browse(cr, uid, gId, context).users:
+                if uid == user.id or uid==1:
+                    res = True
+                    break
+        if not res:
+            logging.warning("unlink : Unable to Check-In the required document.\n You aren't authorized in this context.")
+            raise osv.except_osv(_('Check-In Error'), _("Unable to Check-In the required document.\n You aren't authorized in this context."))
+            return False
         documentType=self.pool.get('plm.document')
         checkObjs=self.browse(cr, uid, ids, context=context)
         docids=[]
