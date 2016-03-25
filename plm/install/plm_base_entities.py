@@ -553,7 +553,7 @@ class plm_relation(osv.osv):
         parentName, parentID, childName, childID, sourceID, relArgs=relations[0]
         toCleanRelations(relations)
         tmpBomId=toCompute(parentName, relations)
-        return False
+        return tmpBomId
     
     def _sumBomWeight(self, bomObj):
         """
