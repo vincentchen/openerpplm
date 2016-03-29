@@ -119,7 +119,7 @@
                     </sheet>
                 </page>
                 <page string="Linked Documents">
-                    <field name="linkeddocuments" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+                    <field name="linkeddocuments"/>
                 </page>
             </notebook>
         </field>
@@ -242,7 +242,7 @@
                    </page>
                    <page string="Linked Documents">
                 		<group name="LKDocs">
-	                        <field name="linkeddocuments" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+	                        <field name="linkeddocuments"/>
                   		</group>
                    </page>
                 </notebook>
