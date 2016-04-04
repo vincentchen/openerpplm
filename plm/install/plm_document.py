@@ -956,8 +956,10 @@ class plm_checkout(osv.osv):
         return newID
          
     def unlink(self, cr, uid, ids, context=None):
+        res = False
         groupType=self.pool.get('res.groups')
-        for gId in groupType.search(cr,uid,[('name','=','PLM / Administrator')],context=context):
+        #Forced void context to match exact name and not translated name
+        for gId in groupType.search(cr,uid,[('name','=', 'PLM / Administrator')],context={}):   
             for user in groupType.browse(cr, uid, gId, context).users:
                 if uid == user.id or uid==1:
                     res = True
