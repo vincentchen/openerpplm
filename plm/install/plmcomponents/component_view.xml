@@ -87,7 +87,6 @@
                     </group>
 	            </header>
             </xpath>
-            
             <notebook position="inside">
                 <page string="Engineering Infos">
                     <group colspan="4" col="4" string="Part Number Area">
@@ -119,7 +118,8 @@
                     </sheet>
                 </page>
                 <page string="Linked Documents">
-                    <field name="linkeddocuments"/>
+                    	<button class="oe_inline oe_stat_button"   type="object" icon="fa-list-alt" name="action_rev_docs" string="Revision Rel Docs"></button>
+                    	<field name="linkeddocuments" />
                 </page>
             </notebook>
         </field>

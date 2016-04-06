@@ -618,4 +618,27 @@ class plm_component(osv.osv):
                     values[fieldName] = readDict.get('value','')
         return values
     
+    def action_rev_docs(self, cr, uid, ids, context={}):
+        '''
+            This function is called by the button on component view, section LinkedDocuments
+            Clicking that button all documents related to all revisions of this component are opened in a tree view
+        '''
+        docIds = []
+        for compBrws in self.browse(cr, uid, ids, context):
+            engineering_code = compBrws.engineering_code
+            if not engineering_code:
+                logging.warning("Part %s doesn't have and engineering code!" %(compBrws.name))
+                continue
+            componentIds = self.search(cr, uid, [('engineering_code', '=' , engineering_code)])
+            for compBrws in self.browse(cr, uid, componentIds, context):
+                docIds.extend(compBrws.linkeddocuments.ids)
+        return {
+            'domain': [('id', 'in', docIds)],
+            'name': _('Related documents'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'plm.document',
+            'type': 'ir.actions.act_window',
+         }
+        
 plm_component()
