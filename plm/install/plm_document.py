@@ -1056,12 +1056,13 @@ plm_document_relation()
 class plm_backupdoc(osv.osv):
     _name = 'plm.backupdoc'
     _columns = {
-                'userid':fields.many2one('res.users', 'Related User', ondelete='cascade'), 
+                'userid':fields.many2one('res.users', 'Related User'), 
                 'createdate':fields.datetime('Date Created', readonly=True),
                 'existingfile':fields.char('Physical Document Location',size=1024), 
-                'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
-                'revisionid': fields.related('documentid','revisionid',type="integer",relation="plm.document",string="Revision",store=False),
-                'state': fields.related('documentid','state',type="char",relation="plm.document",string="Status",store=False),
+                'documentid':fields.many2one('plm.document', 'Related Document'), 
+                'revisionid': fields.related('documentid','revisionid',type="integer",relation="plm.document",string="Revision",store=True),
+                'state': fields.related('documentid','state',type="char",relation="plm.document",string="Status",store=True),
+                'document_name': fields.related('documentid','name',type="char",relation="plm.document",string="Stored Name", store=True),
                 'printout': fields.binary('Printout Content'),
                 'preview': fields.binary('Preview Content'),
     }
