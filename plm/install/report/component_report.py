@@ -40,7 +40,7 @@ class component_custom_report(report_int):
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
-        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10)
+        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10, poolObj=self.pool, cr=cr, uid=uid)
         children=[]
         documents=[]
         components=componentType.browse(cr, uid, ids, context=context)
@@ -60,7 +60,7 @@ class component_one_custom_report(report_int):
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
-        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10)
+        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10, poolObj=self.pool, cr=cr, uid=uid)
         children=[]
         documents=[]
         components=componentType.browse(cr, uid, ids, context=context)
@@ -84,7 +84,7 @@ class component_all_custom_report(report_int):
         componentType=self.pool.get('product.product')
         user=self.pool.get('res.users').browse(cr, uid, uid, context=context)
         msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
-        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10)
+        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10, poolObj=self.pool, cr=cr, uid=uid)
         children=[]
         documents=[]
         components=componentType.browse(cr, uid, ids, context=context)

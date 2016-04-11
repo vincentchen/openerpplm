@@ -3,6 +3,7 @@ import base64
 import StringIO
 import logging
 from reportlab.pdfgen import canvas
+from reportlab.lib.colors import black, white
 
 try:
     from PyPDF2 import PdfFileWriter, PdfFileReader
@@ -31,7 +32,7 @@ def getDocumentStream(docRepository,objDoc):
     return content
 
 class BookCollector(object):
-    def __init__(self,jumpFirst=True,customTest=False,bottomHeight=20):
+    def __init__(self,jumpFirst=True,customTest=False,bottomHeight=20, poolObj=None, cr=False, uid=1):
         """
             jumpFirst = (True/False)
                 jump to add number at the first page
@@ -43,14 +44,34 @@ class BookCollector(object):
         self.customTest=customTest
         self.pageCount=1
         self.bottomHeight=bottomHeight
+        self.poolObj = poolObj
+        self.uid = uid
+        self.cr = cr
         
-    def getNextPageNumber(self,mediaBox, docState):
+    def getNextPageNumber(self, mediaBox, docState):
+        def computeFont(x1, y1):
+            computedX1 = float(x1)/2.834
+            if y1 > x1:
+                #vertical
+                if computedX1 <= 298:
+                    self.bottomHeight = 6
+                    return 6
+                return 10
+            else:
+                #horizontal
+                if computedX1 <= 421:
+                    self.bottomHeight = 6
+                    return 6
+                return 10
+            
         pagetNumberBuffer = StringIO.StringIO()
         c = canvas.Canvas(pagetNumberBuffer)
-        x,y,x1,y1 = mediaBox
+        x, y, x1, y1 = mediaBox
+        fontSize = computeFont(x1, y1)
+        c.setFont("Helvetica", fontSize)
         if isinstance(self.customTest,tuple):
             page,message=self.customTest
-            message = message+'  State:%s'%(docState)
+            message = message + '  State:%s' % (docState)
             if page:
                 msg="Page: "+str(self.pageCount) +str(message)
                 cha=len(msg)
@@ -61,13 +82,15 @@ class BookCollector(object):
                 c.drawString(float(x)+20,self.bottomHeight,str(message))
         else:
             c.drawRightString(float(x1)-50,self.bottomHeight,"Page: "+str(self.pageCount))
-        c.showPage()
-        c.save()
+#         c.showPage()
+#         c.save()
         self.pageCount+=1
-        return pagetNumberBuffer
+        return pagetNumberBuffer, c, fontSize
+        #return pagetNumberBuffer
     
-    def addPage(self,pageRes):
-        streamBuffer,docState = pageRes
+    def addPage(self, pageRes):
+        streamBuffer, docObject = pageRes
+        docState = docObject.state
         if streamBuffer.len<1:
             return False
         mainPage=PdfFileReader(streamBuffer)
@@ -76,12 +99,20 @@ class BookCollector(object):
                 self.collector.addPage(mainPage.getPage(i))
                 self.jumpFirst=False
             else:
-                numberPagerBuffer=self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
+                numberPagerBuffer, canvas, fontsize = self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
+                try:
+                    _orientation, paper = paperFormat(mainPage.getPage(i).mediaBox)
+                    self.poolObj.get('plm.document').advancedPlmReportEngine(self.cr, self.uid, docObject, canvas, fontsize, paper)
+                except Exception, ex:
+                    logging.warning(ex)
+                    logging.warning('advancedPlmReportEngine function not implemented in plm.document object')
+                canvas.showPage()
+                canvas.save()
                 numberPageReader=PdfFileReader(numberPagerBuffer)  
                 mainPage.getPage(i).mergePage(numberPageReader.getPage(0))
                 self.collector.addPage(mainPage.getPage(i))
     
-    def printToFile(self,fileName):  
+    def printToFile(self, fileName):  
         outputStream = file(fileName, "wb")
         self.collector.write(outputStream)
         outputStream.close()
@@ -100,7 +131,7 @@ class external_pdf(render):
             
 def packDocuments(docRepository,documents,bookCollector):
     """
-        pack the documenta for paper size
+        pack the document for paper size
     """
     packed=[]
     output0 = [] 
@@ -124,17 +155,17 @@ def packDocuments(docRepository,documents,bookCollector):
                     page=PdfFileReader(input1)
                     orientation,paper=paperFormat(page.getPage(0).mediaBox)
                     if(paper==0)  :
-                        output0.append((input1,document.state))
+                        output0.append((input1, document))
                     elif(paper==1):
-                        output1.append((input1,document.state))
+                        output1.append((input1, document))
                     elif(paper==2):
-                        output2.append((input1,document.state))
+                        output2.append((input1, document))
                     elif(paper==3):
-                        output3.append((input1,document.state))
+                        output3.append((input1, document))
                     elif(paper==4):
-                        output4.append((input1,document.state))
+                        output4.append((input1, document))
                     else: 
-                        output0.append((input1,document.state))
+                        output0.append((input1, document))
                     packed.append(document.id)
     for pag in output0+output1+output2+output3+output4:
         bookCollector.addPage(pag)
