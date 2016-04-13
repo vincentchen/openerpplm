@@ -49,25 +49,28 @@ class BookCollector(object):
         self.cr = cr
         
     def getNextPageNumber(self, mediaBox, docState):
+        doc_orientation = ''
         def computeFont(x1, y1):
             computedX1 = float(x1)/2.834
             if y1 > x1:
+                doc_orientation = 'vertical'
                 #vertical
                 if computedX1 <= 298:
                     self.bottomHeight = 6
-                    return 6
-                return 10
+                    return 6, doc_orientation
+                return 10, doc_orientation
             else:
+                doc_orientation = 'horizontal'
                 #horizontal
                 if computedX1 <= 421:
                     self.bottomHeight = 6
-                    return 6
-                return 10
+                    return 6, doc_orientation
+                return 10, doc_orientation
             
         pagetNumberBuffer = StringIO.StringIO()
         c = canvas.Canvas(pagetNumberBuffer)
         x, y, x1, y1 = mediaBox
-        fontSize = computeFont(x1, y1)
+        fontSize, doc_orientation = computeFont(x1, y1)
         c.setFont("Helvetica", fontSize)
         if isinstance(self.customTest,tuple):
             page,message=self.customTest
@@ -85,7 +88,7 @@ class BookCollector(object):
 #         c.showPage()
 #         c.save()
         self.pageCount+=1
-        return pagetNumberBuffer, c, fontSize
+        return pagetNumberBuffer, c, doc_orientation
         #return pagetNumberBuffer
     
     def addPage(self, pageRes):
@@ -99,10 +102,10 @@ class BookCollector(object):
                 self.collector.addPage(mainPage.getPage(i))
                 self.jumpFirst=False
             else:
-                numberPagerBuffer, canvas, fontsize = self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
+                numberPagerBuffer, canvas, doc_orientation = self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
                 try:
                     _orientation, paper = paperFormat(mainPage.getPage(i).mediaBox)
-                    self.poolObj.get('plm.document').advancedPlmReportEngine(self.cr, self.uid, docObject, canvas, fontsize, paper)
+                    self.poolObj.get('plm.document').advancedPlmReportEngine(self.cr, self.uid, docObject, canvas, doc_orientation, paper)
                 except Exception, ex:
                     logging.warning(ex)
                     logging.warning('advancedPlmReportEngine function not implemented in plm.document object')
