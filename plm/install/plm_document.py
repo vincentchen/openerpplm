@@ -72,8 +72,9 @@ class plm_document(osv.osv):
     def _getlastrev(self, cr, uid, ids, context=None):
         result = []
         for objDoc in self.browse(cr, uid, ids, context=context):
-            docIds=self.search(cr,uid,[('name','=',objDoc.name),('type','=','binary')],order='revisionid',context=context)
-            docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
+            docIds = self.search(cr,uid,[('name','=',objDoc.name),('type','=','binary')], order='revisionid', context=context)
+            #docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
+            # Document ids has not to be ordered because they are correctly ordered by revision_id
             result.append(docIds[len(docIds)-1])
         return list(set(result))
             
@@ -790,8 +791,10 @@ class plm_document(osv.osv):
         # Get Hierarchical tree relations due to children
         modArray = self._explodedocs(cr, uid, oid, ['HiTree'], listed_models)
         outIds = list(set(outIds + modArray + docArray))
+        print 'Before outIds: %s' % (outIds)
         if selection == 2:
             outIds = self._getlastrev(cr, uid, outIds, context)
+        print 'outIds: %s' % (outIds)
         return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
     def GetSomeFiles(self, cr, uid, request, default=None, context=None):

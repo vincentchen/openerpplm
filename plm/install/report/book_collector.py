@@ -98,22 +98,26 @@ class BookCollector(object):
             return False
         mainPage=PdfFileReader(streamBuffer)
         for i in range(0,mainPage.getNumPages()):
-            if self.jumpFirst:
-                self.collector.addPage(mainPage.getPage(i))
-                self.jumpFirst=False
-            else:
-                numberPagerBuffer, canvas, doc_orientation = self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
-                try:
-                    _orientation, paper = paperFormat(mainPage.getPage(i).mediaBox)
-                    self.poolObj.get('plm.document').advancedPlmReportEngine(self.cr, self.uid, docObject, canvas, doc_orientation, paper)
-                except Exception, ex:
-                    logging.warning(ex)
-                    logging.warning('advancedPlmReportEngine function not implemented in plm.document object')
-                canvas.showPage()
-                canvas.save()
-                numberPageReader=PdfFileReader(numberPagerBuffer)  
-                mainPage.getPage(i).mergePage(numberPageReader.getPage(0))
-                self.collector.addPage(mainPage.getPage(i))
+            try:
+                if self.jumpFirst:
+                    self.collector.addPage(mainPage.getPage(i))
+                    self.jumpFirst=False
+                else:
+                    numberPagerBuffer, canvas, doc_orientation = self.getNextPageNumber(mainPage.getPage(i).mediaBox,docState)
+                    try:
+                        _orientation, paper = paperFormat(mainPage.getPage(i).mediaBox)
+                        self.poolObj.get('plm.document').advancedPlmReportEngine(self.cr, self.uid, docObject, canvas, doc_orientation, paper)
+                    except Exception, ex:
+                        logging.warning(ex)
+                        logging.warning('advancedPlmReportEngine function not implemented in plm.document object')
+                    canvas.showPage()
+                    canvas.save()
+                    numberPageReader=PdfFileReader(numberPagerBuffer)  
+                    mainPage.getPage(i).mergePage(numberPageReader.getPage(0))
+                    self.collector.addPage(mainPage.getPage(i))
+            except Exception, ex:
+                logging.error(ex)
+                logging.error('Something went wrong during pdf generation')
     
     def printToFile(self, fileName):  
         outputStream = file(fileName, "wb")

@@ -46,6 +46,8 @@ class plm_config_settings(osv.osv):
        'active_os_ver':fields.char('OS version',size=128,  help="Editor OS version"),
        'active_os_arch':fields.char('OS architecture',size=128,  help="Editor OS architecture"),
        'node_id':fields.char('Registered PLM client',size=128,  help="Listed registered Client."),
+       
+       'module_plm_preserve_engineering_bom': fields.boolean('Preserve Engineering Bom'),
     }
  
     def GetServiceIds(self, cr, uid, oids, default=None, context=None):

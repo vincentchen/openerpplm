@@ -22,11 +22,10 @@
                     </header>
                     <separator string="PLM Module Settings"/>
                     <group>
-                        <label for="id" string="Service ID"/>
+                        <label for="module_plm_preserve_engineering_bom"/>
                          <div>
                              <div>
-                                <field name="plm_service_id" class="oe_inline"/>
-                                <label for="plm_service_id"/>
+                             	<field name="module_plm_preserve_engineering_bom" class="oe_inline"/>
                            </div>
                        </div>
                      </group>
