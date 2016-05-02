@@ -794,6 +794,54 @@ class plm_document(osv.osv):
             outIds = self._getlastrev(cr, uid, outIds, context)
         return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
+    def CheckInRecursive(self, cr, uid, request, default=None, context=None):
+        """
+            Evaluate documents to return
+        """
+        def getDocId(args):
+            docName = args.get('name')
+            docRev = args.get('revisionid')
+            docIds = self.search(cr, uid, [('name', '=', docName), ('revisionid', '=', docRev)])
+            if not docIds:
+                logging.warning('Document with name "%s" and revision "%s" not found' % (docName, docRev))
+                return False
+            return docIds[0]
+
+        oid, _listedFiles, selection = request
+        oid = getDocId(oid)
+        checkRes = self.isCheckedOutByMe(cr, uid, oid, context)
+        if not checkRes:
+            return False
+        if selection is False:
+            selection = 1
+        if selection < 0:
+            selection = selection * (-1)
+        documentRelation = self.pool.get('plm.document.relation')
+        docArray = []
+
+        def recursionCompute(oid):
+            if oid in docArray:
+                return
+            docRelIds = documentRelation.search(cr, uid, ['|', ('parent_id', '=', oid), ('child_id', '=', oid)])
+            for objRel in documentRelation.browse(cr, uid, docRelIds, context):
+                if objRel.link_kind in ['LyTree', 'RfTree'] and objRel.child_id.id not in docArray:
+                    docArray.append(objRel.child_id.id)
+                else:
+                    if objRel.parent_id.id == oid:
+                        recursionCompute(objRel.child_id.id)
+            if oid not in docArray:
+                docArray.append(oid)
+
+        recursionCompute(oid)
+        if selection == 2:
+            docArray = self._getlastrev(cr, uid, docArray, context)
+        checkoutObj = self.pool.get('plm.checkout')
+        for docId in docArray:
+            checkoutId = checkoutObj.search(cr, uid, [('documentid', '=', docId), ('userid', '=', uid)], context)
+            if checkoutId:
+                checkoutObj.unlink(cr, uid, checkoutId)
+        return self.read(cr, uid, docArray, ['datas_fname'], context)
+
     def GetSomeFiles(self, cr, uid, request, default=None, context=None):
         """
             Extract documents to be returned 
