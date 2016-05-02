@@ -87,6 +87,7 @@
                     </group>
 	            </header>
             </xpath>
+            
             <notebook position="inside">
                 <page string="Engineering Infos">
                     <group colspan="4" col="4" string="Part Number Area">

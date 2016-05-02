@@ -791,10 +791,8 @@ class plm_document(osv.osv):
         # Get Hierarchical tree relations due to children
         modArray = self._explodedocs(cr, uid, oid, ['HiTree'], listed_models)
         outIds = list(set(outIds + modArray + docArray))
-        print 'Before outIds: %s' % (outIds)
         if selection == 2:
             outIds = self._getlastrev(cr, uid, outIds, context)
-        print 'outIds: %s' % (outIds)
         return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
     def CheckInRecursive(self, cr, uid, request, default=None, context=None):
@@ -1025,7 +1023,7 @@ class plm_checkout(osv.osv):
         res = False
         groupType=self.pool.get('res.groups')
         #Forced void context to match exact name and not translated name
-        for gId in groupType.search(cr,uid,[('name','=', 'PLM / Administrator')],context={}):   
+        for gId in groupType.search(cr,uid,[('name','=', 'PLM / Administrator')],context={}):
             for user in groupType.browse(cr, uid, gId, context).users:
                 if uid == user.id or uid==1:
                     res = True
@@ -1199,25 +1197,5 @@ class BackupDocWizard(osv.osv_memory):
                             'type': 'ir.actions.act_window',
                             'domain': "[]"}
         return True   
-            
-#         committed=False
-#         if context!=None and context!={}:
-#             if uid!=1:
-#                 logging.warning("unlink : Unable to remove the required documents.\n You aren't authorized in this context.")
-#                 raise osv.except_osv(_('Backup Error'), _("Unable to remove the required document.\n You aren't authorized in this context."))
-#                 return False
-#         documentType=self.pool.get('plm.document')
-#         checkObj=self.browse(cr, uid, context['active_id'])
-#         objDoc=documentType.browse(cr, uid, checkObj.documentid.id)
-#         if objDoc.state=='draft' and documentType.ischecked_in(cr, uid, ids, context):
-#             if checkObj.existingfile != objDoc.store_fname:
-#                 committed=documentType.write(cr, uid, [objDoc.id], {'store_fname':checkObj.existingfile,'printout':checkObj.printout,'preview':checkObj.preview,}, context, check=False)
-#                 if  committed:
-#                     self.wf_message_post(cr, uid, [objDoc.id], body=_('Document restored from backup.'))
-#                 else:
-#                     logging.warning("action_restore_document : Unable to restore the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set.")
-#                     raise osv.except_osv(_('Check-In Error'), _("Unable to restore the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set.\n Check if it's checked-in, before to proceed."))
-#         self.unlink(cr, uid, ids, context)
-#         return committed
 
 BackupDocWizard()
