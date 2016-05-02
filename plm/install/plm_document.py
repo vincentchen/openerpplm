@@ -823,6 +823,8 @@ class plm_document(osv.osv):
         def recursionCompute(oid):
             if oid in docArray:
                 return
+            else:
+                docArray.append(oid)
             docRelIds = documentRelation.search(cr, uid, ['|', ('parent_id', '=', oid), ('child_id', '=', oid)])
             for objRel in documentRelation.browse(cr, uid, docRelIds, context):
                 if objRel.link_kind in ['LyTree', 'RfTree'] and objRel.child_id.id not in docArray:
@@ -830,8 +832,6 @@ class plm_document(osv.osv):
                 else:
                     if objRel.parent_id.id == oid:
                         recursionCompute(objRel.child_id.id)
-            if oid not in docArray:
-                docArray.append(oid)
 
         recursionCompute(oid)
         if selection == 2:
