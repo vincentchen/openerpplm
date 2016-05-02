@@ -842,6 +842,12 @@ class plm_document(osv.osv):
                 checkoutObj.unlink(cr, uid, checkoutId)
         return self.read(cr, uid, docArray, ['datas_fname'], context)
 
+    def isCheckedOutByMe(self, cr, uid, docId, context):
+        checkoutIds = self.pool.get('plm.checkout').search(cr, uid, [('documentid', '=', docId), ('userid', '=', uid)])
+        for checkoutId in checkoutIds:
+            return checkoutId
+        return None
+
     def GetSomeFiles(self, cr, uid, request, default=None, context=None):
         """
             Extract documents to be returned 
