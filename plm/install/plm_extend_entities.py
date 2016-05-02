@@ -60,17 +60,17 @@ class plm_component(osv.osv):
         @return:  Dictionary of values
         """
         result={}
-        prod_ids=[]
         if context is None:
             context = {}
         bom_line_objType = self.pool.get('mrp.bom.line')
         prod_objs = self.browse(cr, uid, ids, context=context)
         for prod_obj in prod_objs:
-            tmp_ids = bom_line_objType.search(cr, uid, [('product_id','=',prod_obj.id)])
-            bom_line_objs = bom_line_objType.browse(cr, uid, tmp_ids, context=context)
-            for bom_line_obj in bom_line_objs:                
-                prod_ids.extend([bom_line_obj.bom_id.product_id.id])
-            result[prod_obj.id]=list(set(prod_ids))
+            prod_ids = []
+            bom_line_ids = bom_line_objType.search(cr, uid, [('product_id', '=', prod_obj.id)])
+            for bom_line_obj in bom_line_objType.browse(cr, uid, bom_line_ids, context=context):
+                for objPrd in self.search([('product_tmpl_id', '=', bom_line_obj.bom_id.product_tmpl_id.id)]):
+                    prod_ids.append(objPrd.id)
+            result[prod_obj.id] = list(set(prod_ids))
         return result
 
   
