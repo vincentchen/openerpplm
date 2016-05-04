@@ -54,20 +54,23 @@ class plm_document(osv.osv):
     _table = 'plm_document'
     _inherit = 'ir.attachment'
 
+    def get_checkout_user(self, cr, uid, oid, context={}):
+        checkType = self.pool.get('plm.checkout')
+        lastDoc = self._getlastrev(cr, uid, [oid], context)
+        for docID in checkType.search(cr, uid, [('documentid', '=', lastDoc[0])]):
+            objectCheck = checkType.browse(cr, uid, docID)
+            return objectCheck.userid
+        False
+        
     def _is_checkedout_for_me(self, cr, uid, oid, context=None):
         """
             Get if given document (or its latest revision) is checked-out for the requesting user
         """
-        act=False
-        lastDoc=self._getlastrev(cr, uid, [oid], context)
-        checkType=self.pool.get('plm.checkout')
-        docIDs=checkType.search(cr, uid, [('documentid','=',lastDoc[0])])
-        for docID in docIDs:
-            objectCheck = checkType.browse(cr, uid, docID)
-            if objectCheck.userid.id==uid:
-                act=True
-                break
-        return act
+        userBrws = self.get_checkout_user(cr, uid, oid, context=None)
+        if userBrws:
+            if userBrws.id == uid:
+                return True
+        return False
 
     def _getlastrev(self, cr, uid, ids, context=None):
         result = []
@@ -222,12 +225,18 @@ class plm_document(osv.osv):
 
     def _data_check_files(self, cr, uid, ids, listedFiles=(), forceFlag=False, context=None):
         result = []
-        datefiles,listfiles=listedFiles
+        datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, list(set(ids)), context=context):
             if objDoc.type=='binary':
+                checkOutUser = ''
+                isCheckedOutToMe = False
                 timeDoc=self.getLastTime(cr,uid,objDoc.id)
                 timeSaved=time.mktime(timeDoc.timetuple())
-                isCheckedOutToMe=self._is_checkedout_for_me(cr, uid, objDoc.id, context)
+                checkoutUserBrws = self.get_checkout_user(cr, uid, objDoc.id, context=None)
+                if checkoutUserBrws:
+                    checkOutUser = checkoutUserBrws.name
+                    if checkoutUserBrws.id == uid:
+                        isCheckedOutToMe = True
                 if (objDoc.datas_fname in listfiles):
                     if forceFlag:
                         isNewer = True
@@ -246,7 +255,7 @@ class plm_document(osv.osv):
                     file_size=len(objDoc.datas)
                 else:
                     file_size=objDoc.file_size
-                result.append((objDoc.id, objDoc.datas_fname, file_size, collectable, isCheckedOutToMe, timeDoc))
+                result.append((objDoc.id, objDoc.datas_fname, file_size, collectable, isCheckedOutToMe, checkOutUser))
         return list(set(result))
             
     def copy(self,cr,uid,oid,defaults={},context=None):
@@ -976,6 +985,12 @@ class plm_document(osv.osv):
         if not backupDocIds:
             return super(plm_document, self)._file_delete(cr, uid, fname)
         
+    def GetNextDocumentName(self, cr, uid, documentName, context={}):
+        '''
+            Return a new name due to sequence next number.
+        '''
+        nextDocNum = self.pool.get('ir.sequence').get(cr, uid, 'plm.document.progress')
+        return documentName+'-'+nextDocNum
 
 plm_document()
 

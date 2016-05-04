@@ -94,6 +94,7 @@ Supported Editors :
         'install/plmmaterials/material_view.xml',
         'install/plmfinishings/finishing_sequence.xml',
         'install/plmfinishings/finishing_view.xml',
+        'install/settings/settings.xml',
        ],
     'demo': [
         ],

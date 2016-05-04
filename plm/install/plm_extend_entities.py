@@ -119,46 +119,29 @@ class plm_relation(osv.osv):
 
 #   Overridden methods for this entity
 
-    def _bom_find(self, cr, uid, product_tmpl_id=None, product_id=None, properties=None, bomType='normal',context=None):
+    def _bom_find(self, cr, uid, product_tmpl_id=None, product_id=None, properties=None, context=None):
         """ Finds BoM for particular product and product uom.
         @param product_tmpl_id: Selected product.
         @param product_uom: Unit of measure of a product.
         @param properties: List of related properties.
         @return: False or BoM id.
         """
-        if properties is None:
-            properties = []
-        domain = ['&',('type', '=', bomType)]
-        if product_id:
-            domain = ['&',('type', '=', bomType)]
-            if not product_tmpl_id:
-                product_tmpl_id = self.pool['product.product'].browse(cr, uid, product_id, context=context).product_tmpl_id.id
-            domain = domain + [
-                '|',
-                    ('product_id', '=', product_id),
-                    '&',
-                        ('product_id', '=', False),
-                        ('product_tmpl_id', '=', product_tmpl_id)
-            ]
-        elif product_tmpl_id:
-            domain = domain + [('product_id', '=', False), ('product_tmpl_id', '=', product_tmpl_id)]
-        else:
-            # neither product nor template, makes no sense to search
-            return False
-        domain = domain + [ '|', ('date_start', '=', False), ('date_start', '<=', time.strftime(DEFAULT_SERVER_DATE_FORMAT)),
-                            '|', ('date_stop', '=', False), ('date_stop', '>=', time.strftime(DEFAULT_SERVER_DATE_FORMAT))]
-        # order to prioritize bom with product_id over the one without
-        ids = self.search(cr, uid, domain, order='product_id', context=context)
-        # Search a BoM which has all properties specified, or if you can not find one, you could
-        # pass a BoM without any properties
-        bom_empty_prop = False
-        for bom in self.pool.get('mrp.bom').browse(cr, uid, ids, context=context):
-            if not set(map(int, bom.property_ids or [])) - set(properties or []):
-                if properties and not bom.property_ids:
-                    bom_empty_prop = bom.id
-                else:
-                    return bom.id
-        return bom_empty_prop
+        bom_id = super(plm_relation, self)._bom_find(cr,
+                                                                                     uid,
+                                                                                     product_tmpl_id=product_tmpl_id,
+                                                                                     product_id=product_id,
+                                                                                     properties=properties,
+                                                                                     context=context)
+        if bom_id:
+            objBom = self.browse(cr, uid, bom_id, context)
+            odooPLMBom = ['ebom', 'spbom']
+            if objBom.type in odooPLMBom:
+                bom_ids = self.search(cr, uid, [('product_id', '=', objBom.product_id.id),
+                                                ('product_tmpl_id', '=', objBom.product_tmpl_id.id),
+                                                ('type', 'not in', odooPLMBom)])
+                for _id in bom_ids:
+                    return _id
+        return bom_id
     
 #######################################################################################################################################33
 
@@ -217,10 +200,9 @@ class plm_relation_line(osv.osv):
         bom_obj = self.pool['mrp.bom']
         res = {}
         for bom_line in self.browse(cr, uid, ids, context=context):
-            bom_id = bom_obj._bom_find(cr, uid,
-                product_tmpl_id=bom_line.product_id.product_tmpl_id.id,
-                product_id=bom_line.product_id.id, bomType=bom_line.type, context=context)
-            if bom_id:
+            for bom_id in self.search([('product_id', '=', bom_line.product_id.id),
+                                      ('product_tmpl_id', '=', bom_line.product_id.product_tmpl_id.id),
+                                      ('type', '=', bom_line.type)]):
                 child_bom = bom_obj.browse(cr, uid, bom_id, context=context)
                 res[bom_line.id] = [x.id for x in child_bom.bom_line_ids]
             else:
