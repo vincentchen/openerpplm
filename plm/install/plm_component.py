@@ -264,26 +264,26 @@ class plm_component(osv.osv):
         checkObj=self.browse(cr, uid, idd, context)
         if not checkObj:
             return False
-        bomType=self.pool.get('mrp.bom')
-        bomLType=self.pool.get('mrp.bom.line')
-        objBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','normal')])
-        idBoms=bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','ebom')])
+        bomType = self.pool.get('mrp.bom')
+        bomLType = self.pool.get('mrp.bom.line')
+        objBoms = bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','normal')])
+        idBoms = bomType.search(cr, uid, [('product_tmpl_id','=',checkObj.product_tmpl_id.id),('type','=','ebom')])
 
         if not objBoms:
             if idBoms:
                 self.processedIds.append(idd)
-                newidBom=bomType.copy(cr, uid, idBoms[0], defaults, context)
+                newidBom = bomType.copy(cr, uid, idBoms[0], defaults, context)
                 if newidBom:
                     bomType.write(cr,uid,[newidBom],{'name':checkObj.name,'product_id':checkObj.id,'type':'normal',},check=False,context=None)
-                    oidBom=bomType.browse(cr,uid,newidBom,context=context)
-                    ok_rows=self._summarizeBom(cr, uid, oidBom.bom_line_ids)
+                    oidBom = bomType.browse(cr,uid,newidBom,context=context)
+                    ok_rows = self._summarizeBom(cr, uid, oidBom.bom_line_ids)
                     for bom_line in list(set(oidBom.bom_line_ids) ^ set(ok_rows)):
                         bomLType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
                         bomLType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
                         self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         else:
-            for bom_line in bomType.browse(cr,uid,objBoms[0],context=context).bom_line_ids:
+            for bom_line in bomType.browse(cr, uid, objBoms[0], context=context).bom_line_ids:
                 self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         return False
 
