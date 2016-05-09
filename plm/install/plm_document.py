@@ -76,11 +76,18 @@ class plm_document(osv.osv):
         result = []
         for objDoc in self.browse(cr, uid, ids, context=context):
             docIds = self.search(cr,uid,[('name','=',objDoc.name),('type','=','binary')], order='revisionid', context=context)
-            #docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
+            docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
             # Document ids has not to be ordered because they are correctly ordered by revision_id
             result.append(docIds[len(docIds)-1])
         return list(set(result))
-            
+
+    def GetLastNamesFromID(self, cr, uid, ids=[], context={}):
+        """
+            get the last rev
+        """
+        newIds = self._getlastrev(cr, uid, ids=ids, context=context)
+        return self.read(cr, uid, newIds, ['datas_fname'], context=context)
+
     def _data_get_files(self, cr, uid, ids, listedFiles=([],[]), forceFlag=False, context=None):
         """
             Get Files to return to Client
