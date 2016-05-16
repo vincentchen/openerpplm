@@ -32,18 +32,18 @@ def getDocumentStream(docRepository,objDoc):
     return content
 
 class BookCollector(object):
-    def __init__(self,jumpFirst=True,customTest=False,bottomHeight=20, poolObj=None, cr=False, uid=1):
+    def __init__(self, jumpFirst=True, customTest=False,bottomHeight=20, poolObj=None, cr=False, uid=1):
         """
             jumpFirst = (True/False)
                 jump to add number at the first page
             customTest=(True/False,message) / False
                 Add page number -> True/Fale, Custom Message)
         """
-        self.jumpFirst=jumpFirst
-        self.collector=PdfFileWriter()
-        self.customTest=customTest
-        self.pageCount=1
-        self.bottomHeight=bottomHeight
+        self.jumpFirst = jumpFirst
+        self.collector = PdfFileWriter()
+        self.customTest = customTest
+        self.pageCount = 1
+        self.bottomHeight = bottomHeight
         self.poolObj = poolObj
         self.uid = uid
         self.cr = cr
@@ -72,19 +72,19 @@ class BookCollector(object):
         x, y, x1, y1 = mediaBox
         fontSize, doc_orientation = computeFont(x1, y1)
         c.setFont("Helvetica", fontSize)
-        if isinstance(self.customTest,tuple):
-            page,message=self.customTest
+        if isinstance(self.customTest, tuple):
+            page, message=self.customTest
             message = message + '  State:%s' % (docState)
             if page:
-                msg="Page: "+str(self.pageCount) +str(message)
-                cha=len(msg)
-                c.drawRightString(float(x1)-cha,self.bottomHeight," Page: "+str(self.pageCount))
-                c.drawString(float(x)+20,self.bottomHeight,str(message))
+                msg = "Page: " + str(self.pageCount) + str(message)
+                cha = len(msg)
+                c.drawRightString(float(x1) - cha, self.bottomHeight, " Page: " + str(self.pageCount))
+                c.drawString(float(x) + 20,self.bottomHeight,str(message))
             else:
                 cha=len(str(message))
-                c.drawString(float(x)+20,self.bottomHeight,str(message))
+                c.drawString(float(x) + 20, self.bottomHeight, str(message))
         else:
-            c.drawRightString(float(x1)-50,self.bottomHeight,"Page: "+str(self.pageCount))
+            c.drawRightString(float(x1) - 50, self.bottomHeight, "Page: " + str(self.pageCount))
 #         c.showPage()
 #         c.save()
         self.pageCount+=1

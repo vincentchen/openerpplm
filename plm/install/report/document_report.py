@@ -29,13 +29,13 @@ from openerp import pooler
 class document_custom_report(report_int):
     def create(self, cr, uid, ids, datas, context=None):
         self.pool = pooler.get_pool(cr.dbname)
-        docType=self.pool.get('plm.document')
-        docRepository=docType._get_filestore(cr)
+        docType = self.pool.get('plm.document')
+        docRepository = docType._get_filestore(cr)
         documents = docType.browse(cr, uid, ids, context=context)
-        userType=self.pool.get('res.users')
-        user=userType.browse(cr, uid, uid, context=context)
-        msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
-        output  = BookCollector(jumpFirst=False,customTest=(False,msg),bottomHeight=10, poolObj=self.pool, cr=cr, uid=uid)
-        return packDocuments(docRepository,documents,output)
+        userType = self.pool.get('res.users')
+        user = userType.browse(cr, uid, uid, context=context)
+        msg = "Printed by " + str(user.name) + " : " + str(time.strftime("%d/%m/%Y %H:%M:%S"))
+        output  = BookCollector(jumpFirst=False, customTest=(False, msg), bottomHeight=10, poolObj=self.pool, cr=cr, uid=uid)
+        return packDocuments(docRepository, documents, output)
     
 document_custom_report('report.plm.document.pdf')
