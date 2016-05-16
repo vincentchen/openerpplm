@@ -21,8 +21,8 @@
 ##############################################################################
 import StringIO
 import os
-import random
-import string
+from datetime import datetime
+from dateutil import tz
 import base64
 import time
 import logging
@@ -173,6 +173,14 @@ def getDocumentStream(docRepository,objDoc):
         print "getFileStream : Exception (%s)reading  stream on file : %s." %(str(ex),objDoc.datas_fname)
     return content
 
+def getBottomMessage(user, context):
+        to_zone = tz.gettz(context.get('tz', 'Europe/Rome'))
+        from_zone = tz.tzutc()
+        dt = datetime.now()
+        dt = dt.replace(tzinfo=from_zone)
+        localDT = dt.astimezone(to_zone)
+        localDT = localDT.replace(microsecond=0)
+        return "Printed by " + str(user.name) + " : " + str(localDT.ctime())
 
 class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -248,7 +256,7 @@ class component_spare_parts_report(report_int):
         bomType=self.pool.get('mrp.bom')
         userType=self.pool.get('res.users')
         user=userType.browse(cr, uid, uid, context=context)
-        msg = "Printed by "+str(user.name)+" : "+ str(time.strftime("%d/%m/%Y %H:%M:%S"))
+        msg = getBottomMessage(user, context)
         output = BookCollector(customTest=(True,msg))
         components=componentType.browse(cr, uid, ids, context=context)
         for component in components:
