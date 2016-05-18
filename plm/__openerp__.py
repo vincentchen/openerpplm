@@ -95,6 +95,7 @@ Supported Editors :
         'install/plmfinishings/finishing_sequence.xml',
         'install/plmfinishings/finishing_view.xml',
         'install/settings/settings.xml',
+        'install/views/mrp_extension.xml',
        ],
     'demo': [
         ],
