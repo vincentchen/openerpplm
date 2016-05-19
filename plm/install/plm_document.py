@@ -1012,7 +1012,8 @@ class plm_checkout(osv.osv):
                 'hostname':fields.char('hostname',size=64), 
                 'hostpws':fields.char('PWS Directory',size=1024), 
                 'documentid':fields.many2one('plm.document', 'Related Document', ondelete='cascade'), 
-                'createdate':fields.datetime('Date Created', readonly=True)
+                'createdate':fields.datetime('Date Created', readonly=True),
+                'rel_doc_rev': fields.related('documentid', 'revisionid', type='integer', relation="plm.document", string="Revision", store=True)
     }
     _defaults = {
         'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S")
