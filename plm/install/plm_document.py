@@ -54,6 +54,11 @@ class plm_document(osv.osv):
     _table = 'plm_document'
     _inherit = 'ir.attachment'
 
+    _defaults = {
+        'type': 'binary',
+        'file_size': 0,
+    }
+
     def get_checkout_user(self, cr, uid, oid, context={}):
         checkType = self.pool.get('plm.checkout')
         lastDoc = self._getlastrev(cr, uid, [oid], context)
@@ -62,7 +67,7 @@ class plm_document(osv.osv):
                 objectCheck = checkType.browse(cr, uid, docID)
                 return objectCheck.userid
         False
-        
+
     def _is_checkedout_for_me(self, cr, uid, oid, context=None):
         """
             Get if given document (or its latest revision) is checked-out for the requesting user
@@ -77,10 +82,9 @@ class plm_document(osv.osv):
         result = []
         for objDoc in self.browse(cr, uid, ids, context=context):
             docIds = self.search(cr, uid, [('name', '=', objDoc.name), ('type', '=', 'binary')], order='revisionid', context=context)
-            docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
             # Document ids has not to be ordered because they are correctly ordered by revision_id
             if docIds:
-                result.append(docIds[len(docIds)-1])
+                result.append(docIds[len(docIds) - 1])
             else:
                 logging.warning('[_getlastrev] No documents are found for object with name: "%s"' % (objDoc.name))
         return list(set(result))
@@ -97,7 +101,7 @@ class plm_document(osv.osv):
             Get Files to return to Client
         """
         result = []
-        datefiles,listfiles=listedFiles
+        datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, ids, context=context):
             if objDoc.type=='binary':
                 timeDoc=self.getLastTime(cr,uid,objDoc.id)
@@ -128,21 +132,21 @@ class plm_document(osv.osv):
                     logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
                     result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
-            
+
     def _data_get(self, cr, uid, ids, name, arg, context):
         result = {}
-        value=False
+        value = False
         for objDoc in self.browse(cr, uid, ids, context=context):
-            if objDoc.type=='binary':
+            if objDoc.type == 'binary':
                 if not objDoc.store_fname:
-                    value=objDoc.db_datas
-                    if not value or len(value)<1:
-                        raise osv.except_osv(_('Stored Document Error'), _("Document %s - %s cannot be accessed" %(str(objDoc.name),str(objDoc.revisionid))))
+                    value = objDoc.db_datas
+                    if not value or len(value) < 1:
+                        raise osv.except_osv(_('Stored Document Error'), _("Document %s - %s cannot be accessed" % (str(objDoc.name), str(objDoc.revisionid))))
                 else:
-                    filestore=os.path.join(self._get_filestore(cr), objDoc.store_fname)
+                    filestore = os.path.join(self._get_filestore(cr), objDoc.store_fname)
                     if os.path.exists(filestore):
                         value = file(filestore, 'rb').read()
-                if value and len(value)>0:
+                if value and len(value) > 0:
                     result[objDoc.id] = base64.encodestring(value)
                 else:
                     result[objDoc.id] = ''
@@ -641,13 +645,13 @@ class plm_document(osv.osv):
         return len(ids) if count else ids
 
     def write(self, cr, uid, ids, vals, context=None, check=True):
-        checkState=('confirmed','released','undermodify','obsoleted')
+        checkState = ('confirmed', 'released', 'undermodify', 'obsoleted')
         if check:
-            for customObject in self.browse(cr,uid,ids,context=context):
+            for customObject in self.browse(cr, uid, ids, context=context):
                 if customObject.state in checkState:
                     raise osv.except_osv(_('Edit Entity Error'), _("The active state does not allow you to make save action"))
                     return False
-        return super(plm_document,self).write(cr, uid, ids, vals, context=context)
+        return super(plm_document, self).write(cr, uid, ids, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         values={'state':'released',}

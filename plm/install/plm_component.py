@@ -93,22 +93,30 @@ class plm_component(osv.osv):
         return self.getUpdTime(self.browse(cr, uid, oid, context=context))
 
     def getUpdTime(self, obj):
-        if(obj.write_date!=False):
-            return datetime.strptime(obj.write_date,'%Y-%m-%d %H:%M:%S')
+        if(obj.write_date != False):
+            return datetime.strptime(obj.write_date, '%Y-%m-%d %H:%M:%S')
         else:
-            return datetime.strptime(obj.create_date,'%Y-%m-%d %H:%M:%S')
+            return datetime.strptime(obj.create_date, '%Y-%m-%d %H:%M:%S')
 
 ##  Customized Automations
     def on_change_name(self, cr, uid, oid, name=False, engineering_code=False):
-        print 'on_change name'
+        outDict = {'value': {}}
         if name:
-            results=self.search(cr,uid,[('name','=',name)])
+            results = self.search(cr, uid, [('name', '=', name)])
             if len(results) > 0:
-                raise osv.except_osv(_('Update Part Warning'), _("Part %s already exists.\nClose with OK to reuse, with Cancel to discharge." %(name)))
+                raise osv.except_osv(_('Update Part Warning'), _("\nPart Name %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (name)))
             if not engineering_code:
-                return {'value': {'engineering_code': name}}            
-        return {}
+                engineering_code = name
+                outDict['value'].update({'engineering_code': name})
+            if self.search(cr, uid, [('engineering_code', '=', engineering_code)]):
+                raise osv.except_osv(_('Update Part Warning'), _("\nPart Number %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (engineering_code)))
+        return outDict
 
+    def on_change_engineering_code(self, cr, uid, oid, engineering_code=False):
+        if engineering_code:
+            if self.search(cr, uid, [('engineering_code', '=', engineering_code)]):
+                raise osv.except_osv(_('Update Part Warning'), _("\nPart Number %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (engineering_code)))
+        return {'value': {'engineering_code': engineering_code}}
 ##  External methods
     def Clone(self, cr, uid, oid, default=None, context=None):
         """
@@ -118,7 +126,7 @@ class plm_component(osv.osv):
         exitValues = {}
         newID = self.copy(cr, uid, oid, defaults, context)
         if newID is not None:
-            newEnt = self.browse(cr,uid,newID,context=context)
+            newEnt = self.browse(cr, uid, newID, context=context)
             exitValues['_id'] = newID
             exitValues['name'] = newEnt.name
             exitValues['engineering_code'] = newEnt.engineering_code

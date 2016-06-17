@@ -192,7 +192,7 @@
                		<page string="Engineering Infos">
                    		<group colspan="4" col="4" string="Part Number Area" name="PNArea">
                      		<group colspan="4" col="4">
-                      			<field name="engineering_code" select="1" 	attrs="{'readonly':[('state','!=','draft')]}" colspan="2"/>
+                      			<field name="engineering_code" select="1" 	attrs="{'readonly':[('state','!=','draft')]}" colspan="2" on_change="on_change_engineering_code(engineering_code)"/>
                        			<field name="engineering_revision" 			readonly="True" colspan="2"/>
                    			</group>
                    		</group>
