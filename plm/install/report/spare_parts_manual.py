@@ -294,7 +294,11 @@ class component_spare_parts_report(report_int):
                     packedIds.append(bom_line.id)
                 if len(packedIds)>0:
                     for pageStream in self.getPdfComponentLayout(cr, product):
-                        output.addPage(pageStream)
+                        try:
+                            output.addPage((pageStream, ''))
+                        except Exception,ex:
+                            logging.error(ex)
+                            raise ex
                     stream,typerep=BODY.create(cr, uid, [BomObject.id], data={'report_type': u'pdf'},context=context) 
                     pageStream=StringIO.StringIO()
                     pageStream.write(stream)
@@ -308,8 +312,8 @@ class component_spare_parts_report(report_int):
         ret=[]
         docRepository=self.pool.get('plm.document')._get_filestore(cr)
         for document in component.linkeddocuments:
-            if (document.usedforspare) and (document.type=='binary'):
-                if document.printout:
+            if (document.usedforspare) and (document.type == 'binary'):
+                if document.printout and str(document.printout) != 'None':
                     ret.append(StringIO.StringIO(base64.decodestring(document.printout)))
                 elif isPdf(document.datas_fname):
                     value=getDocumentStream(docRepository,document)
