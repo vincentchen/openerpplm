@@ -540,6 +540,14 @@ class plm_component(osv.osv):
         return False
 
     def write(self, cr, uid, ids, vals, context=None, check=True):
+        if 'type' in vals.keys():
+            prodType = vals.get('type', '')
+            if not prodType:
+                vals['type'] = 'product'
+        else:
+            prodType = self.browse(cr, uid, ids).type
+            if not prodType:
+                vals['type'] = 'product'
         return super(plm_component,self).write(cr, uid, ids, vals, context=context)  
 
     def copy(self,cr,uid,oid,defaults={},context=None):
