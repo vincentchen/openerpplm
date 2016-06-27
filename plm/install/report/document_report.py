@@ -28,7 +28,7 @@ from openerp.report.interface import report_int
 from openerp import pooler
 
 class document_custom_report(report_int):
-    def create(self, cr, uid, ids, datas, context=None):
+    def create(self, cr, uid, ids, datas, context={}):
         self.pool = pooler.get_pool(cr.dbname)
         docType = self.pool.get('plm.document')
         docRepository = docType._get_filestore(cr)

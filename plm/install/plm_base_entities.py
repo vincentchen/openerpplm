@@ -444,20 +444,20 @@ class plm_relation(osv.osv):
         """
             Save EBom relations
         """
-        def cleanStructure(parentID=None,sourceID=None):
+        def cleanStructure(parentID=None, sourceID=None):
             """
                 Clean relations having sourceID
             """
-            if parentID==None or sourceID==None:
+            if parentID is None or sourceID is None:
                 return None
-            objPart=self.pool.get('product.product').browse(cr,uid,parentID,context=None)
-            ids=self.search(cr,uid,[('product_id','=',objPart.id),('source_id','=',sourceID)])
-            self.unlink(cr,uid,ids)                                     # Cleans mrp.bom
-            ids=self.search(cr,uid,[('product_tmpl_id','=',objPart.product_tmpl_id.id),('source_id','=',sourceID)])
-            self.unlink(cr,uid,ids)                                     # Cleans mrp.bom
-            bomLType=self.pool.get('mrp.bom.line')
-            ids=bomLType.search(cr,uid,[('bom_id','=',parentID),('source_id','=',sourceID)])
-            bomLType.unlink(cr,uid,ids)                                 # Cleans mrp.bom.line
+            objPart = self.pool.get('product.product').browse(cr, uid, parentID, context=None)
+            ids = self.search(cr, uid, [('product_id', '=', objPart.id), ('source_id', '=', sourceID)])
+            self.unlink(cr, uid, ids)                                     # Cleans mrp.bom
+            ids = self.search(cr, uid, [('product_tmpl_id', '=', objPart.product_tmpl_id.id), ('source_id', '=', sourceID)])
+            self.unlink(cr, uid, ids)                                     # Cleans mrp.bom
+            bomLType = self.pool.get('mrp.bom.line')
+            ids = bomLType.search(cr, uid, [('bom_id', '=', parentID), ('source_id', '=', sourceID)])
+            bomLType.unlink(cr, uid, ids)                                 # Cleans mrp.bom.line
 
 
         def toCleanRelations(relations):
@@ -529,34 +529,34 @@ class plm_relation(osv.osv):
                 Saves the relation ( child side in mrp.bom.line )
             """
             try:
-                res={}
-                if bomID!=None:
-                    res['bom_id']=bomID
-                if kindBom!=None:
-                    res['type']=kindBom
+                res = {}
+                if bomID is not None:
+                    res['bom_id'] = bomID
+                if kindBom is not None:
+                    res['type'] = kindBom
                 else:
-                    res['type']='ebom'
-                res['product_id']=partID
-                res['source_id']=sourceID
-                res['name']=name
-                if args!=None:
+                    res['type'] = 'ebom'
+                res['product_id'] = partID
+                res['source_id'] = sourceID
+                res['name'] = name
+                if args is not None:
                     for arg in args:
-                        res[str(arg)]=args[str(arg)]
+                        res[str(arg)] = args[str(arg)]
                 if ('product_qty' in res):
-                    if(type(res['product_qty'])!=types.FloatType) or (res['product_qty']<1e-6):
-                        res['product_qty']=1.0
+                    if(type(res['product_qty']) != types.FloatType) or (res['product_qty'] < 1e-6):
+                        res['product_qty'] = 1.0
                 return self.pool.get('mrp.bom.line').create(cr, uid, res)
             except:
-                logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
-                raise AttributeError(_("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(sys.exc_info()))))
+                logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(args)))
+                raise AttributeError(_("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(sys.exc_info()))))
 
-        if len(relations)<1: # no relation to save 
+        if len(relations) < 1:  # no relation to save
             return False
-        parentName, parentID, childName, childID, sourceID, relArgs=relations[0]
+        parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]
         toCleanRelations(relations)
-        tmpBomId=toCompute(parentName, relations)
+        tmpBomId = toCompute(parentName, relations)
         return tmpBomId
-    
+
     def _sumBomWeight(self, bomObj):
         """
             Evaluates net weight for assembly, based on BoM object
