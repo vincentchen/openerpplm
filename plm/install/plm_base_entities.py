@@ -360,6 +360,7 @@ class plm_relation(osv.osv):
             Explodes a bom entity  ( check=False : all levels, check=True : one level )
         """
         output=[]
+        self._packed = []
         for bid in bids:
             for bom_line in bid.bom_line_ids:
                 if check and (bom_line.product_id.id in self._packed):
