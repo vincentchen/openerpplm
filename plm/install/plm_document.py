@@ -81,7 +81,7 @@ class plm_document(osv.osv):
     def _getlastrev(self, cr, uid, ids, context=None):
         result = []
         for objDoc in self.browse(cr, uid, ids, context=context):
-            docIds = self.search(cr, uid, [('name', '=', objDoc.name), ('type', '=', 'binary')], order='revisionid', context=context)
+            docIds = self.search(cr, uid, [('name', 'ilike', objDoc.name)], order='revisionid', context=context)
             # Document ids has not to be ordered because they are correctly ordered by revision_id
             if docIds:
                 result.append(docIds[len(docIds) - 1])
