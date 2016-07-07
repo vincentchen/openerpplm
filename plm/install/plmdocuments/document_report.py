@@ -24,25 +24,27 @@ from openerp.osv import osv, fields
 from openerp.tools.translate import _
 import openerp.tools as tools
 
+
 class report_plm_document_user(osv.osv):
     _name = "report.plm_document.user"
     _description = "Files details by Users"
     _auto = False
     _columns = {
-        'name': fields.char('Year', size=64,readonly=True),
-        'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'), ('05','May'), ('06','June'),
-                                  ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
-        'day': fields.char('Day', size=64,readonly=True),
-        'user_id':fields.integer('Owner', readonly=True),
-        'user':fields.char('User',size=64,readonly=True),
-        'directory': fields.char('Directory',size=64,readonly=True),
-        'datas_fname': fields.char('File',size=64,readonly=True),
-        'create_date': fields.datetime('Date Created', readonly=True),
-        'change_date': fields.datetime('Modified Date', readonly=True),
-        'file_size': fields.integer('File Size', readonly=True),
-        'nbr':fields.integer('# of Files', readonly=True),
-        'type':fields.char('Directory Type',size=64,readonly=True),
-     }
+        'name': fields.char(_('Year'), size=64, readonly=True),
+        'month': fields.selection([('01', _('January')), ('02', _('February')), ('03', _('March')), ('04', _('April')), ('05', _('May')), ('06', _('June')),
+                                  ('07', _('July')), ('08', _('August')), ('09', _('September')), ('10', _('October')), ('11', _('November')), ('12', _('December'))], _('Month'), readonly=True),
+        'day': fields.char(_('Day'), size=64, readonly=True),
+        'user_id': fields.integer(_('Owner'), readonly=True),
+        'user': fields.char(_('User'), size=64, readonly=True),
+        'directory': fields.char(_('Directory'), size=64, readonly=True),
+        'datas_fname': fields.char(_('File'), size=64, readonly=True),
+        'create_date': fields.datetime(_('Date Created'), readonly=True),
+        'change_date': fields.datetime(_('Modified Date'), readonly=True),
+        'file_size': fields.integer(_('File Size'), readonly=True),
+        'nbr': fields.integer(_('Number of Files'), readonly=True),
+        'type': fields.char(_('Directory Type'), size=64, readonly=True),
+    }
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_plm_document_user')
         cr.execute("""
@@ -70,19 +72,31 @@ class report_plm_document_user(osv.osv):
 report_plm_document_user()
 
 
-
 class report_plm_files_partner(osv.osv):
     _name = "report.plm_files.partner"
     _description = "Files details by Partners"
     _auto = False
     _columns = {
-        'name': fields.char('Year',size=64,required=False, readonly=True),
-        'file_size': fields.integer('File Size', readonly=True),
-        'nbr':fields.integer('# of Files', readonly=True),
-        'partner':fields.char('Partner',size=64,readonly=True),
-        'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'), ('05','May'), ('06','June'),
-                                  ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
-     }
+        'name': fields.char(_('Year'), size=64, required=False, readonly=True),
+        'file_size': fields.integer(_('File Size'), readonly=True),
+        'nbr': fields.integer(_('Number of Files'), readonly=True),
+        'partner': fields.char(_('Partner'), size=64, readonly=True),
+        'month': fields.selection([
+                           ('01', _('January')),
+                           ('02', _('February')),
+                           ('03', _('March')),
+                           ('04', _('April')),
+                           ('05', _('May')),
+                           ('06', _('June')),
+                           ('07', _('July')),
+                           ('08', _('August')),
+                           ('09', _('September')),
+                           ('10', _('October')),
+                           ('11', _('November')),
+                           ('12', _('December'))],
+            _('Month'), readonly=True),
+    }
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_plm_files_partner')
         cr.execute("""
@@ -102,16 +116,19 @@ class report_plm_files_partner(osv.osv):
          """)
 report_plm_files_partner()
 
+
 class report_plm_document_file(osv.osv):
     _name = "report.plm_document.file"
     _description = "Files details by Directory"
     _auto = False
     _columns = {
-        'file_size': fields.integer('File Size', readonly=True),
-        'nbr':fields.integer('# of Files', readonly=True),
-        'month': fields.char('Month', size=24,readonly=True),
-     }
+        'file_size': fields.integer(_('File Size'), readonly=True),
+        'nbr': fields.integer(_('Number of Files'), readonly=True),
+        'month': fields.char(_('Month'), size=24, readonly=True),
+    }
+
     _order = "month"
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_plm_document_file')
         cr.execute("""
@@ -127,17 +144,18 @@ class report_plm_document_file(osv.osv):
 
 report_plm_document_file()
 
+
 class report_plm_document_wall(osv.osv):
     _name = "report.plm_document.wall"
     _description = "Users that did not inserted documents since one month"
     _auto = False
     _columns = {
-        'name': fields.date('Month', readonly=True),
-        'user_id':fields.many2one('res.users', 'Owner',readonly=True),
-        'user':fields.char('User',size=64,readonly=True),
-        'month': fields.char('Month', size=24,readonly=True),
-        'last':fields.datetime('Last Posted Time', readonly=True),
-             }
+        'name': fields.date(_('Month'), readonly=True),
+        'user_id': fields.many2one('res.users', _('Owner'), readonly=True),
+        'user': fields.char(_('User'), size=64, readonly=True),
+        'month': fields.char(_('Month'), size=24, readonly=True),
+        'last': fields.datetime(_('Last Posted Time'), readonly=True),
+    }
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_document_wall')
@@ -158,4 +176,3 @@ class report_plm_document_wall(osv.osv):
         """)
 report_plm_document_wall()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

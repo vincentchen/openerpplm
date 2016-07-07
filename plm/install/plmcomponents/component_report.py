@@ -18,28 +18,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import time
 from openerp.osv import osv, fields
-from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from openerp.tools.translate import _
 import openerp.tools as tools
+
 
 class report_plm_component(osv.osv):
     _name = "report.plm_component"
     _description = "Report Component"
     _auto = False
-            
-    _columns = {
-        'count_component_draft': fields.integer('Draft', readonly=True),
-        'count_component_confirmed': fields.integer('Confirmed', readonly=True),
-        'count_component_released': fields.integer('Released', readonly=True),
-        'count_component_modified': fields.integer('Under Modify', readonly=True),
-        'count_component_obsoleted': fields.integer('Obsoleted', readonly=True),
 
-#         'rate_component_draft': fields.integer('Percent of Parts', readonly=True),
-#         'rate_component_released': fields.integer('Percent of Parts', readonly=True),
-#         'rate_component_modified': fields.integer('Percent of Parts', readonly=True),
-     }
+    _columns = {
+        'count_component_draft': fields.integer(_('Draft'), readonly=True),
+        'count_component_confirmed': fields.integer(_('Confirmed'), readonly=True),
+        'count_component_released': fields.integer(_('Released'), readonly=True),
+        'count_component_modified': fields.integer(_('Under Modify'), readonly=True),
+        'count_component_obsoleted': fields.integer(_('Obsoleted'), readonly=True),
+    }
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_plm_component')
@@ -54,50 +49,5 @@ class report_plm_component(osv.osv):
                     (SELECT count(*) FROM product_template WHERE state = 'obsoleted') AS count_component_obsoleted
              )
         """)
- 
-#     def _get_status_count(self, cr, uid, ids, field_names, arg, context=None):
-#         objType = self.pool.get('product.product')
-#         domains = {
-#             'count_component_draft': [('state', '=', 'draft')],
-#             'count_component_modified': [('state', '=', 'undermodify')],
-#             'count_component_released': [('state', '=', 'released')],
-#         }
-#         result = {}
-#         alldata = objType.search(cr, uid, [('state', 'not in', ('false', 'cancel'))])
-#         count_all=len(alldata)
-#         for field in domains:
-#             data = objType.search(cr, uid, domains[field], context=context)
-#             result[field] = len(data)
-# 
-#         for field in domains:
-#             if field == 'count_component_draft':
-#                 if result['count_component_draft']:
-#                     result['rate_component_draft'] = result['count_component_draft'] * 100 / count_all
-#                 else:
-#                     result['rate_component_draft'] = 0
-#             if field == 'count_component_modified':
-#                 if result['count_component_modified'] and result['count_component_released']:
-#                     result['count_component_released']=result['count_component_released']+result['count_component_modified']
-#                 else:
-#                     result['count_component_released'] = 0
-#             if field == 'count_component_modified':
-#                 if result['count_component_modified'] and result['count_component_released']:
-#                     result['rate_component_modified'] = result['count_component_modified'] * 100 / result['count_component_released']
-#                 else:
-#                     result['rate_component_modified'] = 0
-# 
-#         return result
-
-#     _columns = {
-#         'count_component_draft': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#         'count_component_all': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#         'count_component_released': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#         'count_component_modified': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-# 
-#         'rate_component_draft': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#         'rate_component_released': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#         'rate_component_modified': fields.function(_get_status_count, type='integer', multi='_get_status_count'),
-#      }
-
 
 report_plm_component()
