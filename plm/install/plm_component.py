@@ -548,23 +548,23 @@ class plm_component(osv.osv):
             prodType = self.browse(cr, uid, ids).type
             if not prodType:
                 vals['type'] = 'product'
-        return super(plm_component,self).write(cr, uid, ids, vals, context=context)  
+        return super(plm_component, self).write(cr, uid, ids, vals, context=context)
 
-    def copy(self,cr,uid,oid,defaults={},context=None):
+    def copy(self, cr, uid, oid, defaults={}, context=None):
         """
             Overwrite the default copy method
         """
         previous_name = self.browse(cr, uid, oid, context=context).name
-        if not 'name' in defaults:
-            defaults['name'] = ''
-            defaults['engineering_code'] = ''
+        if not defaults.get('name', False):
+            defaults['name'] = '-'
+            defaults['engineering_code'] = '-'
             defaults['engineering_revision'] = 0
-        #assign default value
+        # assign default value
         defaults['state'] = 'draft'
         defaults['engineering_writable'] = True
         defaults['write_date'] = None
         defaults['linkeddocuments'] = []
-        objId = super(plm_component,self).copy(cr, uid, oid, defaults, context=context)
+        objId = super(plm_component, self).copy(cr, uid, oid, defaults, context=context)
         if (objId):
             self.wf_message_post(cr, uid, [oid], body=_('Copied starting from : %s.' % previous_name))
         return objId
