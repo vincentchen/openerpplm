@@ -118,14 +118,13 @@ class plm_component(osv.osv):
                 raise osv.except_osv(_('Update Part Warning'), _("\nPart Number %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (engineering_code)))
         return {'value': {'engineering_code': engineering_code}}
 ##  External methods
-    def Clone(self, cr, uid, oid, default=None, context=None):
+    def Clone(self, cr, uid, oid, context=None, defaults={}):
         """
             create a new revision of the component
         """
-        defaults = {}
         exitValues = {}
         newID = self.copy(cr, uid, oid, defaults, context)
-        if newID is not None:
+        if newID not in (None, False):
             newEnt = self.browse(cr, uid, newID, context=context)
             exitValues['_id'] = newID
             exitValues['name'] = newEnt.name
