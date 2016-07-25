@@ -28,13 +28,11 @@
 		                    <button string="Update Bom" 
 				                    name="action_wizard_compute_bom" 
 				                    type="object" 
-				                    icon="fa-gears" 
 				                    attrs="{'invisible':[('obsolete_presents', '!=', True)]}" 
 		                    />
 		                    <button string="All Related Boms to Update" 
 				                    name="showAllBomsToCompute" 
-				                    type="object" 
-				                    icon="fa-gears" 
+				                    type="object"  
 		                    />
 		            </xpath>
 	            	<xpath expr="//field[@name='product_qty']" position="after"> 
