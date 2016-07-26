@@ -261,10 +261,10 @@ class plm_component(osv.osv):
         """
             Create a new Normal Bom (recursive on all EBom children)
         """
-        defaults={}
+        defaults = {}
         if idd in self.processedIds:
             return False
-        checkObj=self.browse(cr, uid, idd, context)
+        checkObj = self.browse(cr, uid, idd, context)
         if not checkObj:
             return False
         bomType = self.pool.get('mrp.bom')
@@ -283,7 +283,7 @@ class plm_component(osv.osv):
                     for bom_line in list(set(oidBom.bom_line_ids) ^ set(ok_rows)):
                         bomLType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
-                        bomLType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.name,'product_qty':bom_line.product_qty,},context=None)
+                        bomLType.write(cr, uid, [bom_line.id], {'type':'normal', 'source_id':False, 'product_qty':bom_line.product_qty}, context=None)
                         self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         else:
             for bom_line in bomType.browse(cr, uid, objBoms[0], context=context).bom_line_ids:
@@ -322,13 +322,13 @@ class plm_component(osv.osv):
                     if not child.id in tobeReleasedIDs:
                         tobeReleasedIDs.append(child.id)
         return (stopFlag,list(set(tobeReleasedIDs)))
-    
+
     def action_create_normalBom_WF(self, cr, uid, ids, context=None):
         """
             Create a new Normal Bom if doesn't exist (action callable from code)
         """
         for idd in ids:
-            self.processedIds=[]
+            self.processedIds = []
             self._create_normalBom(cr, uid, idd, context)
         self.wf_message_post(cr, uid, ids, body=_('Created Normal Bom.'))
         return False

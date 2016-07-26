@@ -620,7 +620,7 @@ class plm_relation(osv.osv):
             newOid=self.browse(cr,uid,newId,context=context)
             for bom_line in newOid.bom_line_ids:
                 lateRevIdC=compType.GetLatestIds(cr,uid,[(bom_line.product_id.product_tmpl_id.engineering_code,False,False)],context=context) # Get Latest revision of each Part
-                bomLType.write(cr,uid,[bom_line.id],{'source_id':False,'name':bom_line.product_id.product_tmpl_id.name,'product_id':lateRevIdC[0]},context=context)
+                bomLType.write(cr, uid, [bom_line.id], {'source_id': False, 'product_id': lateRevIdC[0]}, context=context)
             self.write(cr,uid,[newId],{'source_id':False,'name':newOid.product_tmpl_id.name,},check=False,context=context)
         return newId
 
