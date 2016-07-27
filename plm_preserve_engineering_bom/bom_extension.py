@@ -25,25 +25,25 @@ Created on Mar 24, 2016
 
 @author: Daniel Smerghetto
 '''
-from openerp.osv import osv, fields
+from openerp.osv import osv
 import logging
 
 
 class BomExtension(osv.osv):
     _name = 'mrp.bom'
     _inherit = 'mrp.bom'
-    
+
     def SaveStructure(self, cr, uid, relations, level=0, currlevel=0):
         def getBomLinesToReWrite(relations):
             """
-                Processes relations  
+                Processes relations
             """
             dictToRewrite = {}
             for parentName, parentProductID, tmpChildName, tmpChildID, sourceID, tempRelArgs in relations:
                 parentName, tmpChildName, tmpChildID, tempRelArgs, sourceID
                 if parentProductID:
                     bomLineList = []
-                    bom_ids = self.search(cr,uid,[('product_id','=',parentProductID), ('type','=','ebom')])
+                    bom_ids = self.search(cr, uid, [('product_id', '=', parentProductID), ('type', '=', 'ebom')])
                     print 'bom_ids : ' + str(bom_ids)
                     for bom_id in bom_ids:
                         bomBrws = self.browse(cr, uid, bom_id)
@@ -59,14 +59,14 @@ class BomExtension(osv.osv):
         super(BomExtension, self).SaveStructure(cr, uid, relations, level=level, currlevel=currlevel)
         print dictToRewrite
         for parentProductID, bomLineList in dictToRewrite.items():
-            bom_ids = self.search(cr,uid,[('product_id','=',parentProductID), ('type','=','ebom')])
+            bom_ids = self.search(cr, uid, [('product_id', '=', parentProductID), ('type', '=', 'ebom')])
             if not bom_ids:
                 raise osv.except_osv(_('Bom not found.'), _('No  bom found for product_id: %s' % parentProductID))
             for bom_id in bom_ids:
                 for bomLineVals in bomLineList:
                     res = self.write(cr, uid, bom_id, {'bom_line_ids': [(0, 0, bomLineVals)]})
                     if not res:
-                        message = "BoM Line not wrote with vals %r." %(bomLineVals)
+                        message = "BoM Line not wrote with vals %r." % (bomLineVals)
                         logging.warning(message)
                         raise osv.except_osv(_('Creating a new Bom Line Object.'), _(message))
         return False
