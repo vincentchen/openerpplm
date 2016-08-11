@@ -22,7 +22,7 @@
 import random
 import string
 import base64
-import os, stat
+import os
 import logging
 import time
 from datetime import datetime
@@ -1146,87 +1146,3 @@ class plm_document_relation(osv.osv):
         return False
 
 plm_document_relation()
-
-
-class plm_backupdoc(osv.osv):
-    _name = 'plm.backupdoc'
-    _columns = {
-                'userid':fields.many2one('res.users', 'Related User'), 
-                'createdate':fields.datetime('Date Created', readonly=True),
-                'existingfile':fields.char('Physical Document Location',size=1024), 
-                'documentid':fields.many2one('plm.document', 'Related Document'), 
-                'revisionid': fields.related('documentid','revisionid',type="integer",relation="plm.document",string="Revision",store=True),
-                'state': fields.related('documentid','state',type="char",relation="plm.document",string="Status",store=True),
-                'document_name': fields.related('documentid','name',type="char",relation="plm.document",string="Stored Name", store=True),
-                'printout': fields.binary('Printout Content'),
-                'preview': fields.binary('Preview Content'),
-    }
-    _defaults = {
-        'createdate': lambda self,cr,uid,ctx:time.strftime("%Y-%m-%d %H:%M:%S")
-    }
-        
-    def unlink(self, cr, uid, ids, context=None):
-        committed=False
-        if context!=None and context!={}:
-            if uid!=1:
-                logging.warning("unlink : Unable to remove the required documents. You aren't authorized in this context.")
-                raise osv.except_osv(_('Backup Error'), _("Unable to remove the required document.\n You aren't authorized in this context."))
-                return False
-        documentType=self.pool.get('plm.document')
-        checkObjs=self.browse(cr, uid, ids, context=context)
-        for checkObj in checkObjs:
-            if not int(checkObj.documentid):
-                return super(plm_backupdoc,self).unlink(cr, uid, ids, context=context)
-            currentname=checkObj.documentid.store_fname
-            if checkObj.existingfile != currentname:
-                fullname=os.path.join(documentType._get_filestore(cr),checkObj.existingfile)
-                if os.path.exists(fullname):
-                    if os.path.exists(fullname):
-                        os.chmod(fullname, stat.S_IWRITE)
-                        os.unlink(fullname)
-                        committed=True
-                else:
-                    logging.warning("unlink : Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set. You can't change writable flag.")
-                    raise osv.except_osv(_('Check-In Error'), _("Unable to remove the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+") from backup set.\n It isn't a backup file, it's original current one."))
-        if committed:
-            return super(plm_backupdoc,self).unlink(cr, uid, ids, context=context)
-        else:
-            return False
-
-plm_backupdoc()
-
-class BackupDocWizard(osv.osv_memory):
-    _name = 'plm.backupdoc_wizard'
-    
-    def action_restore_document(self, cr, uid, ids, context=None):
-        return True
-    
-        # TODO: To Test!!!        Restore datas field to allow file download
-        backupDocIds = context.get('active_ids', [])
-        backupDocObj = self.pool.get('plm.backupdoc')
-        plmDocObj = self.pool.get('plm.document')
-        for backupDocBrws in backupDocObj.browse(cr, uid, backupDocIds):
-            relDocBrws = backupDocBrws.documentid
-            values = {
-                      'printout' : backupDocBrws.printout,
-                      'state' : 'draft',
-                      'revisionid' : backupDocBrws.revisionid,
-                      'name' : backupDocBrws.document_name,
-                      'store_fname' : backupDocBrws.existingfile,
-                      }
-            if relDocBrws:
-                return plmDocObj.write(cr, uid, relDocBrws.id, values)
-            else:
-                documentId = plmDocObj.create(cr, uid, values)
-                # TODO: Needs to be related to component?
-                if documentId:
-                    return {'name': _('Document'),
-                            'view_type': 'form',
-                            "view_mode": 'form, tree',
-                            'res_model': 'plm.document',
-                            'res_id': documentId,
-                            'type': 'ir.actions.act_window',
-                            'domain': "[]"}
-        return True   
-
-BackupDocWizard()
