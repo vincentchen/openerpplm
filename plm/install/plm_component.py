@@ -148,26 +148,23 @@ class plm_component(osv.osv):
         """
         ids = []
         plmDocObj = self.pool.get('plm.document')
-        
+
         def getCompIds(partName, partRev):
-            if docRev is None or docRev is False:
-                partIds=self.search(cr,uid,[('engineering_code','=',partName)], order='engineering_revision', context=context)
-                if len(partIds)>0:
+            if partRev is None or partRev is False:
+                partIds = self.search(cr, uid, [('engineering_code', '=', partName)], order='engineering_revision', context=context)
+                if len(partIds) > 0:
                     partIds.sort()
-                    ids.append(partIds[len(partIds)-1])
+                    ids.append(partIds[len(partIds) - 1])
             else:
                 ids.extend(self.search(cr, uid, [('engineering_code', '=', partName), ('engineering_revision', '=', partRev)], context=context))
 
-        for docName, docRev, docIdToOpen in vals:
+        for compName, compRev, docIdToOpen in vals:
             checkOutUser = plmDocObj.get_checkout_user(cr, uid, docIdToOpen, context)
             if checkOutUser:
                 isMyDocument = plmDocObj.isCheckedOutByMe(cr, uid, docIdToOpen, context)
                 if isMyDocument and forceCADProperties:
                     return []    # Document properties will be not updated
-                else:
-                    getCompIds(docName, docRev)
-            else:
-                getCompIds(docName, docRev)
+            getCompIds(compName, compRev)
         return list(set(ids))
     
     def NewRevision(self,cr,uid,ids,context=None):
@@ -531,11 +528,13 @@ class plm_component(osv.osv):
                             return existingID
                 else:
                     return existingID
-            
-            try:
-                return super(plm_component,self).create(cr, uid, vals, context=context)
-            except Exception ,ex:
-                raise Exception(" (%r). It has tried to create with values : (%r)."%(ex,vals))
+        try:
+            return super(plm_component, self).create(cr, uid, vals, context=context)
+        except Exception, ex:
+            import psycopg2
+            if isinstance(ex, psycopg2.IntegrityError):
+                raise ex
+            raise Exception(_(" (%r). It has tried to create with values : (%r).") % (ex, vals))
         return False
 
     def write(self, cr, uid, ids, vals, context=None, check=True):
@@ -635,5 +634,25 @@ class plm_component(osv.osv):
             'res_model': 'plm.document',
             'type': 'ir.actions.act_window',
          }
-        
+
+    def isLastDocumentRevision(self, cr, uid, compId, docId, context={}):
+        '''
+            NOT USED
+            Verify if document is at it's last revision
+            I can't do a simple search ordering by revisionid because document names changes every time by sequence
+        '''
+        if not docId:
+            msg = 'Wrong values on verification if is selected last document revision: compId="%r", docId="%r"' % (compId, docId)
+            logging.error(msg)
+            raise msg
+        compBrws = self.browse(cr, uid, compId)
+        compIds = self.search(cr, uid, [('engineering_code', '=', compBrws.engineering_code)], order='engineering_revision')
+        lastcompBrws = self.browse(cr, uid, compIds[-1])
+        docBrwstoOpen = self.pool.get('plm.document').browse(cr, uid, docId)
+        for docBrws in lastcompBrws.linkeddocuments:
+            if docBrws.revisionid > docBrwstoOpen.revisionid:
+                # This verification is because I may have multiple document revisions in the same last revision component
+                return False
+        return True
+
 plm_component()
