@@ -38,7 +38,7 @@ class ProductProductExtension(models.Model):
         '''
             Set flag to skip translation creation because super copy function makes the trick
         '''
-        localCtx = self.env.context.copy()
+        localCtx = context.copy()
         localCtx['skip_translations'] = True
         return super(ProductProductExtension, self).copy(cr, uid, _id, default, localCtx)
 
