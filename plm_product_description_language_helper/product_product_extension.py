@@ -28,8 +28,7 @@ Created on 15 Jun 2016
 
 from openerp import models
 from openerp import api
-from openerp import fields
-from openerp import _
+# from openerp import _
 
 
 class ProductProductExtension(models.Model):
@@ -39,8 +38,9 @@ class ProductProductExtension(models.Model):
         '''
             Set flag to skip translation creation because super copy function makes the trick
         '''
-        context['skip_translations'] = True
-        return super(ProductProductExtension, self).copy(cr, uid, _id, default, context)
+        localCtx = self.env.context.copy()
+        localCtx['skip_translations'] = True
+        return super(ProductProductExtension, self).copy(cr, uid, _id, default, localCtx)
 
     @api.model
     def create(self, vals):
