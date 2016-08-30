@@ -31,6 +31,7 @@
     'depends': ['plm'],
     'description': """ """,
     'data': ['views/component_view_extension.xml',
+             'security/ir.model.access.csv',
              ],
     'installable': True,
     'application': False,
