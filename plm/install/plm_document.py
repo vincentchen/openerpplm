@@ -343,19 +343,16 @@ class plm_document(models.Model):
         fobj.close()
         return (os.path.join(flag,filename),len(value))
 
-    def _iswritable(self, cr, user, oid):
-        checkState=('draft')
-        if not oid.type=='binary':
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") not writable as hyperlink.")
+    @api.model
+    def _iswritable(self, oid):
+        if not oid.type == 'binary':
+            logging.warning("_iswritable : Part (" + str(oid.name) + "-" + str(oid.revisionid) + ") not writable as hyperlink.")
             return False
-        if not oid.engineering_writable:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") not writable.")
+        if oid.state not in ('draft'):
+            logging.warning("_iswritable : Part (" + str(oid.name) + "-" + str(oid.revisionid) + ") in status ; " + str(oid.state) + ".")
             return False
-        if not oid.state in checkState:
-            logging.warning("_iswritable : Part ("+str(oid.engineering_code)+"-"+str(oid.engineering_revision)+") in status ; "+str(oid.state)+".")
-            return False
-        if oid.engineering_code == False:
-            logging.warning("_iswritable : Part ("+str(oid.name)+"-"+str(oid.engineering_revision)+") without Engineering P/N.")
+        if not oid.name:
+            logging.warning("_iswritable : Part (" + str(oid.name) + "-" + str(oid.revisionid) + ") without Engineering P/N.")
             return False
         return True
 
