@@ -48,7 +48,7 @@ def random_name():
 
 def create_directory(path):
     dir_name = random_name()
-    path = os.path.join(path,dir_name)
+    path = os.path.join(path, dir_name)
     os.makedirs(path)
     return dir_name
 
@@ -133,55 +133,60 @@ class plm_document(models.Model):
                     logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
                     result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
-            
+
     def _data_get(self, cr, uid, ids, name, arg, context):
         result = {}
-        value=False
         for objDoc in self.browse(cr, uid, ids, context=context):
-            if objDoc.type=='binary':
+            if objDoc.type == 'binary':
+                value = ''
                 if not objDoc.store_fname:
-                    value=objDoc.db_datas
-                    if not value or len(value)<1:
-                        raise UserError(_("Document %s - %s cannot be accessed" %(str(objDoc.name),str(objDoc.revisionid))))
+                    value = objDoc.db_datas
                 else:
-                    filestore=os.path.join(self._get_filestore(cr), objDoc.store_fname)
+                    filestore = os.path.join(self._get_filestore(cr), objDoc.store_fname)
                     if os.path.exists(filestore):
                         value = file(filestore, 'rb').read()
-                if value and len(value)>0:
+                    else:
+                        msg = "Document %s-%s is not in %r" % (str(objDoc.name),
+                                                               str(objDoc.revisionid),
+                                                               filestore)
+
+                        logging.error(msg)
+                if value and len(value) > 0:
                     result[objDoc.id] = base64.encodestring(value)
                 else:
                     result[objDoc.id] = ''
+                    msg = "Document %s - %s cannot be accessed" % (str(objDoc.name),
+                                                                   str(objDoc.revisionid))
+                    logging.warning(msg)
         return result
 
     def _data_set(self, cr, uid, oid, name, value, args=None, context=None):
-        oiDocument=self.browse(cr, uid, oid, context)
-        if oiDocument.type=='binary':
+        oiDocument = self.browse(cr, uid, oid, context)
+        if oiDocument.type == 'binary':
             if not value:
                 filename = oiDocument.store_fname
                 try:
                     os.unlink(os.path.join(self._get_filestore(cr), filename))
                 except:
                     pass
-                cr.execute('update plm_document set store_fname=NULL WHERE id=%s', (oid,) )
+                cr.execute('update plm_document set store_fname=NULL WHERE id=%s', (oid,))
                 return True
-            #if (not context) or context.get('store_method','fs')=='fs':
             try:
-                printout=False
-                preview=False
+                printout = False
+                preview = False
                 if oiDocument.printout:
-                    printout=oiDocument.printout
+                    printout = oiDocument.printout
                 if oiDocument.preview:
-                    preview=oiDocument.preview
-                db_datas=b''                    # Clean storage field. 
-                fname,filesize=self._manageFile(cr,uid,oid,binvalue=value,context=context)
-                cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,filesize,db_datas,oid))
-                self.pool.get('plm.backupdoc').create(cr,uid, {
-                                              'userid':uid,
-                                              'existingfile':fname,
-                                              'documentid':oid,
-                                              'printout': printout,
-                                              'preview': preview
-                                             }, context=context)
+                    preview = oiDocument.preview
+                db_datas = b''                    # Clean storage field.
+                fname, filesize = self._manageFile(cr, uid, oid, binvalue=value, context=context)
+                cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname, filesize, db_datas, oid))
+                self.pool.get('plm.backupdoc').create(cr, uid, {'userid': uid,
+                                                                'existingfile': fname,
+                                                                'documentid': oid,
+                                                                'printout': printout,
+                                                                'preview': preview
+                                                                }, context=context)
 
                 return True
             except Exception, ex:
@@ -253,25 +258,29 @@ class plm_document(models.Model):
                     checkOutUser = checkoutUserBrws.name
                     if checkoutUserBrws.id == uid:
                         isCheckedOutToMe = True
-                if (objDoc.datas_fname in listfiles):
+                datas_fname = objDoc.datas_fname
+                if (datas_fname in listfiles):
                     if forceFlag:
                         isNewer = True
                     else:
-                        listFileIndex = listfiles.index(objDoc.datas_fname)
-                        timefile = time.mktime(datetime.strptime(str(datefiles[listFileIndex]), '%Y-%m-%d %H:%M:%S').timetuple())
-                        isNewer = (timeSaved - timefile) > 5
+                        try:
+                            listFileIndex = listfiles.index(datas_fname)
+                            timefile = time.mktime(datetime.strptime(str(datefiles[listFileIndex]), '%Y-%m-%d %H:%M:%S').timetuple())
+                            isNewer = (timeSaved - timefile) > 5
+                        except:
+                            logging.warning("Unable to calculate the delta time for %r" % datas_fname)
+                            isNewer = True
                     collectable = isNewer and not(isCheckedOutToMe)
                 else:
                     collectable = True
-                objDatas = False
-                try:
-                    objDatas = objDoc.datas
-                except Exception, ex:
-                    logging.error('Document with "id": %s  and "name": %s may contains no data!!         Exception: %s' % (objDoc.id, objDoc.name, ex))
-                if (objDoc.file_size < 1) and (objDatas):
-                    file_size = len(objDoc.datas)
-                else:
+                if objDoc.file_size:
                     file_size = objDoc.file_size
+                else:
+                    try:
+                        file_size = len(objDoc.datas)
+                    except Exception:
+                        logging.error('Document with "id": %s  and "name": %s may contains no data!!' % (objDoc.id,
+                                                                                                         objDoc.name))
                 result.append((objDoc.id, objDoc.datas_fname, file_size, collectable, isCheckedOutToMe, checkOutUser))
         return list(set(result))
 
@@ -313,7 +322,7 @@ class plm_document(models.Model):
                                          }, context=context)
         return newID 
 
-    def _manageFile(self,cr,uid, oid, binvalue=None, context=None):
+    def _manageFile(self, cr, uid, oid, binvalue=None, context=None):
         """
             use given 'binvalue' to save it on physical repository and to read size (in bytes).
         """
@@ -322,26 +331,23 @@ class plm_document(models.Model):
             try:
                 os.makedirs(path)
             except:
-                raise UserError( _("Permission denied or directory %s cannot be created." %(str(path))))
-        
-        flag = None
+                raise UserError(_("Permission denied or directory %s cannot be created." % (str(path))))
+        storeDirectory = None
         # This can be improved
         for dirs in os.listdir(path):
-            if os.path.isdir(os.path.join(path,dirs)) and len(os.listdir(os.path.join(path,dirs)))<4000:
-                flag = dirs
+            if os.path.isdir(os.path.join(path, dirs)) and len(os.listdir(os.path.join(path, dirs))) < 4000:
+                storeDirectory = dirs
                 break
-        if binvalue==None:
-            fileStream=self._data_get(cr, uid, [oid], name=None, arg=None, context=context)
-            binvalue=fileStream[fileStream.keys()[0]]
-        
-        flag = flag or create_directory(path)
+        if binvalue is None:
+            fileStream = self._data_get(cr, uid, [oid], name=None, arg=None, context=context)
+            binvalue = fileStream[fileStream.keys()[0]]
+        storeDirectory = storeDirectory or create_directory(path)
         filename = random_name()
-        fname = os.path.join(path, flag, filename)
-        fobj = file(fname,'wb')
-        value = base64.decodestring(binvalue)
-        fobj.write(value)
-        fobj.close()
-        return (os.path.join(flag,filename),len(value))
+        fname = os.path.join(path, storeDirectory, filename)
+        with file(fname, 'wb') as fobj:
+            value = base64.decodestring(binvalue)
+            fobj.write(value)
+            return (os.path.join(storeDirectory, filename), len(value))
 
     @api.model
     def _iswritable(self, oid):
