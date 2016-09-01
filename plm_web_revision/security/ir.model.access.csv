@@ -1,0 +1,2 @@
+id,active,perm_create,perm_unlink,group_id/id,name,model_id/id,perm_read,perm_write
+plm.access_plm_web_revision,True,True,False,plm.group_plm_integrationuser,Web Revision,plm_web_revision.model_product_rev_wizard,True,True

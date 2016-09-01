@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
+#    OmniaSolutions, Open Source Management Solution    
+#    Copyright (C) 2010-2011 OmniaSolutions (<http://www.omniasolutions.eu>). All Rights Reserved
 #    $Id$
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -19,18 +19,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import plm_base_entities
-import mrp_extension
-import plm_document
-import plm_component
-import plm_extend_entities
-import plmcomparebom
-import plmdescriptions
-import plmsparebom
-import plmcomponents
-import plmdocuments
-import plm_backup_document
-import actions
-import report
+{
+    'name': 'PLM Web Revision',
+    'version': '1.1',
+    'author': 'OmniaSolutions',
+    'website': 'http://www.omniasolutions.eu',
+    'category': 'Product Lifecycle Management',
+    'sequence': 15,
+    'summary': 'PLM Revision from web side',
+    'images': [],
+    'depends': ['plm'],
+    'description': """ """,
+    'data': ['views/component_view_extension.xml',
+             'security/ir.model.access.csv',
+             ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

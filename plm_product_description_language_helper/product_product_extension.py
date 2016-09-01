@@ -28,33 +28,19 @@ Created on 15 Jun 2016
 
 from openerp import models
 from openerp import api
-from openerp import fields
-from openerp import _
+# from openerp import _
 
 
 class ProductProductExtension(models.Model):
     _inherit = 'product.product'
 
-    std_umc1 = fields.Char(_('UM / Feature 1'),
-                           size=32,
-                           help=_("Allow to specifiy a unit measure for the first feature."),
-                           related='std_description.umc1',
-                           store=True)
-    std_umc2 = fields.Char(_('UM / Feature 2'),
-                           size=32,
-                           help=_("Allow to specifiy a unit measure for the second feature."),
-                           related='std_description.umc2', store=True)
-    std_umc3 = fields.Char(_('UM / Feature 3'),
-                           size=32,
-                           help=_("Allow to specifiy a unit measure for the third feature."),
-                           related='std_description.umc3', store=True)
-
     def copy(self, cr, uid, _id, default=None, context={}):
         '''
             Set flag to skip translation creation because super copy function makes the trick
         '''
-        context['skip_translations'] = True
-        return super(ProductProductExtension, self).copy(cr, uid, _id, default, context)
+        localCtx = context.copy()
+        localCtx['skip_translations'] = True
+        return super(ProductProductExtension, self).copy(cr, uid, _id, default, localCtx)
 
     @api.model
     def create(self, vals):

@@ -50,7 +50,7 @@ msgstr "ID"
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_is_row_material
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_is_row_material
 #, python-format
-msgid "Is Row Material"
+msgid "Is Raw Material"
 msgstr "Is grondstof"
 
 #. module: plm_cutted_parts
