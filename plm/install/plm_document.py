@@ -101,8 +101,8 @@ class plm_document(models.Model):
         """
             Get Files to return to Client
         """
-        logging.info("Start collecting file For download")
         result = []
+        logging.info("Start collecting file For download")
         totalByte = 0 
         datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, ids, context=context):
@@ -253,6 +253,8 @@ class plm_document(models.Model):
         return list(set(result))
 
     def _data_check_files(self, cr, uid, ids, listedFiles=(), forceFlag=False, context=None):
+        maxTargetFileSize = self.pool.get('ir.config_parameter').get_param(cr, uid, 'max_download_file_size', default=5000000000)
+        maxTargetFileSize = int(maxTargetFileSize)
         result = []
         datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, list(set(ids)), context=context):
@@ -281,12 +283,18 @@ class plm_document(models.Model):
                     collectable = isNewer and not(isCheckedOutToMe)
                 else:
                     collectable = True
-                file_size = 10
-                if objDoc.file_size:
-                    file_size = objDoc.file_size
-                else:
+                filestorePath = self._get_filestore(cr)
+                completePath = os.path.join(filestorePath, objDoc.store_fname)
+                file_size = 1
+                if os.path.exists(completePath):
+                    file_size = os.path.getsize(completePath)
+                if file_size <= 1:
                     logging.error('Document with "id": %s and "name": %s may contains no data!!' % (objDoc.id, datas_fname))
-                result.append((objDoc.id,
+                outId = objDoc.id
+                if file_size > maxTargetFileSize:
+                    # This case is used to split big files and download them, see the client for more info
+                    outId = (objDoc.id, tuple(range(0, len(range(0, file_size, maxTargetFileSize)))))
+                result.append((outId,
                                objDoc.datas_fname,
                                file_size,
                                collectable,
@@ -294,6 +302,16 @@ class plm_document(models.Model):
                                checkOutUser))
         logging.info("Going out to _data_check_files")
         return list(set(result))
+
+    def getPartOfFile(self, cr, uid, result, context={}):
+        docId, tokenIndex = result
+        maxTargetFileSize = self.pool.get('ir.config_parameter').get_param(cr, uid, 'max_download_file_size', default=False)
+        maxTargetFileSize = int(maxTargetFileSize)
+        objDoc = self.browse(cr, uid, docId, context)
+        if objDoc:
+            completeData = objDoc.datas
+            splittedDatas = [completeData[i:i + maxTargetFileSize] for i in range(0, len(completeData), maxTargetFileSize)]
+            return base64.encodestring(splittedDatas[tokenIndex]), objDoc.datas_fname
 
     def copy(self,cr,uid,oid,defaults={},context=None):
         """
@@ -899,7 +917,7 @@ class plm_document(models.Model):
         else:
             docArray=ids
         return self._data_get_files(cr, uid, docArray, listedFiles, forceFlag, context)
-
+        
     def GetAllFiles(self, cr, uid, request, default=None, context=None):
         """
             Extract documents to be returned 
