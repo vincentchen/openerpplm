@@ -85,7 +85,7 @@ class plm_document(models.Model):
             docIds = self.search(cr, uid, [('name', '=', objDoc.name)], order='revisionid', context=context)
             docIds.sort()   # Ids are not surely ordered, but revision are always in creation order.
             if docIds:
-                result.append(docIds[len(docIds)-1])
+                result.append(docIds[len(docIds) - 1])
             else:
                 logging.warning('[_getlastrev] No documents are found for object with name: "%s"' % (objDoc.name))
         return list(set(result))
@@ -97,16 +97,20 @@ class plm_document(models.Model):
         newIds = self._getlastrev(cr, uid, ids=ids, context=context)
         return self.read(cr, uid, newIds, ['datas_fname'], context=context)
 
-    def _data_get_files(self, cr, uid, ids, listedFiles=([],[]), forceFlag=False, context=None):
+    def _data_get_files(self, cr, uid, ids, listedFiles=([], []), forceFlag=False, context=None):
         """
             Get Files to return to Client
         """
+        logging.info("Start collecting file For download")
         result = []
-        datefiles,listfiles=listedFiles
+        totalByte = 0 
+        datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, ids, context=context):
-            if objDoc.type=='binary':
-                timeDoc=self.getLastTime(cr,uid,objDoc.id)
-                timeSaved=time.mktime(timeDoc.timetuple())
+            if objDoc.file_size:
+                totalByte = totalByte + objDoc.file_size
+            if objDoc.type == 'binary':
+                timeDoc = self.getLastTime(cr, uid, objDoc.id)
+                timeSaved = time.mktime(timeDoc.timetuple())
                 try:
                     isCheckedOutToMe=self._is_checkedout_for_me(cr, uid, objDoc.id, context)
                     if not(objDoc.datas_fname in listfiles):
@@ -128,10 +132,11 @@ class plm_document(models.Model):
                                 value = file(os.path.join(self._get_filestore(cr), objDoc.store_fname), 'rb').read()
                             result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                         else:
-                            result.append((objDoc.id,objDoc.datas_fname,False, isCheckedOutToMe, timeDoc))
+                            result.append((objDoc.id, objDoc.datas_fname, False, isCheckedOutToMe, timeDoc))
                 except Exception, ex:
-                    logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
-                    result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
+                    logging.error("_data_get_files : Unable to access to document (" + str(objDoc.name) + "). Error :" + str(ex))
+                    result.append((objDoc.id, objDoc.datas_fname, False, True, self.getServerTime(cr, uid, ids)))
+        logging.info("Start sending %r object to the client in byte: %r" % (len(result),totalByte))
         return result
 
     def _data_get(self, cr, uid, ids, name, arg, context):
@@ -228,14 +233,17 @@ class plm_document(models.Model):
         return list(set(result))
 
     def _relatedbydocs(self, cr, uid, oid, kinds, listed_documents=[], recursion=True):
-        result=[]
+        result = []
         if (oid in listed_documents):
             return result
-        documentRelation=self.pool.get('plm.document.relation')
-        docRelIds=documentRelation.search(cr,uid,[('parent_id', '=',oid),('link_kind', 'in',kinds)])
-        if len(docRelIds)==0:
+        documentRelation = self.pool.get('plm.document.relation')
+        docRelIds = documentRelation.search(cr,
+                                            uid,
+                                            [('parent_id', '=',oid),
+                                             ('link_kind', 'in',kinds)])
+        if len(docRelIds) == 0:
             return result
-        children=documentRelation.browse(cr,uid,docRelIds)
+        children = documentRelation.browse(cr, uid, docRelIds)
         for child in children:
             if recursion:
                 listed_documents.append(oid)
@@ -273,15 +281,18 @@ class plm_document(models.Model):
                     collectable = isNewer and not(isCheckedOutToMe)
                 else:
                     collectable = True
+                file_size = 10
                 if objDoc.file_size:
                     file_size = objDoc.file_size
                 else:
-                    try:
-                        file_size = len(objDoc.datas)
-                    except Exception:
-                        logging.error('Document with "id": %s  and "name": %s may contains no data!!' % (objDoc.id,
-                                                                                                         objDoc.name))
-                result.append((objDoc.id, objDoc.datas_fname, file_size, collectable, isCheckedOutToMe, checkOutUser))
+                    logging.error('Document with "id": %s and "name": %s may contains no data!!' % (objDoc.id, datas_fname))
+                result.append((objDoc.id,
+                               objDoc.datas_fname,
+                               file_size,
+                               collectable,
+                               isCheckedOutToMe,
+                               checkOutUser))
+        logging.info("Going out to _data_check_files")
         return list(set(result))
 
     def copy(self,cr,uid,oid,defaults={},context=None):
@@ -803,8 +814,6 @@ class plm_document(models.Model):
             Evaluate documents to return
         """
         forceFlag = False
-        listed_models = []
-        listed_documents = []
         outIds = []
         oid, listedFiles, selection = request
         outIds.append(oid)
@@ -814,9 +823,11 @@ class plm_document(models.Model):
             forceFlag = True
             selection = selection * (-1)
         # Get relations due to layout connected
-        docArray = self._relateddocs(cr, uid, oid, ['LyTree'], listed_documents)
+        docArray = self._relateddocs(cr, uid, oid, ['LyTree'], [])
+        logging.info("LyTree Len of docArray: %r" % len(docArray))
         # Get Hierarchical tree relations due to children
-        modArray = self._explodedocs(cr, uid, oid, ['HiTree'], listed_models)
+        modArray = self._explodedocs(cr, uid, oid, ['HiTree'], [])
+        logging.info("HiTree Len of modArray: %r" % len(modArray))
         outIds = list(set(outIds + modArray + docArray))
         if selection == 2:  # Case of latest
             outIds = self._getlastrev(cr, uid, outIds, context)
