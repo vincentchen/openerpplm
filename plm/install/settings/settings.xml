@@ -8,5 +8,6 @@
             <field name="code">plm.document.progress</field>
         </record> 
 
+        <function model="ir.config_parameter" name="set_param" eval="('max_download_file_size', 500000000000)" />
     </data>
 </openerp>

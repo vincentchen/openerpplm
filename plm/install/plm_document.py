@@ -305,7 +305,7 @@ class plm_document(models.Model):
 
     def getPartOfFile(self, cr, uid, result, context={}):
         docId, tokenIndex = result
-        maxTargetFileSize = self.pool.get('ir.config_parameter').get_param(cr, uid, 'max_download_file_size', default=False)
+        maxTargetFileSize = self.pool.get('ir.config_parameter').get_param(cr, uid, 'max_download_file_size', default=500000000)
         maxTargetFileSize = int(maxTargetFileSize)
         objDoc = self.browse(cr, uid, docId, context)
         if objDoc:
