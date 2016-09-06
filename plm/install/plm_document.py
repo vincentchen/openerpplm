@@ -243,11 +243,11 @@ class plm_document(osv.osv):
         result = []
         datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, list(set(ids)), context=context):
-            if objDoc.type=='binary':
+            if objDoc.type == 'binary':
                 checkOutUser = ''
                 isCheckedOutToMe = False
-                timeDoc=self.getLastTime(cr,uid,objDoc.id)
-                timeSaved=time.mktime(timeDoc.timetuple())
+                timeDoc = self.getLastTime(cr, uid, objDoc.id)
+                timeSaved = time.mktime(timeDoc.timetuple())
                 checkoutUserBrws = self.get_checkout_user(cr, uid, objDoc.id, context=None)
                 if checkoutUserBrws:
                     checkOutUser = checkoutUserBrws.name
@@ -257,8 +257,8 @@ class plm_document(osv.osv):
                     if forceFlag:
                         isNewer = True
                     else:
-                        timefile=time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]),'%Y-%m-%d %H:%M:%S').timetuple())
-                        isNewer=(timeSaved-timefile)>5
+                        timefile = time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]), '%Y-%m-%d %H:%M:%S').timetuple())
+                        isNewer = (timeSaved - timefile) > 5
                     collectable = isNewer and not(isCheckedOutToMe)
                 else:
                     collectable = True
@@ -999,13 +999,34 @@ class plm_document(osv.osv):
         backupDocIds = self.pool.get('plm.backupdoc').search(cr, uid, [('existingfile', '=', fname)])
         if not backupDocIds:
             return super(plm_document, self)._file_delete(cr, uid, fname)
-        
+
     def GetNextDocumentName(self, cr, uid, documentName, context={}):
         '''
             Return a new name due to sequence next number.
         '''
         nextDocNum = self.pool.get('ir.sequence').get(cr, uid, 'plm.document.progress')
-        return documentName+'-'+nextDocNum
+        return documentName + '-' + nextDocNum
+
+    def action_rev_comps(self, cr, uid, ids, context={}):
+        '''
+            This function is called by the button on document view, section LinkedParts
+            Clicking that button all components related to all revisions of this document are opened in a tree view
+        '''
+        compIds = []
+        for docBrws in self.browse(cr, uid, ids, context):
+            for compBrws in docBrws.linkedcomponents:
+                engineering_code = compBrws.engineering_code
+                if not engineering_code:
+                    logging.warning("Part %s doesn't have and engineering code!" % (compBrws.name))
+                    continue
+                compIds.extend(self.pool.get('product.product').search(cr, uid, [('engineering_code', '=', engineering_code)]))
+        return {'domain': [('id', 'in', compIds)],
+                'name': _('Related components'),
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'res_model': 'product.product',
+                'type': 'ir.actions.act_window',
+                }
 
 plm_document()
 

@@ -90,6 +90,7 @@
 	                    </sheet>
 	                </page>
 	                <page string="Linked Parts">
+                    	<button class="oe_inline oe_stat_button"   type="object" icon="fa-list-alt" name="action_rev_comps" string="Rel. Components"></button>
 	                    <field colspan="4" name="linkedcomponents" nolabel="1" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
 	                </page>
 	                <page string="Indexed Content" groups="base.group_extended">
