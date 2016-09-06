@@ -195,7 +195,7 @@ class plm_document(models.Model):
 
                 return True
             except Exception, ex:
-                raise except_orm(_('Error in _data_set'), str(ex))
+                raise UserError(_('Error in _data_set %r' % ex))
         else:
             return True
 

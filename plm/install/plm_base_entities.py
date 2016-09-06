@@ -227,17 +227,29 @@ class plm_relation(models.Model):
 
     def _getinbom(self, cr, uid, pid, sid=False):
         bomLType = self.pool.get('mrp.bom.line')
-        ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('source_id', '=', sid), ('type', '=', 'ebom')])
+        ids = []
+        if sid:
+            ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                            ('source_id', '=', sid),
+                                            ('type', '=', 'ebom')])
+            if not ids:
+                ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                                ('source_id', '=', sid),
+                                                ('type', '=', 'normal')])
+        else:
+            ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                            ('source_id', '=', False),
+                                            ('type', '=', 'ebom')])
+            if not ids:
+                ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                                ('source_id', '=', False),
+                                                ('type', '=', 'normal')])
         if not ids:
-            ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('source_id', '=', sid), ('type', '=', 'normal')])
+            ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                            ('type', '=', 'ebom')])
             if not ids:
-                ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('source_id', '=', False), ('type', '=', 'ebom')])
-            if not ids:
-                ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('source_id', '=', False), ('type', '=', 'normal')])
-                if not ids:
-                    ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('type', '=', 'ebom')])
-                if not ids:
-                    ids = bomLType.search(cr, uid, [('product_id', '=', pid), ('type', '=', 'normal')])
+                ids = bomLType.search(cr, uid, [('product_id', '=', pid),
+                                                ('type', '=', 'normal')])
         return bomLType.browse(cr, uid, list(set(ids)), context=None)
 
     def _getbom(self, cr, uid, pid, sid=False):
@@ -390,9 +402,9 @@ class plm_relation(models.Model):
             sid = ids[1]
         oid = ids[0]
         relDatas.append(oid)
-        bomId       = self._getinbom(cr, uid, oid, sid)
+        bomId = self._getinbom(cr, uid, oid, sid)
         relDatas.append(self._implodebom(cr, uid, bomId))
-        prtDatas    = self._getpackdatas(cr, uid, relDatas)
+        prtDatas = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
     def GetExplodedBom(self, cr, uid, ids, level=0, currlevel=0):
