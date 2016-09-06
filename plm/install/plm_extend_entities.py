@@ -197,10 +197,10 @@ class plm_relation_line(osv.osv):
         """
             If the BOM line refers to a BOM, return the ids of the child BOM lines
         """
-        bom_obj = self.pool['mrp.bom']
+        bom_obj = self.pool.get('mrp.bom')
         res = {}
         for bom_line in self.browse(cr, uid, ids, context=context):
-            for bom_id in self.search([('product_id', '=', bom_line.product_id.id),
+            for bom_id in bom_obj.search(cr, uid, [('product_id', '=', bom_line.product_id.id),
                                       ('product_tmpl_id', '=', bom_line.product_id.product_tmpl_id.id),
                                       ('type', '=', bom_line.type)]):
                 child_bom = bom_obj.browse(cr, uid, bom_id, context=context)
