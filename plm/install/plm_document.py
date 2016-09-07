@@ -103,7 +103,7 @@ class plm_document(models.Model):
         """
         logging.info("Start collecting file For download")
         result = []
-        totalByte = 0 
+        totalByte = 0
         datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, ids, context=context):
             if objDoc.file_size:
@@ -112,7 +112,7 @@ class plm_document(models.Model):
                 timeDoc = self.getLastTime(cr, uid, objDoc.id)
                 timeSaved = time.mktime(timeDoc.timetuple())
                 try:
-                    isCheckedOutToMe=self._is_checkedout_for_me(cr, uid, objDoc.id, context)
+                    isCheckedOutToMe = self._is_checkedout_for_me(cr, uid, objDoc.id, context)
                     if not(objDoc.datas_fname in listfiles):
                         if (not objDoc.store_fname) and (objDoc.db_datas):
                             value = objDoc.db_datas
@@ -121,10 +121,10 @@ class plm_document(models.Model):
                         result.append((objDoc.id, objDoc.datas_fname, base64.encodestring(value), isCheckedOutToMe, timeDoc))
                     else:
                         if forceFlag:
-                            isNewer=True
+                            isNewer = True
                         else:
-                            timefile=time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]),'%Y-%m-%d %H:%M:%S').timetuple())
-                            isNewer=(timeSaved - timefile)>5
+                            timefile = time.mktime(datetime.strptime(str(datefiles[listfiles.index(objDoc.datas_fname)]), '%Y-%m-%d %H:%M:%S').timetuple())
+                            isNewer = (timeSaved - timefile) > 5
                         if (isNewer and not(isCheckedOutToMe)):
                             if (not objDoc.store_fname) and (objDoc.db_datas):
                                 value = objDoc.db_datas
@@ -136,7 +136,7 @@ class plm_document(models.Model):
                 except Exception, ex:
                     logging.error("_data_get_files : Unable to access to document (" + str(objDoc.name) + "). Error :" + str(ex))
                     result.append((objDoc.id, objDoc.datas_fname, False, True, self.getServerTime(cr, uid, ids)))
-        logging.info("Start sending %r object to the client in byte: %r" % (len(result),totalByte))
+        logging.info("Start sending %r object to the client in byte: %r" % (len(result), totalByte))
         return result
 
     def _data_get(self, cr, uid, ids, name, arg, context):
@@ -188,7 +188,6 @@ class plm_document(models.Model):
                 cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname, filesize, db_datas, oid))
                 self.pool.get('plm.backupdoc').create(cr, uid, {'userid': uid,
                                                                 'existingfile': fname,
-                                                                'documentid': oid,
                                                                 'printout': printout,
                                                                 'preview': preview
                                                                 }, context=context)
