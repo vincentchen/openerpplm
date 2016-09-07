@@ -9,8 +9,8 @@
 	        <field name="arch" type="xml">
 	        <form string="Creation of New Revision">
 	        	<group> 
-	        		<field name="reviseDocument" />	
-	        		<field name="reviseEbom" />	
+	        		<!-- <field name="reviseDocument" />-->	
+	        		<!-- <field name="reviseEbom" /> -->	
 	        		<field name="reviseNbom" />	
 	        		<field name="reviseSbom" />	
 	        	</group>	

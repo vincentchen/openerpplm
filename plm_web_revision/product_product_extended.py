@@ -98,7 +98,20 @@ class ProductProductExtended(models.Model):
         for bomBrws in bomObj.search([('product_tmpl_id', '=', oldProdBrws.product_tmpl_id.id), ('type', '=', bomType)]):
             newBomBrws = bomObj.copy(bomBrws.id)
             newBomBrws.product_tmpl_id = newProdBrws.product_tmpl_id.id
-            newBomBrws.source_id = newProdBrws.linkeddocuments.ids[0]
+            if bomType == 'ebom':
+                self.repairSourceId(newBomBrws, bomBrws)
+
+    @api.model
+    def repairSourceId(self, newBom, oldBom):
+        """
+        upgrade the source id at the new version
+        """
+        pass
+        # TODO: finish this
+        for objDoc in self.env['plm.document'].browse(oldBom.source_id):
+            args = {'name': objDoc.name,
+                    'revisionid': objDoc .revisionid}
+            newId = self.env['plm.document'].GetLatestIds(args)
 
 ProductProductExtended()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
