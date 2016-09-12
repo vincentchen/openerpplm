@@ -525,6 +525,14 @@ class plm_component(models.Model):
             return False
         return True  
 
+    def wf_message_post_client(self, cr, uid, args, body='', context=None):
+        '''
+            args = [objId, objMessage]
+        '''
+        objId, objMessage = args
+        self.wf_message_post(cr, uid, [objId], objMessage, context)
+        return True
+        
     def wf_message_post(self,cr,uid,ids,body='',context=None):
         """
             Writing messages to follower, on multiple objects
