@@ -58,10 +58,10 @@ class plm_temporary_cutted(models.Model):
                 materiaPercentage = (1 + bomLine.product_id.wastage_percent)
                 xMaterial = (bomLine.product_id.row_material_xlenght * materiaPercentage) + bomLine.product_id.material_added
                 yMaterial = (bomLine.product_id.row_material_ylenght * materiaPercentage) + bomLine.product_id.material_added
-                xRowMaterialLenght = bomLine.product_id.row_material.row_material_xlenght
-                yRowMaterialLenght = bomLine.product_id.row_material.row_material_ylenght
-                xQty = xMaterial / (1 if xRowMaterialLenght == 0 else xRowMaterialLenght)
-                yQty = yMaterial / (1 if yRowMaterialLenght == 0 else yRowMaterialLenght)
+                xRawMaterialLenght = bomLine.product_id.row_material.row_material_xlenght
+                yRawMaterialLenght = bomLine.product_id.row_material.row_material_ylenght
+                xQty = xMaterial / (1 if xRawMaterialLenght == 0 else xRawMaterialLenght)
+                yQty = yMaterial / (1 if yRawMaterialLenght == 0 else yRawMaterialLenght)
                 qty = xQty * yQty
                 commonValues = {'x_leght': xMaterial,
                                 'y_leght': yMaterial,
