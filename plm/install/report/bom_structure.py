@@ -165,13 +165,13 @@ def getLinesToPrint(myObjects, flatMode=False):
                     outList.append(globalSumDict[(productName, productRevision)])
                     del globalSumDict[(productName, productRevision)]
 
-    def addIfNeeded(bomLineObj):
+    def addIfNeeded(bomLineObj, parentQty):
         prodObj = bomLineObj.product_id
         tmpl_obj = prodObj.product_tmpl_id
         productName = tmpl_obj.engineering_code
         fatherProductName = bomLineObj.bom_id.product_id.name
         productRevision = tmpl_obj.engineering_revision
-        lineQty = bomLineObj.product_qty
+        lineQty = bomLineObj.product_qty * parentQty
         productNamesToSort.append(productName)
         if (productName, productRevision) not in globalSumDict:
             singleDict = {'code': prodObj.default_code,
@@ -190,22 +190,23 @@ def getLinesToPrint(myObjects, flatMode=False):
         else:
             globalSumDict[(productName, productRevision)]['pqty'] += lineQty
 
-    def makeRecursion(bomLineObjs):
+    def makeRecursion(bomLineObjs, parentQty=1):
         for bomLineObj in bomLineObjs:
             bomId = isAParent(bomLineObj)
             if flatMode:
-                addIfNeeded(bomLineObj)
+                addIfNeeded(bomLineObj, parentQty)
                 if bomId:
-                    makeRecursion(bomId.bom_line_ids)
+                    makeRecursion(bomId.bom_line_ids, bomLineObj.product_qty * parentQty)
             else:
                 if bomId:
-                    makeRecursion(bomId.bom_line_ids)
+                    makeRecursion(bomId.bom_line_ids, bomLineObj.product_qty * parentQty)
                 else:
-                    addIfNeeded(bomLineObj)
+                    addIfNeeded(bomLineObj, parentQty)
 
     makeRecursion(myObjects)
     sortOutRes()
     return outList
+
 
 class bom_structure_all_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
