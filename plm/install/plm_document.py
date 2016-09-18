@@ -1264,7 +1264,7 @@ class plm_document_relation(models.Model):
     parent_id       =   fields.Many2one ('plm.document', _('Related parent document'), ondelete='cascade')
     child_id        =   fields.Many2one ('plm.document', _('Related child document'),  ondelete='cascade')
     configuration   =   fields.Char     (_('Configuration Name'),size=1024)
-    link_kind       =   fields.Char     (_('Kind of Link'),size=64, required=True)
+    link_kind       =   fields.Char     (_('Kind of Link'),size=64, required=True)  # LyTree or HiTree or RfTree
     create_date     =   fields.Datetime (_('Date Created'), readonly=True)
 
     #  TODO: To remove userid field for version 10

@@ -50,6 +50,9 @@ class plm_config_settings(models.Model):
     module_plm_pack_and_go = fields.Boolean("Plm Pack and go")
     module_product_description_language_helper = fields.Boolean("Plm Product Description Language Helper")
     module_plm_report_language_helper = fields.Boolean("Plm Report Language Helper")
+    module_plm_automate_nbom = fields.Boolean("Plm Automate Normal Bom")
+    module_plm_date_bom = fields.Boolean("Plm Date Bom")
+    module_plm_web_revision = fields.Boolean("Plm Web Revision")
 
 plm_config_settings()
 
