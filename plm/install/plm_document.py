@@ -22,22 +22,22 @@
 import random
 import string
 import base64
-import os, stat
+import os
+import json
 import time
 from datetime import datetime
-
 from openerp.osv.orm import except_orm
 import openerp.tools as tools
 from openerp.exceptions import UserError
 from openerp.osv import fields as oldFields
-from openerp        import models, fields, api, SUPERUSER_ID, _, osv
+from openerp import models, fields, api, SUPERUSER_ID, _, osv
 import logging
 _logger = logging.getLogger(__name__)
 
 
 # To be adequated to plm.component class states
-USED_STATES=[('draft',_('Draft')),('confirmed',_('Confirmed')),('released',_('Released')),('undermodify',_('UnderModify')),('obsoleted',_('Obsoleted'))]
-USEDIC_STATES=dict(USED_STATES)
+USED_STATES = [('draft',_('Draft')),('confirmed',_('Confirmed')),('released',_('Released')),('undermodify',_('UnderModify')),('obsoleted',_('Obsoleted'))]
+USEDIC_STATES = dict(USED_STATES)
 #STATEFORRELEASE=['confirmed']
 #STATESRELEASABLE=['confirmed','released','undermodify','UnderModify']
 
@@ -1022,17 +1022,184 @@ class plm_document(models.Model):
 
     def GetNextDocumentName(self, cr, uid, documentName, context={}):
         '''
-            Return a new name due to sequence next number.
+        Return a new name due to sequence next number.
         '''
         nextDocNum = self.pool.get('ir.sequence').get(cr, uid, 'plm.document.progress')
         return documentName + '-' + nextDocNum
+
+    @api.model
+    def needUpdate(self):
+        """
+        check if the file need to be updated
+        """
+        checkoutIds = self.env['plm.checkout'].search([('documentid', '=', self.id),
+                                                       ('userid', '=', self.env.uid)])
+        for _brw in checkoutIds:
+            return True
+        return False
+
+    @api.model
+    def checkout(self, hostName, hostPws):
+        """
+        check out the current document
+        """
+        if self.is_checkout:
+            raise UserError(_("Unable to check-Out a document that is already checked id by user %r" % self.checkout_user))
+        if self.state in ['released', 'obsoleted']:
+            raise UserError(_("Unable to check-Outcheck-Out a document that is in state %r" % self.state))
+        values = {'userid': self.env.uid,
+                  'hostname': hostName,
+                  'hostpws': hostPws,
+                  'documentid': self.id}
+        self.env['plm.checkout'].create(values)
+
+    @api.model
+    def saveStructure(self, arguments):
+        """
+        save the structure passed
+        self['FILE_PATH'] = ''
+        self['PDF_PATH'] = ''
+        self['PRODUCT_ATTRIBUTES'] = []
+        self['DOCUMENT_ATTRIBUTES'] = []
+        self['RELATION_ATTRIBUTES'] = []
+        self['RELATIONS'] = [] # tutte le relazioni vanno qui ma devo metterci un attributo che mi identifica il tipo
+                                # 2d2d 3d3d 3d2d o niente
+        self['DOCUMENT_DATE'] = None
+        """
+        cPickleStructure, hostName, hostPws = arguments
+        documentAttributes = {}
+        documentRelations = {}
+        productAttributes = {}
+        productRelations = {}
+        productDocumentRelations = {}
+        objStructure = json.loads(cPickleStructure)
+
+        def populateStructure(parentItem=False, structure={}):
+            documentId = False
+            productId = False
+            documentProperty = structure.get('DOCUMENT_ATTRIBUTES', False)
+            if documentProperty and structure.get('FILE_PATH', False):
+                documentId = id(documentProperty)
+                documentAttributes[documentId] = documentProperty
+            productProperty = structure.get('PRODUCT_ATTRIBUTES', False)
+            if productProperty:
+                productId = id(productProperty)
+                productAttributes[productId] = productProperty
+            if productId and documentId:
+                listRelated = productDocumentRelations.get(productId, [])
+                listRelated.append(documentId)
+                productDocumentRelations[productId] = listRelated
+            if parentItem:
+                parentDocumentId, parentProductId = parentItem
+                relationAttributes = structure.get('MRP_ATTRIBUTES', {})
+                childRelations = documentRelations.get(parentDocumentId, [])
+                childRelations.append((documentId, relationAttributes.get('TYPE', '')))
+                if parentDocumentId:
+                    documentRelations[parentDocumentId] = childRelations
+                if parentProductId:
+                    if not documentId:
+                        documentId = parentDocumentId
+                    itemTuple = (productId, documentId, relationAttributes)
+                    listItem = productRelations.get(parentProductId, [])
+                    listItem.append(itemTuple)
+                    productRelations[parentProductId] = listItem
+            for subStructure in structure.get('RELATIONS', []):
+                populateStructure((documentId, productId), subStructure)
+        populateStructure(structure=objStructure)
+
+        # Save the document
+        logging.info("Savind Document")
+        for documentAttribute in documentAttributes.values():
+            documentAttribute['TO_UPDATE'] = False
+            docId = False
+            for brwItem in self.search([('name', '=', documentAttribute.get('name')),
+                                        ('revisionid', '=', documentAttribute.get('revisionid'))]):
+                if brwItem.state not in ['released', 'obsoleted']:
+                    if brwItem.needUpdate():
+                        brwItem.write(documentAttribute)
+                        documentAttribute['TO_UPDATE'] = True
+                docId = brwItem
+            if not docId:
+                docId = self.create(documentAttribute)
+                docId.checkout(hostName, hostPws)
+                documentAttribute['TO_UPDATE'] = True
+            documentAttribute['id'] = docId.id
+
+        # Save the product
+        logging.info("Savind Product")
+        productTemplate = self.env['product.product']
+        for refId, productAttribute in productAttributes.items():
+            linkedDocuments = set()
+            for refDocId in productDocumentRelations.get(refId, []):
+                linkedDocuments.add((4, documentAttributes[refDocId].get('id', 0)))
+            prodId = False
+            for brwItem in productTemplate.search([('engineering_code', '=', productAttribute.get('engineering_code')),
+                                                   ('engineering_revision', '=', productAttribute.get('engineering_revision'))]):
+                if brwItem.state not in ['released', 'obsoleted']:
+                    brwItem.write(productAttribute)
+                prodId = brwItem
+                break
+            if not prodId:
+                if not productAttribute.get('name', False):
+                    productAttribute['name'] = productAttribute.get('engineering_code', False)
+                prodId = productTemplate.create(productAttribute)
+            prodId.linkeddocuments
+            if linkedDocuments:
+                prodId.write({'linkeddocuments': list(linkedDocuments)})
+            productAttribute['id'] = prodId.id
+        # Save the document relation
+        logging.info("Savind Document Relations")
+        documentRelationTemplate = self.env['plm.document.relation']
+        for parentId, childrenRelations in documentRelations.items():
+            trueParentId = documentAttributes[parentId].get('id', 0)
+            itemFound = set()
+            for objBrw in documentRelationTemplate.search([('parent_id', '=', trueParentId)]):
+                found = False
+                for childId, relationType in childrenRelations:
+                    trueChildId = documentAttributes.get(childId, {}).get('id', 0)
+                    if objBrw.parent_id == trueParentId and objBrw.child_id == trueChildId and objBrw.type == relationType:
+                        found = True
+                        itemFound.add((childId, relationType))
+                        break
+                if not found:
+                    objBrw.unlink()
+            for childId, relationType in set(childrenRelations).difference(itemFound):
+                trueChildId = documentAttributes.get(childId, {}).get('id', 0)
+                documentRelationTemplate.create({'parent_id': trueParentId,
+                                                 'child_id': trueChildId,
+                                                 'type': relationType})
+        # Save the product relation
+        logging.info("Savind Product Relations")
+        mrpBomTemplate = self.env['mrp.bom']
+        for parentId, childRelations in productRelations.items():
+            trueParentId = productAttributes[parentId].get('id')
+            brwProduct = productTemplate.search([('id', '=', trueParentId)])
+            productTempId = brwProduct.product_tmpl_id.id
+            brwBom = mrpBomTemplate.search([('product_tmpl_id', '=', productTempId)])
+            if not brwBom:
+                brwBom = mrpBomTemplate.create({'product_tmpl_id': productTempId,
+                                                'type': 'ebom'})
+            # delete rows
+            for _, documentId, _ in childRelations:
+                trueDocumentId = documentAttributes.get(documentId, {}).get('id', 0)
+                if trueDocumentId:  # sems strange this .. but i will delete only the bom with the right source id
+                    brwBom.deleteChildRow(trueDocumentId)
+                    break
+            # add rows
+            for childId, documentId, relationAttributes in childRelations:
+                if not (childId and documentId):
+                    logging.warning("Bed relation request %r, %r" % (childId, documentId))
+                    continue
+                trueChildId = productAttributes[childId].get('id')
+                trueDocumentId = documentAttributes[documentId].get('id')
+                brwBom.addChildRow(trueChildId, trueDocumentId, relationAttributes)
+        return json.dumps(objStructure)
 
 plm_document()
 
 
 class plm_checkout(models.Model):
     _name = 'plm.checkout'
-    
     userid      =   fields.Many2one ('res.users', _('Related User'), ondelete='cascade')
     hostname    =   fields.Char     (_('hostname'),size=64)
     hostpws     =   fields.Char     (_('PWS Directory'),size=1024)
@@ -1111,6 +1278,13 @@ class plm_document_relation(models.Model):
         ('relation_uniq', 'unique (parent_id,child_id,link_kind)', _('The Document Relation must be unique !')) 
     ]
 
+    def deleteRelation(self, parentId, childId, kind, configuration=False):
+        """
+            controllare se la configurazione e; usata !!!!!
+        """
+        # TODO: da dare
+        pass
+
     def SaveStructure(self, cr, uid, relations, level=0, currlevel=0):
         """
             Save Document relations
@@ -1130,7 +1304,7 @@ class plm_document_relation(models.Model):
 
         def saveChild(relation):
             """
-                save the relation 
+                save the relation
             """
             try:
                 res={}

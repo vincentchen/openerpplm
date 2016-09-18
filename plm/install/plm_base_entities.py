@@ -601,8 +601,28 @@ class plm_relation(models.Model):
         return newId
 
 #   Overridden methods for this entity
+    @api.model
+    def deleteChildRow(self, documentId):
+        """
+        delete the bom child row
+        """
+        for bomLine in self.bom_line_ids:
+            if bomLine.source_id.id == documentId and bomLine.type == self.type:
+                bomLine.unlink()
+
+    @api.model
+    def addChildRow(self, childId, sourceDocumentId, relationAttributes):
+        """
+        add children rows
+        """
+        relationAttributes.update({'bom_id': self.id,
+                                   'product_id': childId,
+                                   'source_id': sourceDocumentId,
+                                   'type': 'ebom'})
+        self.bom_line_ids.ids.append(self.env['mrp.bom.line'].create(relationAttributes).id)
 
 plm_relation()
+
 
 class plm_material(models.Model):
     _name = "plm.material"
