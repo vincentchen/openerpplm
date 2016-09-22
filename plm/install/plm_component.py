@@ -41,6 +41,16 @@ USEDIC_STATES = dict(USED_STATES)
 # STATESRELEASABLE=['confirmed','transmitted','released','undermodify','obsoleted']
 
 
+def emptyStringIfFalse(value):
+    """
+        return an empty string if the value is False
+    """
+    if value:
+        return unicode(value)
+    else:
+        return ''
+
+
 class plm_component(models.Model):
     _inherit = 'product.product'
     create_date = fields.Datetime(_('Date Created'), readonly=True)
@@ -774,13 +784,66 @@ class plm_component(models.Model):
                 'type': 'ir.actions.act_window',
                 }
 
-        def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
-            result = super(plm_component, self).name_search(cr, user, name, args, operator, context, limit)
-            newResult = []
-            for productId, oldName in result:
-                objBrowse = self.browse(cr, user, [productId], context)
-                newName = "%r [%r] " % (oldName, objBrowse.engineering_revision)
-                newResult.append((productId, newName))
-            return newResult
+    @api.multi
+    def name_get(self):
+        result = []
+        for inv in self:
+            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
+            result.append((inv.id, newName))
+        return result
+
+    @api.model
+    def getNormalBomStd(self, args):
+        """
+            get the normal bom from the given name and revision
+            RELPOS,
+            $G{COMPDES="-"} / $G{COMPDES_L2="-"},
+            $G{COMPNAME:f("#clear(<undef>@)")},
+            $G{RELQTY},
+            $G{COMPR1="-"}
+            $G{COMPR2="-"}
+        """
+        componentName, componentRev, bomType = args
+        logging.info('getNormalBom for compoent: %s, componentRev: %s' % (componentName, componentRev))
+        out = []
+        searchFilter = [('engineering_code', '=', componentName),
+                        ('engineering_revision', '=', componentRev)]
+        compBrwsList = self.search(searchFilter).with_context({'lang': 'it_IT'})
+        for objBrowse in compBrwsList:
+            for bomBrowse in objBrowse.bom_ids:
+                if str(bomBrowse.type).lower() == bomType:
+                    for bomLineBrowse in bomBrowse.bom_line_ids:
+                        infoRow = [bomLineBrowse.itemnum,
+                                   emptyStringIfFalse(bomLineBrowse.product_id.description),
+                                   self._translate(emptyStringIfFalse(bomLineBrowse.product_id.description), 'english'),
+                                   bomLineBrowse.product_id.engineering_code,
+                                   bomLineBrowse.product_qty,
+                                   emptyStringIfFalse(bomLineBrowse.product_id.x_r1),
+                                   emptyStringIfFalse(bomLineBrowse.product_id.x_r2)
+                                   ]
+                        out.append(infoRow)
+        return out
+
+    def _translate(self, cr, uid, dataValue="", languageName=""):
+        _LOCALLANGS = {'french': ('French_France', 'fr_FR',),
+                       'italian': ('Italian_Italy', 'it_IT',),
+                       'polish': ('Polish_Poland', 'pl_PL',),
+                       'svedish': ('Svedish_Svenska', 'sw_SE',),
+                       'russian': ('Russian_Russia', 'ru_RU',),
+                       'english': ('English UK', 'en_GB',),
+                       'spanish': ('Spanish_Spain', 'es_ES',),
+                       'german': ('German_Germany', 'de_DE',),
+                       }
+        if not dataValue:
+            return ""
+        if languageName in _LOCALLANGS:
+            language = _LOCALLANGS[languageName][1]
+            transObj = self.pool.get('ir.translation')
+            resIds = transObj.search(cr, uid,
+                                     [('src', '=', dataValue),
+                                      ('lang', '=', language)])
+            for trans in transObj.browse(cr, uid, resIds):
+                return trans.value
+        return ""
 
 plm_component()

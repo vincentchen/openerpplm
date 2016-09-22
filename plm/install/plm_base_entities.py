@@ -134,6 +134,14 @@ CREATE INDEX product_template_engcoderev_index
   (engineering_code, engineering_revision);
   """)
 
+    @api.multi
+    def name_get(self):
+        result = []
+        for inv in self:
+            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
+            result.append((inv.id, newName))
+        return result
+
 plm_component()
 
 
