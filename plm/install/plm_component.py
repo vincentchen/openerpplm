@@ -25,6 +25,7 @@ import types
 from datetime import datetime
 import logging
 
+from openerp import api
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
@@ -383,6 +384,14 @@ class plm_component(osv.osv):
             return False
         return True  
 
+    def wf_message_post_client(self, cr, uid, args, body='', context=None):
+        '''
+            args = [objId, objMessage]
+        '''
+        objId, objMessage = args
+        self.wf_message_post(cr, uid, [objId], objMessage, context)
+        return True
+
     def wf_message_post(self,cr,uid,ids,body='',context=None):
         """
             Writing messages to follower, on multiple objects
@@ -634,6 +643,14 @@ class plm_component(osv.osv):
             'res_model': 'plm.document',
             'type': 'ir.actions.act_window',
          }
+
+    @api.multi
+    def name_get(self):
+        result = []
+        for inv in self:
+            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
+            result.append((inv.id, newName))
+        return result
 
     def isLastDocumentRevision(self, cr, uid, compId, docId, context={}):
         '''

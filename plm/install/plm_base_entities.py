@@ -27,6 +27,7 @@ import logging
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
+from openerp import api
 
 
 # To be adequated to plm.document class states
@@ -155,6 +156,14 @@ CREATE INDEX product_template_engcoderev_index
   USING btree
   (engineering_code, engineering_revision);
   """)
+
+    @api.multi
+    def name_get(self):
+        result = []
+        for inv in self:
+            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
+            result.append((inv.id, newName))
+        return result
 
 plm_component()
 
@@ -620,7 +629,8 @@ class plm_relation(osv.osv):
             newOid=self.browse(cr,uid,newId,context=context)
             for bom_line in newOid.bom_line_ids:
                 lateRevIdC=compType.GetLatestIds(cr,uid,[(bom_line.product_id.product_tmpl_id.engineering_code,False,False)],context=context) # Get Latest revision of each Part
-                bomLType.write(cr, uid, [bom_line.id], {'source_id': False, 'product_id': lateRevIdC[0]}, context=context)
+                if lateRevIdC:
+                    bomLType.write(cr, uid, [bom_line.id], {'source_id': False, 'product_id': lateRevIdC[0]}, context=context)
             self.write(cr,uid,[newId],{'source_id':False,'name':newOid.product_tmpl_id.name,},check=False,context=context)
         return newId
 
