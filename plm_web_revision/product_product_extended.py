@@ -36,7 +36,6 @@ import logging
 class ProductProductExtended(models.Model):
     _name = 'product.rev_wizard'
     reviseDocument = fields.Boolean(_('Document Revision'), help=_("""Make new revision of the linked document ?"""))
-    reviseEbom = fields.Boolean(_('Engineering Bom Revision'), help=_("""Make new revision of the linked Engineering BOM ?"""))
     reviseNbom = fields.Boolean(_('Normal Bom Revision'), help=_("""Make new revision of the linked Normal BOM ?"""))
     reviseSbom = fields.Boolean(_('Spare Bom Revision'), help=_("""Make new revision of the linked Spare BOM ?"""))
 
@@ -57,8 +56,6 @@ class ProductProductExtended(models.Model):
                 raise UserError(_('Something wrong happens during new component revision process.'))
             if self.reviseDocument:
                 self.docRev(prodBrws, newID, prodProdEnv)
-            if self.reviseEbom:
-                self.commonBomRev(prodBrws, newID, prodProdEnv, 'ebom')
             if self.reviseNbom:
                 self.commonBomRev(prodBrws, newID, prodProdEnv, 'normal')
             if self.reviseSbom:
@@ -79,17 +76,46 @@ class ProductProductExtended(models.Model):
 
     @api.multi
     def docRev(self, prodBrws, newID, prodProdEnv):
-        createdDocIds = []
+        docRelObj = self.env['plm.document.relation']
+        plmDocObj = self.env['plm.document']
+        newDocumentIds = []
+        browsModelsDict = {}        # {oldModelBrws: newModelBrws}
+        modelsDocumentsDict = {}    # {oldModelBrws: [newChildrenDocBrws]}
         for docBrws in prodBrws.linkeddocuments:
             if self.stateAllows(docBrws, 'Document'):
                 resDoc = docBrws.NewRevision()
-                newDocID, newDocIndex = resDoc
-                newDocIndex
+                newDocID, _newDocIndex = resDoc
+                newDocBrws = plmDocObj.browse(newDocID)
                 if not newDocID:
                     logging.error('[action_create_new_revision_by_server] newDocID: %r' % (newDocID))
                     raise UserError(_('Something wrong happens during new document revision process.'))
-                createdDocIds.append(newDocID)
-        prodProdEnv.browse(newID).linkeddocuments = createdDocIds
+                relRes = docRelObj.search([('link_kind', '=', 'LyTree'), ('parent_id', '=', docBrws.id)])
+                if relRes:
+                    browsModelsDict[docBrws] = newDocBrws
+                else:
+                    for relObj in docRelObj.search([('link_kind', '=', 'LyTree'), ('child_id', '=', docBrws.id)]):
+                        if relObj.parent_id in modelsDocumentsDict:
+                            modelsDocumentsDict[relObj.parent_id].append(newDocBrws)
+                        else:
+                            modelsDocumentsDict[relObj.parent_id] = [newDocBrws]
+                newDocumentIds.append(newDocID)
+        prodProdEnv.browse(newID).linkeddocuments = newDocumentIds
+        self.repairDocRelations(prodBrws, browsModelsDict, modelsDocumentsDict, docRelObj)
+
+    @api.multi
+    def repairDocRelations(self, oldProdBrws, browsModelsDict, modelsDocumentsDict, docRelObj):
+        for oldBrwsModel, newBrwsModel in browsModelsDict.items():
+            for newDocChildBrws in modelsDocumentsDict.get(oldBrwsModel, []):
+                docRelObj.create({'link_kind': 'LyTree',
+                                  'child_id': newDocChildBrws.id,
+                                  'parent_id': newBrwsModel.id,
+                                  }
+                                 )
+                docRelObj.create({'link_kind': 'HiTree',
+                                  'child_id': newBrwsModel.id,
+                                  'parent_id': newDocChildBrws.id,
+                                  }
+                                 )
 
     @api.multi
     def commonBomRev(self, oldProdBrws, newID, prodProdEnv, bomType):

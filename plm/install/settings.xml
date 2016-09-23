@@ -14,28 +14,28 @@
                     <div id="main"> 
                     	<group string="Plm Addons" col="1">
 			                <group name="config_sign1">
-			                    <field name="module_plm_automatic_weight" widget="upgrade_boolean"/>
+			                    <field name="module_plm_automatic_weight"/>
 			                </group>
 			                <group name="config_sign2">
-			                    <field name="module_plm_cutted_parts" widget="upgrade_boolean"/>
+			                    <field name="module_plm_cutted_parts"/>
 			                </group>
 			                <group name="config_sign3">
-			                    <field name="module_plm_pack_and_go" widget="upgrade_boolean"/>
+			                    <field name="module_plm_pack_and_go"/>
 			                </group>
 	                        <group name="config_sign7">
-			                    <field name="module_plm_date_bom" widget="upgrade_boolean"/>
+			                    <field name="module_plm_date_bom"/>
 			                </group>
 	                        <group name="config_sign8">
-			                    <field name="module_plm_web_revision" widget="upgrade_boolean"/>
+			                    <field name="module_plm_web_revision"/>
 			                </group>
 	                        <group name="config_sign6">
-			                    <field name="module_plm_automate_nbom" widget="upgrade_boolean"/>
+			                    <field name="module_plm_automate_nbom"/>
 			                </group>
 	                        <group name="config_sign5">
-			                    <field name="module_plm_report_language_helper" widget="upgrade_boolean"/>
+			                    <field name="module_plm_report_language_helper"/>
 			                </group>
 			                <group name="config_sign4">
-			                    <field name="module_product_description_language_helper" widget="upgrade_boolean"/>
+			                    <field name="module_product_description_language_helper"/>
 			                </group>
 		                </group>
 	                </div>
