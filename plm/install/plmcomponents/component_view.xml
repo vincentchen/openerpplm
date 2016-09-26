@@ -55,7 +55,9 @@
                     <filter string="Latest" name="latest" icon="terp-stock_symbol-selection" domain="[('state', 'not in', ['obsoleted','undermodify'])]"/>
 				</field>
                	<separator orientation="vertical"/>
+               	<field name="engineering_code"/>
             	<field name="name"/>
+            	<field name="engineering_revision"/>
             	<field name="description"/>
                	<separator orientation="vertical"/>
 	            <group expand="0" string="Group by..." >
