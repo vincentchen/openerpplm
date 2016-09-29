@@ -1211,15 +1211,16 @@ class plm_document(models.Model):
             trueParentId = productAttributes[parentId].get('id')
             brwProduct = productTemplate.search([('id', '=', trueParentId)])
             productTempId = brwProduct.product_tmpl_id.id
-            brwBom = mrpBomTemplate.search([('product_tmpl_id', '=', productTempId)])
-            if not brwBom:
-                brwBom = mrpBomTemplate.create({'product_tmpl_id': productTempId,
-                                                'type': 'ebom'})
+            brwBoml = mrpBomTemplate.search([('product_tmpl_id', '=', productTempId)])
+            if not brwBoml:
+                brwBoml = mrpBomTemplate.create({'product_tmpl_id': productTempId,
+                                                 'type': 'ebom'})
             # delete rows
             for _, documentId, _ in childRelations:
                 trueDocumentId = documentAttributes.get(documentId, {}).get('id', 0)
                 if trueDocumentId:  # sems strange this .. but i will delete only the bom with the right source id
-                    brwBom.deleteChildRow(trueDocumentId)
+                    for brwBom in brwBoml:
+                        brwBom.deleteChildRow(trueDocumentId)
                     break
             # add rows
             for childId, documentId, relationAttributes in childRelations:
