@@ -612,7 +612,7 @@ class plm_relation(models.Model):
         return newId
 
 #   Overridden methods for this entity
-    @api.model
+    @api.one
     def deleteChildRow(self, documentId):
         """
         delete the bom child row
