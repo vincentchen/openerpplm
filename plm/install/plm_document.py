@@ -1003,7 +1003,7 @@ class plm_document(models.Model):
         for result in results:
             break
         return result
-    
+
     def getCheckedOut(self, cr, uid, oid, default=None, context=None):
         checkoutType=self.pool.get('plm.checkout')
         checkoutIDs=checkoutType.search(cr,uid,[('documentid', '=',oid)])
@@ -1037,6 +1037,37 @@ class plm_document(models.Model):
         for _brw in checkoutIds:
             return True
         return False
+
+    @api.model
+    def canBeSaved(self, raiseError=False):
+        """
+        check if the document can be saved and raise exception in case is not possible
+        """
+        msg = ''
+        if self.state in ['released', 'obsoleted']:
+            msg = _("Document is released and cannot be saved")
+            if raiseError:
+                raise UserError(msg)
+        checkOutObject = self.getCheckOutObject()
+        if checkOutObject:
+            if checkOutObject.userid.id != self.env.uid:
+                msg = _("Document is Check-Out from User %r", checkOutObject.name)
+                if raiseError:
+                    raise UserError(msg)
+        else:
+            msg = _("Document in check-In unable to save !")
+            if raiseError:
+                raise UserError(msg)
+        if len(msg) > 0:
+            return False, msg
+        return True, ''
+
+    @api.model
+    def getCheckOutObject(self):
+        checkoutIDs = self.env['plm.checkout'].search([('documentid', '=', self.id)])
+        for checkoutID in checkoutIDs:
+            return checkoutID
+        return None
 
     @api.model
     def checkout(self, hostName, hostPws):
@@ -1073,6 +1104,11 @@ class plm_document(models.Model):
         productRelations = {}
         productDocumentRelations = {}
         objStructure = json.loads(cPickleStructure)
+
+        documentAttribute = objStructure.get('DOCUMENT_ATTRIBUTES', {})
+        for brwItem in self.search([('name', '=', documentAttribute.get('name', '')),
+                                    ('revisionid', '=', documentAttribute.get('revisionid', -1))]):
+            brwItem.canBeSaved(raiseError=True)
 
         def populateStructure(parentItem=False, structure={}):
             documentId = False
@@ -1175,15 +1211,16 @@ class plm_document(models.Model):
             trueParentId = productAttributes[parentId].get('id')
             brwProduct = productTemplate.search([('id', '=', trueParentId)])
             productTempId = brwProduct.product_tmpl_id.id
-            brwBom = mrpBomTemplate.search([('product_tmpl_id', '=', productTempId)])
-            if not brwBom:
-                brwBom = mrpBomTemplate.create({'product_tmpl_id': productTempId,
-                                                'type': 'ebom'})
+            brwBoml = mrpBomTemplate.search([('product_tmpl_id', '=', productTempId)])
+            if not brwBoml:
+                brwBoml = mrpBomTemplate.create({'product_tmpl_id': productTempId,
+                                                 'type': 'ebom'})
             # delete rows
             for _, documentId, _ in childRelations:
                 trueDocumentId = documentAttributes.get(documentId, {}).get('id', 0)
                 if trueDocumentId:  # sems strange this .. but i will delete only the bom with the right source id
-                    brwBom.deleteChildRow(trueDocumentId)
+                    for brwBom in brwBoml:
+                        brwBom.deleteChildRow(trueDocumentId)
                     break
             # add rows
             for childId, documentId, relationAttributes in childRelations:

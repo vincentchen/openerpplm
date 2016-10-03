@@ -793,6 +793,17 @@ class plm_component(models.Model):
         return result
 
     @api.model
+    def getBomRowCad(self, bomLineBrowse):
+        """
+        give back the lines
+        """
+        return [bomLineBrowse.itemnum,
+                emptyStringIfFalse(bomLineBrowse.product_id.description),
+                self._translate(emptyStringIfFalse(bomLineBrowse.product_id.description), 'english'),
+                bomLineBrowse.product_id.engineering_code,
+                bomLineBrowse.product_qty]
+
+    @api.model
     def getNormalBomStd(self, args):
         """
             get the normal bom from the given name and revision
@@ -808,20 +819,12 @@ class plm_component(models.Model):
         out = []
         searchFilter = [('engineering_code', '=', componentName),
                         ('engineering_revision', '=', componentRev)]
-        compBrwsList = self.search(searchFilter).with_context({'lang': 'it_IT'})
+        compBrwsList = self.search(searchFilter)
         for objBrowse in compBrwsList:
             for bomBrowse in objBrowse.bom_ids:
                 if str(bomBrowse.type).lower() == bomType:
                     for bomLineBrowse in bomBrowse.bom_line_ids:
-                        infoRow = [bomLineBrowse.itemnum,
-                                   emptyStringIfFalse(bomLineBrowse.product_id.description),
-                                   self._translate(emptyStringIfFalse(bomLineBrowse.product_id.description), 'english'),
-                                   bomLineBrowse.product_id.engineering_code,
-                                   bomLineBrowse.product_qty,
-                                   emptyStringIfFalse(bomLineBrowse.product_id.x_r1),
-                                   emptyStringIfFalse(bomLineBrowse.product_id.x_r2)
-                                   ]
-                        out.append(infoRow)
+                        out.append(self.getBomRowCad(bomLineBrowse))
         return out
 
     def _translate(self, cr, uid, dataValue="", languageName=""):
