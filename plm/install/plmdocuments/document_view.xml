@@ -207,8 +207,8 @@
                     <templates>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_global_click">
-                                <div class="o_kanban_image">
-                                    <img t-att-src="kanban_image('plm.document', 'preview', record.id.value)"/>
+                                <div class="div_document_kanban">
+                                    <img t-att-src="kanban_image('plm.document', 'preview', record.id.value)" class="image_document_kanban"/>
                                 </div>
 								<div class="oe_kanban_details">
 									<strong>
