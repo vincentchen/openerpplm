@@ -1,6 +1,15 @@
 .image_component_kanban{
-  width:50px;
+  width:100px;
   border: 2px solid #893b74;
+  border-radius: 7px;
+}
+.div_document_kanban{
+  height:250px;
+	}
+.image_document_kanban{
+  width:250px;
+  height:100%;
+  border: 1px solid #893b74;
   border-radius: 7px;
 }
 .a_preview{
