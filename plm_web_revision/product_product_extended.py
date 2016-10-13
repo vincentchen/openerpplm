@@ -35,9 +35,12 @@ import logging
 
 class ProductProductExtended(models.Model):
     _name = 'product.rev_wizard'
-    reviseDocument = fields.Boolean(_('Document Revision'), help=_("""Make new revision of the linked document ?"""))
-    reviseNbom = fields.Boolean(_('Normal Bom Revision'), help=_("""Make new revision of the linked Normal BOM ?"""))
-    reviseSbom = fields.Boolean(_('Spare Bom Revision'), help=_("""Make new revision of the linked Spare BOM ?"""))
+    reviseDocument = fields.Boolean(_('Document Revision'), help=_("""Make new revision of the linked document"""))
+    reviseNbom = fields.Boolean(_('Normal Bom Revision'), help=_("""Make new revision of the linked Normal BOM"""))
+    reviseSbom = fields.Boolean(_('Spare Bom Revision'), help=_("""Make new revision of the linked Spare BOM"""))
+    reviseEbom = fields.Boolean(_('Engineering Bom Revision'), help=_("""Make new revision of the linked Engineering BOM.
+                                                                      Note that only lines without source ID are copied to
+                                                                      new bom revision."""))
 
     @api.multi
     def action_create_new_revision_by_server(self):
@@ -60,6 +63,8 @@ class ProductProductExtended(models.Model):
                 self.commonBomRev(prodBrws, newID, prodProdEnv, 'normal')
             if self.reviseSbom:
                 self.commonBomRev(prodBrws, newID, prodProdEnv, 'spbom')
+            if self.reviseEbom:
+                self.ebomRevision(prodBrws, newID, prodProdEnv)
             return {'name': _('Revised Product'),
                     'view_type': 'tree,form',
                     "view_mode": 'form',
@@ -118,14 +123,28 @@ class ProductProductExtended(models.Model):
                                  )
 
     @api.multi
+    def ebomRevision(self, oldProdBrws, newID, prodProdEnv):
+        bomObj = self.env['mrp.bom']
+        newProdBrws = prodProdEnv.browse(newID)
+        for bomBrws in bomObj.search([('product_tmpl_id', '=', oldProdBrws.product_tmpl_id.id), ('type', '=', 'ebom')]):
+            newBomBrws = bomObj.copy(bomBrws.id)
+            newbomLines = []
+            newBomBrws.product_tmpl_id = newProdBrws.product_tmpl_id.id
+            for oldBomLineBrws in bomBrws.bom_line_ids:
+                if not oldBomLineBrws.source_id:
+                    newbomLines.append(oldBomLineBrws.copy().id)
+            newBomBrws.write({'bom_line_ids': [(6, '', newbomLines)]})
+
+    @api.multi
     def commonBomRev(self, oldProdBrws, newID, prodProdEnv, bomType):
         bomObj = self.env['mrp.bom']
         newProdBrws = prodProdEnv.browse(newID)
         for bomBrws in bomObj.search([('product_tmpl_id', '=', oldProdBrws.product_tmpl_id.id), ('type', '=', bomType)]):
             newBomBrws = bomObj.copy(bomBrws.id)
             newBomBrws.product_tmpl_id = newProdBrws.product_tmpl_id.id
-            if bomType == 'ebom':
-                self.repairSourceId(newBomBrws, bomBrws)
+            # Commented because source ID at the moment is not fixable
+#             if bomType == 'ebom':
+#                 self.repairSourceId(newBomBrws, bomBrws)
 
     @api.model
     def repairSourceId(self, newBom, oldBom):
