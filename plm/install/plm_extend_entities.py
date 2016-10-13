@@ -121,11 +121,11 @@ class plm_relation(models.Model):
         @return: False or BoM id.
         """
         bom_id = super(plm_relation, self)._bom_find(cr,
-                                                                                     uid,
-                                                                                     product_tmpl_id=product_tmpl_id,
-                                                                                     product_id=product_id,
-                                                                                     properties=properties,
-                                                                                     context=context)
+                                                     uid,
+                                                     product_tmpl_id=product_tmpl_id,
+                                                     product_id=product_id,
+                                                     properties=properties,
+                                                     context=context)
         if bom_id:
             objBom = self.browse(cr, uid, bom_id, context)
             odooPLMBom = ['ebom', 'spbom']
