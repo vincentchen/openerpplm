@@ -287,6 +287,10 @@ class plm_component(models.Model):
         bomType = self.pool.get('mrp.bom')
         bomLType = self.pool.get('mrp.bom.line')
         prodTmplObj = self.pool.get('product.template')
+        stockConfigSettings = self.pool.get('stock.config.settings')
+        variantIsInstalled = False
+        if len(stockConfigSettings.search(cr, uid, [('group_product_variant', '=', 1)])) > 0:
+            variantIsInstalled = True
         collectList = []
 
         def getPreviousNormalBOM(bomBrws):
@@ -310,23 +314,26 @@ class plm_component(models.Model):
             raise UserError(_("Could not convert source bom to %r" % newBomType))
         product_template_id = objProductProductBrw.product_tmpl_id.id
         bomIds = bomType.search(cr, uid, [('product_tmpl_id', '=', product_template_id),
-                                                                  ('type', '=', newBomType)])
+                                          ('type', '=', newBomType)])
         if bomIds:
             bomBrws = bomType.browse(cr, uid, bomIds[0], context=context)
             for bom_line in bomBrws.bom_line_ids:
                 self.create_bom_from_ebom(cr, uid, bom_line.product_id, newBomType, summarize, context)
         else:
             bomIds = bomType.search(cr, uid, [('product_tmpl_id', '=', product_template_id),
-                                                                      ('type', '=', 'ebom')])
+                                              ('type', '=', 'ebom')])
             if not bomIds:
                 UserError(_("No Enginnering bom provided"))
             for eBomId in bomIds:
                 newidBom = bomType.copy(cr, uid, eBomId, {}, context)
-                bomType.write(cr, uid, [newidBom], {'name': objProductProductBrw.name,
-                                                    'product_tmpl_id': product_template_id,
-                                                    'type': newBomType,
-                                                    'ebom_source_id': eBomId,
-                                                    }, check=False, context=None)
+                values = {'name': objProductProductBrw.name,
+                          'product_tmpl_id': product_template_id,
+                          'type': newBomType,
+                          'ebom_source_id': eBomId,
+                          }
+                if not variantIsInstalled:
+                    values['product_id'] = False
+                bomType.write(cr, uid, [newidBom], values, check=False, context=None)
                 oidBom = bomType.browse(cr, uid, newidBom, context=context)
                 ok_rows = self._summarizeBom(cr, uid, oidBom.bom_line_ids)
                 # remove not summarized lines

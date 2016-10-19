@@ -66,7 +66,8 @@ class plm_temporary_cutted(models.Model):
                 commonValues = {'x_leght': xMaterial,
                                 'y_leght': yMaterial,
                                 'product_qty': 1 if qty == 0 else qty,  # set to 1 because odoo dose not manage qty==0
-                                'product_id': bomLine.product_id.row_material.id}
+                                'product_id': bomLine.product_id.row_material.id,
+                                'product_rounding': bomLine.product_id.bom_rounding}
                 if explosion_action == 'replace':
                     mrp_bom_line_type_object.write(cr, uid, [bomLine.id], commonValues)
                 else:
