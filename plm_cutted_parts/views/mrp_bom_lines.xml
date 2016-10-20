@@ -15,6 +15,7 @@
 	            	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='type']" position="after">
 		               	<field name="x_leght" />
 		    			<field name="y_leght" />
+		    			<field name="product_rounding" />
 		           	</xpath>
 	           	</data>
 			</field>
