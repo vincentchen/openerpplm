@@ -25,11 +25,8 @@ Created on 25/mag/2016
 '''
 
 import logging
-from openerp import models, fields, api, SUPERUSER_ID, _, osv
-from openerp import tools
-import base64
-import os
-import shutil
+from openerp import models
+from openerp import fields
 _logger = logging.getLogger(__name__)
 
 
