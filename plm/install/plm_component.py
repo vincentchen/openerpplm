@@ -184,14 +184,18 @@ class plm_component(osv.osv):
                 self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Status moved to: %s.' %(USEDIC_STATES[defaults['state']])))
                 # store updated infos in "revision" object
-                defaults['name']=oldObject.name                 # copy function needs an explicit name value
-                defaults['engineering_revision']=newIndex
-                defaults['engineering_writable']=True
-                defaults['state']='draft'
-                defaults['linkeddocuments']=[]                  # Clean attached documents for new revision object
-                newID=self.copy(cr, uid, oldObject.id, defaults, context=context)
+                defaults['name'] = oldObject.engineering_code                 # copy function needs an explicit name value
+                # ATTENTION!!! field name translatable can do a wrong copy operation
+                # Default copy if found a product with the same name return it's id instead of
+                # create a new one. So not change in defaults['name'] = oldObject.name
+                defaults['engineering_code'] = oldObject.engineering_code
+                defaults['engineering_revision'] = newIndex
+                defaults['engineering_writable'] = True
+                defaults['state'] = 'draft'
+                defaults['linkeddocuments'] = []                  # Clean attached documents for new revision object
+                newID = self.copy(cr, uid, oldObject.id, defaults, context=context)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
-                self.write(cr,uid,[newID],{'name':oldObject.name},check=False,context=None)
+                #self.write(cr,uid,[newID],{'engineering_code':oldObject.engineering_code, 'name': oldObject.name},check=False,context=None)
                 # create a new "old revision" object
                 break
             break
