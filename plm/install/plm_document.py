@@ -666,7 +666,7 @@ class plm_document(osv.osv):
                 oldObject=self.browse(cr, uid, existingID[0], context=context)
                 if oldObject.state in checkState:
                     self.wf_message_post(cr, uid, [oldObject.id], body=_('Removed : Latest Revision.'))
-                    if not self.write(cr, uid, [oldObject.id], values, context, check=False):
+                    if not self.write(cr, uid, [oldObject.id], values, context=context, check=False):
                         logging.warning("unlink : Unable to update state to old document ("+str(oldObject.name)+"-"+str(oldObject.revisionid)+").")
                         return False
         return super(plm_document,self).unlink(cr, uid, ids, context=context)
