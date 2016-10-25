@@ -186,7 +186,8 @@ class plm_document(models.Model):
                 db_datas = b''                    # Clean storage field.
                 fname, filesize = self._manageFile(cr, uid, oid, binvalue=value, context=context)
                 cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname, filesize, db_datas, oid))
-                self.pool.get('plm.backupdoc').create(cr, uid, {'userid': uid,
+                self.pool.get('plm.backupdoc').create(cr, uid, {'documentid': oid,
+                                                                'userid': uid,
                                                                 'existingfile': fname,
                                                                 'printout': printout,
                                                                 'preview': preview
@@ -1241,11 +1242,10 @@ class plm_checkout(models.Model):
     hostname    =   fields.Char     (_('hostname'),size=64)
     hostpws     =   fields.Char     (_('PWS Directory'),size=1024)
     documentid  =   fields.Many2one ('plm.document', _('Related Document'), ondelete='cascade')
-    createdate  =   fields.Datetime (_('Date Created'), readonly=True)
     rel_doc_rev =   fields.Integer  (related='documentid.revisionid', string="Revision", store=True)
 
     _defaults = {
-        'create_date': lambda self,ctx:time.strftime("%Y-%m-%d %H:%M:%S")
+        'create_date': lambda self, ctx:time.strftime("%Y-%m-%d %H:%M:%S")
     }
     _sql_constraints = [
         ('documentid', 'unique (documentid)', _('The documentid must be unique !'))
