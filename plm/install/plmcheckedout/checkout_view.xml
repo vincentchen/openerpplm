@@ -53,7 +53,7 @@
                 <field name="hostpws" select="1"/>
                 <field name="documentid" select="1"/>
                 <field name="rel_doc_rev"/>
-                <field name="createdate" select="1"/>
+                <field name="create_date" select="1"/>
             </tree>
         </field>
     </record>
