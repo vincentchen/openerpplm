@@ -689,10 +689,10 @@ class plm_temporary(osv.osv_memory):
         
         productType=self.pool.get('product.product')
         for idd in context['active_ids']:
-            checkObj=productType.browse(cr, uid, idd, context)
+            checkObj = productType.browse(cr, uid, idd, context)
             if not checkObj:
                 continue
-            objBoms=self.pool.get('mrp.bom').search(cr, uid, [('product_tmpl_id','=',idd),('type','=','normal')])
+            objBoms=self.pool.get('mrp.bom').search(cr, uid, [('product_tmpl_id','=', checkObj.product_tmpl_id.id),('type','=','normal')])
             if objBoms:
                 raise osv.except_osv(_('Creating a new Normal Bom Error.'), _("BoM for Part %r already exists." %(checkObj.name)))
 
