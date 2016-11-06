@@ -43,7 +43,7 @@ class plm_document(models.Model):
         out = {'view_type': 'form',
                'view_mode': 'form',
                'res_model': 'plm.convert',
-               'view_id': self.env.ref('plm_bach_convertion.act_plm_convert_form').id,
+               'view_id': self.env.ref('plm_automated_convertion.act_plm_convert_form').id,
                'type': 'ir.actions.act_window',
                'context': context,
                'target': 'new'
