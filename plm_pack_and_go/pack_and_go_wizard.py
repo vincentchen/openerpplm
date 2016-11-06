@@ -55,11 +55,6 @@ class PackAndGo(osv.osv.osv_memory):
                 if os.path.exists(fileName):
                     outFilePath = os.path.join(tmpSubFolder, docBws.datas_fname)
                     shutil.copyfile(fileName, outFilePath)
-        #Commented because now we take pure file instead read it from database
-        
-#             outFilePath = os.path.join(tmpSubFolder, docBws.datas_fname)
-#             with open(outFilePath, 'wb') as outDocFile:
-#                 outDocFile.write(docBws.datas)
 
     @api.multi
     def action_export_zip(self):
