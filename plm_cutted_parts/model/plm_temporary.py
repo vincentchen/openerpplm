@@ -25,11 +25,10 @@ Created on 25/mag/2016
 '''
 
 import logging
-from openerp import models, fields, api, SUPERUSER_ID, _, osv
-from openerp import tools
-import base64
-import os
-import shutil
+from openerp import models
+from openerp import fields
+from openerp import osv
+from openerp import _
 _logger = logging.getLogger(__name__)
 
 
@@ -85,6 +84,8 @@ class plm_temporary_cutted(models.Model):
                         mrp_bom_line_type_object.create(cr, uid, values)
                     else:
                         for bomId in mrp_bom_type_object.browse(cr, uid, bomIds):
+                            if len(bomId.bom_line_ids) > 1:
+                                raise osv.osv.except_osv(_('Bom Generation Error'), 'Bom "%s" has more than one line, please check better.' % (bomId.product_tmpl_id.engineering_code))
                             for bomLineId in bomId.bom_line_ids:
                                 logging.info("Bom line updated %r" % bomLineId)
                                 mrp_bom_line_type_object.write(cr, uid, [bomLineId.id], commonValues)
