@@ -1,7 +1,7 @@
 ##############################################################################
 #
 #    OmniaSolutions, Your own solutions
-#    Copyright (C) 25/mag/2016 OmniaSolutions (<http://www.omniasolutions.eu>). All Rights Reserved
+#    Copyright (C) 03/nov/2016 OmniaSolutions (<http://www.omniasolutions.eu>). All Rights Reserved
 #    info@omniasolutions.eu
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -19,21 +19,33 @@
 #
 ##############################################################################
 '''
-Created on 25/mag/2016
+Created on 03/nov/2016
 
 @author: mboscolo
 '''
+
+from openerp.exceptions import UserError
+from openerp import models
+from openerp import fields
+from openerp import api
+from openerp import _
 import logging
 
-from openerp import models, fields, api, SUPERUSER_ID, _, osv
-from openerp import tools
 
-_logger = logging.getLogger(__name__)
+class plm_document(models.Model):
+    _inherit = 'plm.document'
 
-
-class mrpBomLine_templateCuttedParts(models.Model):
-    _inherit = 'mrp.bom.line'
-    x_leght = fields.Float("X Lenght", default=0.0)
-    y_leght = fields.Float("Y Lenght", default=0.0)
-
-mrpBomLine_templateCuttedParts()
+    @api.multi
+    def show_convert_wizard(self):
+        context = dict(self.env.context or {})
+        context['default_document_id'] = self.id
+        context['datas_fname'] = self.datas_fname
+        out = {'view_type': 'form',
+               'view_mode': 'form',
+               'res_model': 'plm.convert',
+               'view_id': self.env.ref('plm_automated_convertion.act_plm_convert_form').id,
+               'type': 'ir.actions.act_window',
+               'context': context,
+               'target': 'new'
+               }
+        return out

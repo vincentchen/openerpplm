@@ -141,13 +141,13 @@
 							        <field name="std_value3" 	attrs="{'readonly':[('std_umc3','=',False),('state','in',['released','obsoleted'])]}" on_change="on_change_stdvalue(std_description, std_umc1, std_value1, std_umc2, std_value2, std_umc3, std_value3)"/>
 							    </group>
 			    			</page>
-			    			<page string="TitleBlock Informations"> 
+			    			<page name="titleblock_info" string="TitleBlock Informations"> 
 			    				<group name="TBlock">
 			               			<field name="engineering_material" 	attrs="{'readonly':[('state','in',['released','obsoleted'])]}" colspan="2"/>
 			        				<field name="engineering_surface" 	attrs="{'readonly':[('state','in',['released','obsoleted'])]}" colspan="2"/> 
 			        			</group>		
 			    			</page>	
-			    			<page string="Linked Documents"> 
+			    			<page name="linked_document" string="Linked Documents"> 
 			    				<group>
 			    					<button class="oe_inline oe_stat_button"   type="object" icon="fa-list-alt" name="action_rev_docs" string="Revision Rel Docs"></button>	
 			               		</group>
