@@ -25,6 +25,7 @@ Created on 25/mag/2016
 '''
 
 import logging
+import tempfile
 from openerp import models, fields, api, SUPERUSER_ID, _, osv
 from openerp import tools
 from openerp.exceptions import UserError
@@ -46,6 +47,23 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
     _name = 'plm.convert'
 
     @api.model
+    def getAllFiles(self, document):
+        out = {}
+        plm_document = self.env['plm.document']
+        fileStoreLocation = plm_document._get_filestore()
+
+        def templateFile(docId):
+            document = plm_document.browse(docId)
+            return {document.name: (document.datas_fname,
+                                    file(os.path.join(fileStoreLocation, document.store_fname), 'rb'))}
+        out['root_file'] = (document.datas_fname,
+                            file(os.path.join(fileStoreLocation, document.store_fname), 'rb'))
+        objDocu = self.env['plm.document']
+        request = (document.id, [], -1)
+        for outId, _, _, _, _, _ in objDocu.CheckAllFiles(request):
+            out.update(templateFile(outId))
+
+    @api.model
     def getFileConverted(self,
                          document,
                          targetIntegration,
@@ -58,18 +76,14 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
         params = {}
         params['targetExtention'] = targetExtention
         params['integrationName'] = targetIntegration
-        files = {'file': (document.datas_fname,
-                          file(os.path.join(self.env['plm.document']._get_filestore(),
-                                            document.store_fname),
-                               'rb'))}
         response = requests.post(url,
                                  params=params,
-                                 files=files)
+                                 files=self.getAllFiles(document))
         if response.status_code != 200:
             raise UserError("Convertion of cad server faild, check the cad server log")
         if newFileName:
             newFileName = document.datas_fname + targetExtention
-        newTarget = os.path.join(os.environ['TEMP'], newFileName)
+        newTarget = os.path.join(tempfile.gettempdir(), newFileName)
         with open(newTarget, 'wb') as f:
             f.write(response.content)
         return newTarget
@@ -89,7 +103,7 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
     document_id = fields.Many2one('plm.document',
                                   'Related Document')
     targetFormat = fields.Selection(selection='calculate_available_extention',
-                                    string='Covertion Format',
+                                    string='Conversion Format',
                                     required=True)
     downloadDatas = fields.Binary('Download',
                                   attachment=True)
@@ -98,6 +112,7 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
     @api.multi
     def convert(self):
         """
+        convert the file in a new one
         """
         out = []
         for brwWizard in self:
