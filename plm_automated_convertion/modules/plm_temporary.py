@@ -61,7 +61,10 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
         objDocu = self.env['plm.document']
         request = (document.id, [], -1)
         for outId, _, _, _, _, _ in objDocu.CheckAllFiles(request):
+            if outId == document.id:
+                continue
             out.update(templateFile(outId))
+        return out
 
     @api.model
     def getFileConverted(self,
@@ -80,7 +83,7 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
                                  params=params,
                                  files=self.getAllFiles(document))
         if response.status_code != 200:
-            raise UserError("Convertion of cad server faild, check the cad server log")
+            raise UserError("Conversion of cad server failed, check the cad server log")
         if newFileName:
             newFileName = document.datas_fname + targetExtention
         newTarget = os.path.join(tempfile.gettempdir(), newFileName)

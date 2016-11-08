@@ -256,7 +256,10 @@ class plm_document(models.Model):
         maxTargetFileSize = self.pool.get('ir.config_parameter').get_param(cr, uid, 'max_download_file_size', default=5000000000)
         maxTargetFileSize = int(maxTargetFileSize)
         result = []
-        datefiles, listfiles = listedFiles
+        datefiles = []
+        listfiles = []
+        if len(listedFiles) > 0:
+            datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, list(set(ids)), context=context):
             if objDoc.type == 'binary':
                 checkOutUser = ''
