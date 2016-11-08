@@ -279,7 +279,7 @@ class plm_component(osv.osv):
                 self.processedIds.append(idd)
                 newidBom = bomType.copy(cr, uid, idBoms[0], defaults, context)
                 if newidBom:
-                    bomType.write(cr,uid,[newidBom],{'name':checkObj.name,'product_id':checkObj.id,'type':'normal',},check=False,context=None)
+                    bomType.write(cr,uid,[newidBom],{'name':checkObj.product_tmpl_id.engineering_code,'product_id':checkObj.id,'type':'normal',},check=False,context=None)
                     oidBom = bomType.browse(cr,uid,newidBom,context=context)
                     ok_rows = self._summarizeBom(cr, uid, oidBom.bom_line_ids)
                     for bom_line in list(set(oidBom.bom_line_ids) ^ set(ok_rows)):

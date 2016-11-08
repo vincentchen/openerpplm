@@ -66,6 +66,7 @@
         <field name="name">plm.bom.obsoleted</field>
         <field name="model">mrp.bom</field>
         <field name="type">search</field>
+        <field name="priority" eval="17"/>
         <field name="inherit_id" ref="plm.view_mrp_bom_filter_inherit"/>
         <field name="arch" type="xml">
 		 	<xpath expr="//filter[@name='filter_today']" position="after">
