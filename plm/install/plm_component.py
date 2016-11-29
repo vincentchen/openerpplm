@@ -590,18 +590,18 @@ class plm_component(models.Model):
         """
            action to be executed for Released state
         """
-        tmpl_ids=[]
-        full_ids=[]
+        childrenProductToEmit=[]
+        product_tmpl_ids=[]
         defaults={}
         prodTmplType=self.pool.get('product.template')
         excludeStatuses=['released','undermodify','obsoleted']
         includeStatuses=['confirmed']
-        errors, allIDs = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
-        if len(allIDs) < 1 or len(errors) > 0:
+        errors, product_ids = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
+        if len(product_ids) < 1 or len(errors) > 0:
             raise UserError(errors)
-        allProdObjs=self.browse(cr, uid, allIDs, context=context)
-        for oldObject in allProdObjs:
-            last_id=self._getbyrevision(cr, uid, oldObject.engineering_code, oldObject.engineering_revision-1)
+        allProdObjs=self.browse(cr, uid, product_ids, context=context)
+        for oldProductBrw in allProdObjs:
+            last_id=self._getbyrevision(cr, uid, oldProductBrw.engineering_code, oldProductBrw.engineering_revision-1)
             if last_id != None:
                 defaults['engineering_writable']=False
                 defaults['state']='obsoleted'
@@ -610,15 +610,15 @@ class plm_component(models.Model):
                 self.wf_message_post(cr, uid, [last_id], body=_('Status moved to: %s.' %(USEDIC_STATES[defaults['state']])))
             defaults['engineering_writable']=False
             defaults['state']='released'
-        self._action_ondocuments(cr,uid,allIDs,'release')
-        for currId in allProdObjs:
-            if not(currId.id in ids):
-                tmpl_ids.append(currId.product_tmpl_id.id)
-            full_ids.append(currId.product_tmpl_id.id)
-        self.signal_workflow(cr, uid, tmpl_ids, 'release')
-        objId = self.pool.get('product.template').write(cr, uid, full_ids, defaults, context=context)
+        self._action_ondocuments(cr,uid,product_ids,'release')
+        for currentProductId in allProdObjs:
+            if not(currentProductId.id in ids):
+                childrenProductToEmit.append(currentProductId.id)
+            product_tmpl_ids.append(currentProductId.product_tmpl_id.id)
+        self.signal_workflow(cr, uid, childrenProductToEmit, 'release')
+        objId = self.pool.get('product.template').write(cr, uid, product_tmpl_ids, defaults, context=context)
         if (objId):
-            self.wf_message_post(cr, uid, allIDs, body=_('Status moved to: %s.' %(USEDIC_STATES[defaults['state']])))
+            self.wf_message_post(cr, uid, product_ids, body=_('Status moved to: %s.' %(USEDIC_STATES[defaults['state']])))
         return objId
 
     def action_obsolete(self,cr,uid,ids,context=None):
@@ -631,13 +631,13 @@ class plm_component(models.Model):
         docaction='obsolete'
         defaults['engineering_writable']=False
         defaults['state']=status
-        excludeStatuses=['draft','confirmed','transmitted','undermodify','obsoleted']
+        excludeStatuses=['draft', 'confirmed', 'transmitted', 'undermodify', 'obsoleted']
         includeStatuses=['released']
         return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_reactivate(self,cr,uid,ids,context=None):
         """
-            reactivate the object
+        reactivate the object
         """
         defaults={}
         status='released'
@@ -645,29 +645,29 @@ class plm_component(models.Model):
         docaction='release'
         defaults['engineering_writable']=True
         defaults['state']=status
-        excludeStatuses=['draft','confirmed','transmitted','released','undermodify','obsoleted']
+        excludeStatuses=['draft', 'confirmed', 'transmitted', 'released', 'undermodify', 'obsoleted']
         includeStatuses=['obsoleted']
         return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
     
 #   WorkFlow common internal method to apply changes
 
     def _action_to_perform(self, cr, uid, ids, status, action, docaction, defaults=[], excludeStatuses=[], includeStatuses=[], context=None):
-        tmpl_ids=[]
-        full_ids=[]
-        userErrors, allIDs = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
+        childrenProductToEmit=[]
+        product_tmpl_ids=[]
+        userErrors, allProduct_ids = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
         if userErrors:
             raise UserError(userErrors)
-        self._action_ondocuments(cr, uid, allIDs, docaction)
+        self._action_ondocuments(cr, uid, allProduct_ids, docaction)
         
-        for currId in self.browse(cr, uid, allIDs, context=context):
+        for currId in self.browse(cr, uid, allProduct_ids, context=context):
             if not(currId.id in ids):
-                tmpl_ids.append(currId.product_tmpl_id.id)
-            full_ids.append(currId.product_tmpl_id.id)
+                childrenProductToEmit.append(currId.product_tmpl_id.id)
+            product_tmpl_ids.append(currId.product_tmpl_id.id)
         if action:
-            self.signal_workflow(cr, uid, tmpl_ids, action)
-        objId = self.pool.get('product.template').write(cr, uid, full_ids, defaults, context=context)
+            self.signal_workflow(cr, uid, childrenProductToEmit, action)
+        objId = self.pool.get('product.template').write(cr, uid, product_tmpl_ids, defaults, context=context)
         if (objId):
-            self.wf_message_post(cr, uid, allIDs, body=_('Status moved to: %s.' % (USEDIC_STATES[defaults['state']])))
+            self.wf_message_post(cr, uid, allProduct_ids, body=_('Status moved to: %s.' % (USEDIC_STATES[defaults['state']])))
         return objId
     
 #######################################################################################################################################33
