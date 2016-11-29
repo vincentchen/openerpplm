@@ -297,6 +297,7 @@ class plm_document(osv.osv):
         defaults['file_size']=filesize
         defaults['state']='draft'
         defaults['writable']=True
+        defaults['printout']=False
         newID=super(plm_document,self).copy(cr,uid,oid,defaults,context=context)
         if (newID):
             self.wf_message_post(cr, uid, [newID], body=_('Copied starting from : %s.' %previous_name))
