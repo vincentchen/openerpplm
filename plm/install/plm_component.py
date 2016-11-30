@@ -661,7 +661,7 @@ class plm_component(models.Model):
         
         for currId in self.browse(cr, uid, allProduct_ids, context=context):
             if not(currId.id in ids):
-                childrenProductToEmit.append(currId.product_tmpl_id.id)
+                childrenProductToEmit.append(currId.id)
             product_tmpl_ids.append(currId.product_tmpl_id.id)
         if action:
             self.signal_workflow(cr, uid, childrenProductToEmit, action)
