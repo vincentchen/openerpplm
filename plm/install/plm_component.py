@@ -195,7 +195,7 @@ class plm_component(osv.osv):
                 defaults['linkeddocuments'] = []                  # Clean attached documents for new revision object
                 newID = self.copy(cr, uid, oldObject.id, defaults, context=context)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
-                #self.write(cr,uid,[newID],{'engineering_code':oldObject.engineering_code, 'name': oldObject.name},check=False,context=None)
+                # self.write(cr,uid,[newID],{'engineering_code':oldObject.engineering_code, 'name': oldObject.name},check=False,context=None)
                 # create a new "old revision" object
                 break
             break
@@ -285,7 +285,7 @@ class plm_component(osv.osv):
                     for bom_line in list(set(oidBom.bom_line_ids) ^ set(ok_rows)):
                         bomLType.unlink(cr,uid,[bom_line.id],context=None)
                     for bom_line in ok_rows:
-                        bomLType.write(cr, uid, [bom_line.id], {'type':'normal', 'source_id':False, 'product_qty':bom_line.product_qty}, context=None)
+                        bomLType.write(cr,uid,[bom_line.id],{'type':'normal','source_id':False,'name':bom_line.product_id.engineering_code,'product_qty':bom_line.product_qty,},context=None)
                         self._create_normalBom(cr, uid, bom_line.product_id.id, context)
         else:
             for bom_line in bomType.browse(cr, uid, objBoms[0], context=context).bom_line_ids:
