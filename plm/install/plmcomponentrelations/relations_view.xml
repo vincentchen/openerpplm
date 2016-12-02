@@ -143,6 +143,9 @@
          	<field name="inherit_id" ref="mrp.view_mrp_bom_filter"/>
             <field name="type">search</field>
             <field name="arch" type="xml">
+            	<field name="product_id" position="replace">
+            		
+            	</field>
                 <field name="name" position="before">
 	               	<filter name="filter_latest_2_weeks" icon="terp-go-month" string="Latest 2 Weeks" separator="1"
 	                       	domain="[('create_date','&lt;=', (datetime.date.today()).strftime('%%Y-%%m-%%d')),('create_date','&gt;=',(datetime.date.today()-datetime.timedelta(weeks=2)).strftime('%%Y-%%m-%%d'))]"
@@ -202,7 +205,6 @@
             <field name="field_parent">father_complete_ids</field>
             <field name="arch" type="xml">
                 <tree string="Where Used Bill of Materials">
-                    <field name="product_id" string="Component Name"/>
                     <field name="name" string="BoM Name"/>
                     <field name="engineering_revision" string="Revision"/>
                     <field name="description"/>

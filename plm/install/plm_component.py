@@ -459,7 +459,7 @@ class plm_component(osv.osv):
         self._action_ondocuments(cr,uid,allIDs,'release')
         for currId in allProdObjs:
             if not(currId.id in ids):
-                tmpl_ids.append(currId.product_tmpl_id.id)
+                tmpl_ids.append(currId.id)
             full_ids.append(currId.product_tmpl_id.id)
         self.signal_workflow(cr, uid, tmpl_ids, 'release')
         objId=self.pool.get('product.template').write(cr, uid, full_ids, defaults, context=context)
@@ -504,7 +504,7 @@ class plm_component(osv.osv):
         self._action_ondocuments(cr,uid,allIDs,docaction)
         for currId in self.browse(cr,uid,allIDs,context=context):
             if not(currId.id in ids):
-                tmpl_ids.append(currId.product_tmpl_id.id)
+                tmpl_ids.append(currId.id)
             full_ids.append(currId.product_tmpl_id.id)
         if action:
             self.signal_workflow(cr, uid, tmpl_ids, action)
@@ -550,16 +550,7 @@ class plm_component(osv.osv):
             raise Exception(_(" (%r). It has tried to create with values : (%r).") % (ex, vals))
         return False
 
-    def write(self, cr, uid, ids, vals, context=None, check=True):
-        if 'type' in vals.keys():
-            prodType = vals.get('type', '')
-            if not prodType:
-                vals['type'] = 'product'
-        else:
-            prodType = self.browse(cr, uid, ids).type
-            if not prodType:
-                vals['type'] = 'product'
-        return super(plm_component, self).write(cr, uid, ids, vals, context=context)
+
 
     def copy(self, cr, uid, oid, defaults={}, context=None):
         """
