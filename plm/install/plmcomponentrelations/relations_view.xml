@@ -88,11 +88,13 @@
                                     <field name="date_stop"/>
                                     <field name="attribute_value_ids" widget="many2many_tags" domain="[('product_ids.product_tmpl_id', '=', parent.product_tmpl_id)]" groups="product.group_product_variant"/>
                                     <field name="property_ids" widget="many2many_tags" groups="product.group_mrp_properties"/>
-		            	<field name="engineering_revision" readonly="True"/>
-		                <field name="state" readonly="True"/>
-		            	<field name="description" readonly="True"/>
-		                <field name="source_id" string="Source Relation Document"/>
- 	            		<field name="type" />
+					            	<field name="engineering_revision" readonly="True"/>
+					                <field name="state" readonly="True"/>
+					            	<field name="description" readonly="True"/>
+					                <field name="source_id" string="Source Relation Document"/>
+			 	            		<field name="type" />
+                                    <field name="related_bom_ids" invisible="True"/>
+			                        <button name="openRelatedBoms" type="object" string="Related BOM" attrs="{'invisible':[('related_bom_ids', '=', [])]}"/>
                                 </tree>
                             </field>
                         </page>
@@ -171,6 +173,8 @@
 	            	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='product_qty']" position="after">
 		               	<field name="weight_net" readonly="True"/>
 		    			<field name="create_date" select="True" readonly="True"/>
+                        <field name="related_bom_ids" invisible="False"/>
+                        <button name="openRelatedBoms" type="object" string="Related BOM" attrs="{'invisible':[('related_bom_ids', '=', [])]}"/>
 	           		</xpath>
              	</data>
      		</field>
