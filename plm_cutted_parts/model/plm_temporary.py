@@ -68,6 +68,7 @@ class plm_temporary_cutted(models.Model):
                                 'product_id': bomLine.product_id.row_material.id,
                                 'product_rounding': bomLine.product_id.bom_rounding}
                 if explosion_action == 'replace':
+                    commonValues['product_qty'] = bomLine.product_qty * commonValues['product_qty']
                     mrp_bom_line_type_object.write(cr, uid, [bomLine.id], commonValues)
                 else:
                     idTemplate = bomLine.product_id.product_tmpl_id.id
