@@ -214,4 +214,3 @@ class plm_document_relation(models.Model):
     child_revision  =   fields.Integer  (related="child_id.revisionid",     string=_("Revision"),   store=False)
 
 plm_document_relation()
-

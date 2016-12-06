@@ -761,7 +761,7 @@ class plm_document(models.Model):
                 #'is_checkout':fields.function(_is_checkout, type='boolean', string="Is Checked-Out", store=False)
                 }
     _defaults = {
-                 'usedforspare': lambda *a: False,
+                 'usedforspare': False,
                  'revisionid': lambda *a: 0,
                  'writable': lambda *a: True,
                  'state': lambda *a: 'draft',

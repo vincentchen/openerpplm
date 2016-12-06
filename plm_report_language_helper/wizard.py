@@ -69,7 +69,8 @@ class plm_spareChoseLanguage(osv.osv.osv_memory):
             productProductId = self.env.context.get('active_id')
             newContext = self.env.context.copy()
             newContext['lang'] = lang
-            stream, fileExtention = srv.create(self.env.cr, self.env.uid, [productProductId, ], {'raise_report_warning': False}, context=newContext)
+            newContext['raise_report_warning'] = False
+            stream, fileExtention = srv.create(self.env.cr, self.env.uid, [productProductId, ], False, context=newContext)
             self.datas = base64.encodestring(stream)
             tProductProduct = self.env['product.product']
             brwProduct = tProductProduct.browse(productProductId)
