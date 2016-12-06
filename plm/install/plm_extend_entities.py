@@ -195,22 +195,23 @@ class plm_relation_line(models.Model):
             else:
                 self.child_line_ids = False
 
-    state                   =   fields.Selection    (related="product_id.state",                string=_("Status"),     help=_("The status of the product in its LifeCycle."),  store=False)
-    engineering_revision    =   fields.Integer      (related="product_id.engineering_revision", string=_("Revision"),   help=_("The revision of the product."),                 store=False)
-    description             =   fields.Text         (related="product_id.description",          string=_("Description"),                                                        store=False)
-    weight_net              =   fields.Float        (related="product_id.weight",               string=_("Weight Net"),                                                         store=False)
+    state = fields.Selection(related="product_id.state", string=_("Status"), help=_("The status of the product in its LifeCycle."), store=False)
+    engineering_revision = fields.Integer(related="product_id.engineering_revision", string=_("Revision"), help=_("The revision of the product."), store=False)
+    description = fields.Text(related="product_id.description", string=_("Description"), store=False)
+    weight_net = fields.Float(related="product_id.weight", string=_("Weight Net"), store=False)
 
 plm_relation_line()
 
+
 class plm_document_relation(models.Model):
-    _name           =   'plm.document.relation'
-    _inherit        =   'plm.document.relation'
-    
-    parent_preview  =   fields.Binary   (related="parent_id.preview",       string=_("Preview"),    store=False)
-    parent_state    =   fields.Selection(related="parent_id.state",         string=_("Status"),     store=False)
-    parent_revision =   fields.Integer  (related="parent_id.revisionid",    string=_("Revision"),   store=False)
-    child_preview   =   fields.Binary   (related="child_id.preview",        string=_("Preview"),    store=False)
-    child_state     =   fields.Selection(related="child_id.state",          string=_("Status"),     store=False)
-    child_revision  =   fields.Integer  (related="child_id.revisionid",     string=_("Revision"),   store=False)
+    _name = 'plm.document.relation'
+    _inherit = 'plm.document.relation'
+
+    parent_preview = fields.Binary(related="parent_id.preview", string=_("Preview"), store=False)
+    parent_state = fields.Selection(related="parent_id.state", string=_("Status"), store=False)
+    parent_revision = fields.Integer(related="parent_id.revisionid", string=_("Revision"), store=False)
+    child_preview = fields.Binary(related="child_id.preview", string=_("Preview"), store=False)
+    child_state = fields.Selection(related="child_id.state", string=_("Status"), store=False)
+    child_revision = fields.Integer(related="child_id.revisionid", string=_("Revision"), store=False)
 
 plm_document_relation()
