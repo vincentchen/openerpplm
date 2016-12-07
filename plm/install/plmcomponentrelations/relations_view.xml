@@ -151,6 +151,7 @@
             <field name="arch" type="xml">
             	<data>
 	                <field name="product_id" position="after">
+	                	<button name="open_related_bom_lines" type="object" string="Related BOM Lines"/>	
 	                	<field name="engineering_revision" readonly="True"/>
 	                	<field name="description" readonly="True"/>
 	                	<field name="weight_net" readonly="True"/>
@@ -375,6 +376,45 @@
             <field eval="'ir.actions.act_window,'+str(action2)" name="value"/>
         </record>
         
+
+    <record model="ir.ui.view" id="plm_bom_line_tree">
+        <field name="name">bom line.tree</field>
+        <field name="model">mrp.bom.line</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Bom Lines">
+            		<field name="id"/>	
+                    <field name="sequence" widget="handle"/>
+                    <field name="itemnum"/>
+                    <field name="product_id" on_change="onchange_product_id(product_id, product_qty)"/>
+                    <field name="product_qty"/>
+                    <field name="product_uom" options="{'no_open':True,'no_create':True}" on_change="onchange_uom(product_id, product_uom)" groups="product.group_uom"/>
+                    <field name="product_rounding" groups="mrp.group_rounding_efficiency"/>
+                    <field name="product_efficiency" groups="mrp.group_rounding_efficiency"/>
+                    <field name="date_start"/>
+                    <field name="date_stop"/>
+                    <field name="attribute_value_ids" widget="many2many_tags" domain="[('product_ids.product_tmpl_id', '=', parent.product_tmpl_id)]" groups="product.group_product_variant"/>
+                    <field name="property_ids" widget="many2many_tags" groups="product.group_mrp_properties"/>
+	            	<field name="engineering_revision" readonly="True"/>
+	                <field name="state" readonly="True"/>
+	            	<field name="description" readonly="True"/>
+	                <field name="source_id" string="Source Relation Document"/>
+            		<field name="type" />
+            		<field name="bom_id" string="Parent BOM Name"/>
+                    <field name="related_bom_ids" invisible="True"/>
+                    <button name="openRelatedBoms" type="object" string="Related BOM" attrs="{'invisible':[('related_bom_ids', '=', [])]}"/>
+            </tree>
+        </field>
+    </record> 
+
+    <record model="ir.actions.act_window" id="action_bom_line_extended">
+        <field name="name">Bom Lines</field>
+        <field name="res_model">mrp.bom.line</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="plm_bom_line_tree"/>
+    </record>
+   
 </data>
 </openerp>
 

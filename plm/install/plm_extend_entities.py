@@ -165,13 +165,40 @@ class plm_relation(models.Model):
                         result.extend([bom_child.bom_id.id])
             bom_obj.father_complete_ids = self.env['mrp.bom'].browse(list(set(result)))
 
-    state                   = fields.Selection  (related="product_tmpl_id.state",                string=_("Status"),     help=_("The status of the product in its LifeCycle."),  store=False)
-    engineering_revision    = fields.Integer    (related="product_tmpl_id.engineering_revision", string=_("Revision"),   help=_("The revision of the product."),                 store=False)
-    description             = fields.Text       (related="product_tmpl_id.description",          string=_("Description"),                                                        store=False)
-    father_complete_ids     = fields.Many2many  ('mrp.bom', compute=_father_compute,        string=_("BoM Hierarchy"),                                                     store=False)
+    @api.multi      # Don't change me with @api.one or I don't work!!!
+    def open_related_bom_lines(self):
+        for bomBrws in self:
+            def recursion(bomBrwsList):
+                outBomLines = []
+                for bomBrws in bomBrwsList:
+                    lineBrwsList = bomBrws.bom_line_ids
+                    outBomLines.extend(lineBrwsList.ids)
+                    for lineBrws in lineBrwsList:
+                        bomsFound = self.search([('product_tmpl_id', '=', lineBrws.product_id.product_tmpl_id.id),
+                                                 ('type', '=', lineBrws.type),
+                                                 ('active', '=', True)])
+                        bottomLineIds = recursion(bomsFound)
+                        outBomLines.extend(bottomLineIds)
+                return outBomLines
+
+            bomLineIds = recursion(self)
+            return {'name': _('B.O.M. Lines'),
+                    'res_model': 'mrp.bom.line',
+                    'view_type': 'form',
+                    'view_mode': 'tree',
+                    'type': 'ir.actions.act_window',
+                    'domain': [('id', 'in', bomLineIds)],
+                    'context': {"group_by": ['bom_id']},
+                    }
+
+    state = fields.Selection(related="product_tmpl_id.state", string=_("Status"), help=_("The status of the product in its LifeCycle."), store=False)
+    engineering_revision = fields.Integer(related="product_tmpl_id.engineering_revision", string=_("Revision"), help=_("The revision of the product."), store=False)
+    description = fields.Text(related="product_tmpl_id.description", string=_("Description"), store=False)
+    father_complete_ids = fields.Many2many('mrp.bom', compute=_father_compute, string=_("BoM Hierarchy"), store=False)
 
 
 plm_relation()
+
 
 class plm_relation_line(models.Model):
     _name       = 'mrp.bom.line'
