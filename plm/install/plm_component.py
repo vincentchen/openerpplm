@@ -791,14 +791,6 @@ class plm_component(models.Model):
                 'type': 'ir.actions.act_window',
                 }
 
-    @api.multi
-    def name_get(self):
-        result = []
-        for inv in self:
-            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
-            result.append((inv.id, newName))
-        return result
-
     @api.model
     def getBomRowCad(self, bomLineBrowse):
         """

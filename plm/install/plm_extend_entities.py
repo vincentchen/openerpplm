@@ -150,15 +150,15 @@ class plm_relation(models.Model):
         @param context: A standard dictionary for contextual values
         @return:  Dictionary of values
         """
-        bom_type=''
+        bom_type = ''
         bom_line_objType = self.env['mrp.bom.line']
         for bom_obj in self:
             result = []
-            bom_type=bom_obj.type
-            if bom_type=='':
-                bom_children = bom_line_objType.search([('product_id','=',bom_obj.product_id.id)])
+            bom_type = bom_obj.type
+            if bom_type == '':
+                bom_children = bom_line_objType.search([('product_id', '=', bom_obj.product_id.id)])
             else:
-                bom_children = bom_line_objType.search([('product_id','=',bom_obj.product_id.id),('type','=',bom_type)])
+                bom_children = bom_line_objType.search([('product_id', '=', bom_obj.product_id.id), ('type', '=', bom_type)])
             for bom_child in bom_children:
                 if bom_child.bom_id.id:
                     if not(bom_child.bom_id.id in result):

@@ -37,6 +37,9 @@
 			                <group name="config_sign4">
 			                    <field name="module_product_description_language_helper"/>
 			                </group>
+			                <group name="config_sign9">
+			                    <field name="module_plm_auto_internalref"/>
+			                </group>
 		                </group>
 	                </div>
             </form>

@@ -53,6 +53,7 @@ class plm_config_settings(models.Model):
     module_plm_automate_nbom = fields.Boolean("Plm Automate Normal Bom")
     module_plm_date_bom = fields.Boolean("Plm Date Bom")
     module_plm_web_revision = fields.Boolean("Plm Web Revision")
+    module_plm_auto_internalref = fields.Boolean("Populate internal reference with engineering infos")
 
 plm_config_settings()
 
@@ -133,14 +134,6 @@ CREATE INDEX product_template_engcoderev_index
   USING btree
   (engineering_code, engineering_revision);
   """)
-
-    @api.multi
-    def name_get(self):
-        result = []
-        for inv in self:
-            newName = "%s [Rev %r]" % (inv.name, inv.engineering_revision)
-            result.append((inv.id, newName))
-        return result
 
 plm_component()
 
@@ -293,11 +286,11 @@ class plm_relation(models.Model):
     def _getpackdatas(self, cr, uid, relDatas):
         prtDatas = {}
         tmpids = self.getListIdsFromStructure(relDatas)
-        if len(tmpids) < 1:
+        if not tmpids or len(tmpids) < 1:
             return prtDatas
         compType = self.pool.get('product.product')
         tmpDatas = compType.read(cr, uid, tmpids)
-        for tmpData in tmpDatas:
+        for tmpData in tmpDatas: 
             for keyData in tmpData.keys():
                 if tmpData[keyData] is None:
                     del tmpData[keyData]
@@ -396,8 +389,9 @@ class plm_relation(models.Model):
                 continue
             self._packed.append(bomObj.bom_id.id)
             bomFthObj = self.browse(cr, uid, [bomObj.bom_id.id], context=None)
-            innerids = self._implodebom(cr, uid, self._getinbom(cr, uid, bomFthObj.product_id.id))
-            pids.append((bomFthObj.product_id.id, innerids))
+            if bomFthObj and bomFthObj.product_id.id:
+                innerids = self._implodebom(cr, uid, self._getinbom(cr, uid, bomFthObj.product_id.id))
+                pids.append((bomFthObj.product_id.id, innerids))
         return (pids)
 
     def GetWhereUsedSum(self, cr, uid, ids, context=None):
@@ -413,9 +407,9 @@ class plm_relation(models.Model):
             sid = ids[1]
         oid = ids[0]
         relDatas.append(oid)
-        bomId = self._getinbom(cr, uid, oid, sid)
-        relDatas.append(self._implodebom(cr, uid, bomId))
-        prtDatas = self._getpackdatas(cr, uid, relDatas)
+        bomId = self._getinbom(cr, uid, oid, sid)           # Get bom lines related to product.product (normal or ebom)
+        relDatas.append(self._implodebom(cr, uid, bomId))   # Get [(idProd1, [(idProd2, [...])])] -->  products get from found bom
+        prtDatas = self._getpackdatas(cr, uid, relDatas)    # Get {prodId: {prodVals}, ...} --> prodVals came from read
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
     def GetExplodedBom(self, cr, uid, ids, level=0, currlevel=0):
