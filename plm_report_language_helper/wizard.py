@@ -85,7 +85,7 @@ class plm_spareChoseLanguage(osv.osv.osv_memory):
                     'type': 'ir.actions.act_window',
                     'target': 'new',
                     }
-        UserError(_("Select a language"))
+        raise UserError(_("Select a language"))
 
     lang = fields.Selection(getInstalledLanguage,
                             'Language',
