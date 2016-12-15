@@ -110,7 +110,7 @@
 		                </div>  	
 			           	<field name="type" invisible="1"/>	
 		                 <group colspan="6" col="2">
-		                      <field name="name" on_change="on_change_name(name,engineering_code)" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+		                      <field name="name" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
 		                 </group>
 		           		<group colspan="6" col="6" name="PNArea">
 		             		<group colspan="6" col="6">

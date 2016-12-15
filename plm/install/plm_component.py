@@ -128,15 +128,14 @@ class plm_component(models.Model):
         else:
             return datetime.strptime(obj.create_date, '%Y-%m-%d %H:%M:%S')
 
-#  Customized Automations
-    def on_change_name(self, cr, uid, oid, name=False, engineering_code=False):
-        if name:
-            results = self.search(cr, uid, [('name', '=', name)])
+    @api.onchange('name')
+    def on_change_name(self):
+        if self.name:
+            results = self.search([('name', '=', self.name)])
             if len(results) > 0:
-                raise UserError(_("Part %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (name)))
-            if not engineering_code:
-                return {'value': {'engineering_code': name}}
-        return {}
+                raise UserError(_("Part %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (self.name)))
+            if not self.engineering_code:
+                self.engineering_code = self.name
 
 #  External methods
     def Clone(self, cr, uid, oid, context={}, defaults={}):
