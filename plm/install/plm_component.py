@@ -720,6 +720,7 @@ class plm_component(models.Model):
         defaults['linkeddocuments'] = []
         objId = super(plm_component, self).copy(cr, uid, oid, defaults, context=context)
         if (objId):
+            self.write(cr, uid, objId, {'state': 'draft'})
             self.wf_message_post(cr, uid, [oid], body=_('Copied starting from : %s.' % previous_name))
         return objId
 
