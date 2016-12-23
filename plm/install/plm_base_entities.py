@@ -217,10 +217,11 @@ class plm_component_document_rel(osv.osv):
 
 plm_component_document_rel()
 
-         
+
 class plm_relation_line(osv.osv):
     _name = 'mrp.bom.line'
     _inherit = 'mrp.bom.line'
+
     _columns = {
                 'create_date': fields.datetime(_('Creation Date'), readonly=True),
                 'source_id': fields.many2one('plm.document','name',ondelete='no action', readonly=True,help="This is the document object that declares this BoM."),
@@ -235,11 +236,11 @@ class plm_relation_line(osv.osv):
                 'itemlbl': fields.char(_('CAD Item Position Label'),size=64)
                 }
     _defaults = {
-        'product_uom' : 1,
+        'product_uom': 1,
     }
-    
+
     _order = 'itemnum'
-        
+
 plm_relation_line()
 
 class plm_relation(osv.osv):
