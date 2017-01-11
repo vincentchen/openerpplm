@@ -263,7 +263,7 @@ class plm_relation_line(models.Model):
     engineering_revision = fields.Integer(related="product_id.engineering_revision", string=_("Revision"), help=_("The revision of the product."), store=False)
     description = fields.Text(related="product_id.description", string=_("Description"), store=False)
     weight_net = fields.Float(related="product_id.weight", string=_("Weight Net"), store=False)
-    related_bom_ids = fields.One2many(compute='_related_boms', string='Related BOMs', digits=0, readonly=True)
+    related_bom_ids = fields.One2many(compute='_related_boms', comodel_name='mrp.bom', string='Related BOMs', digits=0, readonly=True)
 
 plm_relation_line()
 
