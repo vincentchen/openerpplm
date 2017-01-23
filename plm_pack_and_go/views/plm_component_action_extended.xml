@@ -18,9 +18,6 @@
 		                <field name="comp_rev"/>
 		                <field name="document_id"/>
 		                <field name="doc_rev"/>
-		                <!-- Working but commented because when document form is closed also pack and go wizard is closed
-		                <button string="Open" name="action_open_doc" type="object"/>
-		                -->
 		            </tree>
 		        </field>
 			</group>

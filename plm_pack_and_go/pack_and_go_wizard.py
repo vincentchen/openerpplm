@@ -49,21 +49,6 @@ class AdvancedPackView(models.Model):
     doc_rev = fields.Integer(_('Document Revision'))
     preview = fields.Binary(_('Preview Content'))
 
-# Working but commented because when document form is closed also pack and go wizard is closed
-# 
-#     @api.multi
-#     def action_open_doc(self):
-#         if not self.document_id:
-#             raise UserError(_('No document found to open'))
-#         return {'name': _('Document'),
-#                 'view_type': 'form',
-#                 "view_mode": 'form',
-#                 'res_model': 'plm.document',
-#                 'target': 'new',
-#                 'res_id': self.document_id.id,
-#                 'type': 'ir.actions.act_window',
-#                 'domain': "[]"}
-
 
 class PackAndGo(osv.osv.osv_memory):
     _name = 'pack.and_go'
@@ -78,7 +63,7 @@ class PackAndGo(osv.osv.osv_memory):
     component_id = fields.Many2one('product.product', _('Component'), default=setComponentFromContext)
     name = fields.Char('Attachment Name', required=True, default=' ')
     type = fields.Selection([('url', 'URL'), ('binary', 'File')], 'Type', help="You can either upload a file from your computer or copy/paste an internet link to your file", required=True, change_default=True, default='binary')
-    export_type = fields.Selection([('all', _('All')),
+    export_type = fields.Selection([('all', _('All BOM Documents')),
                                     ('only_drawings', _('Only Drawings')),
                                     ('only_pdf', _('Only PDF')),
                                     ('drawings_and_pdf', _('Drawings and PDF'))
@@ -88,17 +73,22 @@ class PackAndGo(osv.osv.osv_memory):
 
     @api.onchange('component_id')
     def onChangeCompId(self):
+        '''
+            Recompute related field every time the root component changes
+        '''
         self.computeExportRelField()
 
     def computeExportRelField(self):
+        '''
+            Populate related field with all components and documents of Bill of Materials
+        '''
         objProduct = self.env['product.product']
         objPackView = self.env['pack_and_go_view']
         viewObjs = []
         compIds = self.getBomCompIds()
-        for compId in compIds:
-            compBrws = objProduct.browse(compId)
+        for compBrws in objProduct.browse(compIds):
             for docBrws in compBrws.linkeddocuments:
-                newViewObj = objPackView.create({'component_id': compId,
+                newViewObj = objPackView.create({'component_id': compBrws.id,
                                                  'comp_rev': compBrws.engineering_revision,
                                                  'doc_rev': docBrws.revisionid,
                                                  'document_id': docBrws.id,
@@ -107,21 +97,10 @@ class PackAndGo(osv.osv.osv_memory):
                 viewObjs.append(newViewObj.id)
         self.export_rel = viewObjs
 
-    def computeDocFiles(self, docIds, tmpSubFolder, filestorePath=''):
-        for docBws in self.env['plm.document'].browse(docIds):
-            if self.export_type == 'only_pdf' or self.export_type == 'drawings_and_pdf':
-                srv = report.interface.report_int._reports['report.' + 'plm.document.pdf']
-                datas, fileExtention = srv.create(self.env.cr, self.env.uid, [docBws.id], False, context=self.env.context)
-                outFilePath = os.path.join(tmpSubFolder, docBws.name + '.' + fileExtention)
-                fileObj = file(outFilePath, 'wb')
-                fileObj.write(datas)
-            if filestorePath and self.export_type != 'only_pdf':
-                fileName = os.path.join(filestorePath, self.env.cr.dbname, docBws.store_fname)
-                if os.path.exists(fileName):
-                    outFilePath = os.path.join(tmpSubFolder, docBws.datas_fname)
-                    shutil.copyfile(fileName, outFilePath)
-
     def getBomCompIds(self):
+        '''
+            Get all components composing the Bill of Materials
+        '''
         objBom = self.env['mrp.bom']
         prodTmplId = self.component_id.product_tmpl_id.id
         bomId = objBom._getbom(prodTmplId)
@@ -130,6 +109,9 @@ class PackAndGo(osv.osv.osv_memory):
         return objBom.getListIdsFromStructure(relDatas)
 
     def getAll(self):
+        '''
+            Get all documents of the bill of materials
+        '''
         docIds = []
         for viewObj in self.export_rel:
             docId = viewObj.document_id.id
@@ -138,6 +120,9 @@ class PackAndGo(osv.osv.osv_memory):
         return docIds
 
     def getAllDrawings(self):
+        '''
+            Get document ids of all drawings in the assembly
+        '''
         docIds = []
         plmDocRel = self.env['plm.document.relation']
         for viewObj in self.export_rel:
@@ -151,6 +136,9 @@ class PackAndGo(osv.osv.osv_memory):
         return docIds
 
     def generateTmpFolder(self):
+        '''
+            Create temporary folder
+        '''
         tmpSubFolder = tools.config.get('document_path', os.path.join(tools.config['root_path'], 'filestore'))
         logging.info("Pack Go sub folder is %r" % tmpSubFolder)
         tmpSubSubFolder = os.path.join(tmpSubFolder, 'export', self.component_id.engineering_code)
@@ -194,6 +182,23 @@ class PackAndGo(osv.osv.osv_memory):
                 'res_id': self.ids[0],
                 'type': 'ir.actions.act_window',
                 'domain': "[]"}
+
+    def computeDocFiles(self, docIds, tmpSubFolder, filestorePath=''):
+        '''
+            Generate PDF and save documents in the temporary folder
+        '''
+        for docBws in self.env['plm.document'].browse(docIds):
+            if self.export_type == 'only_pdf' or self.export_type == 'drawings_and_pdf':
+                srv = report.interface.report_int._reports['report.' + 'plm.document.pdf']
+                datas, fileExtention = srv.create(self.env.cr, self.env.uid, [docBws.id], False, context=self.env.context)
+                outFilePath = os.path.join(tmpSubFolder, docBws.name + '.' + fileExtention)
+                fileObj = file(outFilePath, 'wb')
+                fileObj.write(datas)
+            if filestorePath and self.export_type != 'only_pdf':
+                fileName = os.path.join(filestorePath, self.env.cr.dbname, docBws.store_fname)
+                if os.path.exists(fileName):
+                    outFilePath = os.path.join(tmpSubFolder, docBws.datas_fname)
+                    shutil.copyfile(fileName, outFilePath)
 
 PackAndGo()
 
