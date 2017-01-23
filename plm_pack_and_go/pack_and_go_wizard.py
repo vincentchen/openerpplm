@@ -47,6 +47,7 @@ class AdvancedPackView(models.Model):
     document_id = fields.Many2one('plm.document', _('Document'))
     comp_rev = fields.Integer(_('Component Revision'))
     doc_rev = fields.Integer(_('Document Revision'))
+    preview = fields.Binary(_('Preview Content'))
 
 # Working but commented because when document form is closed also pack and go wizard is closed
 # 
@@ -100,7 +101,8 @@ class PackAndGo(osv.osv.osv_memory):
                 newViewObj = objPackView.create({'component_id': compId,
                                                  'comp_rev': compBrws.engineering_revision,
                                                  'doc_rev': docBrws.revisionid,
-                                                 'document_id': docBrws.id
+                                                 'document_id': docBrws.id,
+                                                 'preview': docBrws.preview,
                                                  })
                 viewObjs.append(newViewObj.id)
         self.export_rel = viewObjs
