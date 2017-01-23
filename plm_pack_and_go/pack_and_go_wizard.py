@@ -99,7 +99,7 @@ class PackAndGo(osv.osv.osv_memory):
             for docBrws in compBrws.linkeddocuments:
                 newViewObj = objPackView.create({'component_id': compId,
                                                  'comp_rev': compBrws.engineering_revision,
-                                                 'document_id': docBrws.revisionid,
+                                                 'doc_rev': docBrws.revisionid,
                                                  'document_id': docBrws.id
                                                  })
                 viewObjs.append(newViewObj.id)

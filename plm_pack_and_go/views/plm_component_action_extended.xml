@@ -51,10 +51,10 @@
             <form>
             	<sheet>
                 <group >
-                    <field name="component_id"/>
-                    <field name="comp_rev"/>
-                    <field name="document_id"/>
-                    <field name="doc_rev"/>
+                    <field name="component_id" readonly="True"/>
+                    <field name="comp_rev" readonly="True"/>
+                    <field name="document_id" readonly="True"/>
+                    <field name="doc_rev" readonly="True"/>
                 </group>
                	</sheet>	 
             </form>
