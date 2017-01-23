@@ -11,7 +11,19 @@
         		<field name="component_id" />
         		<field name="datas_fname" readonly="1"/>
 	            <field name="datas" readonly="1" filename="datas_fname"/>
-			</group>    
+	            <field name="export_type" />
+	            <field name="export_rel" >
+		            <tree>
+		                <field name="component_id"/>
+		                <field name="comp_rev"/>
+		                <field name="document_id"/>
+		                <field name="doc_rev"/>
+		                <!-- Working but commented because when document form is closed also pack and go wizard is closed
+		                <button string="Open" name="action_open_doc" type="object"/>
+		                -->
+		            </tree>
+		        </field>
+			</group>
             <separator string=""/>
             <group colspan="4" col="4">
             	<button icon="gtk-cancel" special="cancel" string="Cancel"/>
@@ -30,5 +42,39 @@
         key2="client_action_multi"
         id="act_pack_and_go_action" 
         	/>
+    
+    <record model="ir.ui.view" id="view_pack_and_go_view_form">
+        <field name="name">pack.and.go.view.form</field>
+        <field name="model">pack_and_go_view</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form>
+            	<sheet>
+                <group >
+                    <field name="component_id"/>
+                    <field name="comp_rev"/>
+                    <field name="document_id"/>
+                    <field name="doc_rev"/>
+                </group>
+               	</sheet>	 
+            </form>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="view_pack_and_go_view_tree">
+        <field name="name">pack.and.go.view.tree</field>
+        <field name="model">pack_and_go_view</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="component_id"/>
+                <field name="comp_rev"/>
+                <field name="document_id"/>
+                <field name="doc_rev"/>
+            </tree>
+        </field>
+    </record>
+        		
+        		
 	</data>
 </openerp>
