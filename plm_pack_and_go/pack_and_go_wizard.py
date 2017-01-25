@@ -71,10 +71,19 @@ class PackAndGo(osv.osv.osv_memory):
     export_rel = fields.Many2many('pack_and_go_view', 'table_pack_and_go_view', string=_('Select Rows to export'))
 
     @api.multi
+    def clearAll(self):
+        packAndGoViewObj = self.env['pack_and_go_view']
+        objBrwsList = packAndGoViewObj.search([])
+        objBrwsList.unlink()
+        pass
+
+    @api.multi
     def computeExportRelField(self):
         '''
             Populate related field with all components and documents of Bill of Materials
         '''
+        self.clearAll()
+        self.export_rel = []
         objProduct = self.env['product.product']
         objPackView = self.env['pack_and_go_view']
         viewObjs = []
