@@ -19,7 +19,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 '''
 Created on Mar 30, 2016
 
@@ -75,7 +74,6 @@ class PackAndGo(osv.osv.osv_memory):
         packAndGoViewObj = self.env['pack_and_go_view']
         objBrwsList = packAndGoViewObj.search([])
         objBrwsList.unlink()
-        pass
 
     @api.multi
     def computeExportRelField(self):
@@ -107,16 +105,39 @@ class PackAndGo(osv.osv.osv_memory):
                 'type': 'ir.actions.act_window',
                 'domain': "[]"}
 
+    def getBomFromTemplate(self, prodTmpl):
+        bomBrwsList = prodTmpl.bom_ids
+        for bomBrws in bomBrwsList:
+            if bomBrws.type == 'ebom':
+                return [bomBrws]
+        if bomBrwsList:
+            return [bomBrwsList[0]]
+        return []
+
     def getBomCompIds(self):
         '''
             Get all components composing the Bill of Materials
         '''
-        objBom = self.env['mrp.bom']
-        prodTmplId = self.component_id.product_tmpl_id.id
-        bomId = objBom._getbom(prodTmplId)
-        explosedBomIds = objBom._explodebom(bomId, True)
-        relDatas = [self.component_id.id, explosedBomIds]
-        return objBom.getListIdsFromStructure(relDatas)
+        def recursion(bomBrwsList):
+            outCompIds = []
+            for bomBrws in bomBrwsList:
+                for bomLineBrws in bomBrws.bom_line_ids:
+                    prodId = bomLineBrws.product_id.id
+                    if prodId in outCompIds:
+                        continue
+                    prodTmplBrws = bomLineBrws.product_id.product_tmpl_id
+                    bomBrwsList = self.getBomFromTemplate(prodTmplBrws)
+                    lowLevelCompIds = recursion(bomBrwsList)
+                    outCompIds.extend(lowLevelCompIds)
+                    outCompIds.append(prodId)
+            return list(set(outCompIds))
+
+        startingBom = self.getBomFromTemplate(self.component_id.product_tmpl_id)
+        if not startingBom:
+            return
+        compIds = recursion(startingBom)
+        compIds.append(self.component_id.id)
+        return compIds
 
     def getAll(self):
         '''
