@@ -8,18 +8,19 @@
         <field name="arch" type="xml">
         <form string="Export Form">
         	<group>
-        		<field name="component_id" />
-        		<field name="datas_fname" readonly="1"/>
-	            <field name="datas" readonly="1" filename="datas_fname"/>
-	            <field name="export_type" />
-	            <field name="export_rel" >
-		            <tree>
-		                <field name="component_id"/>
-		                <field name="comp_rev"/>
-		                <field name="document_id"/>
-		                <field name="doc_rev"/>
-		            </tree>
-		        </field>
+        			<field name="component_id" colspan="2"/>
+        			<button string="ComputeBom" name="computeExportRelField" type="object" colspan="2"/>
+	        		<field name="datas_fname" readonly="1"/>
+		            <field name="datas" readonly="1" filename="datas_fname"/>
+		            <field name="export_type" />
+		            <field name="export_rel" >
+			            <tree>
+			                <field name="component_id"/>
+			                <field name="comp_rev"/>
+			                <field name="document_id"/>
+			                <field name="doc_rev"/>
+			            </tree>
+			        </field>
 			</group>
             <separator string=""/>
             <group colspan="4" col="4">

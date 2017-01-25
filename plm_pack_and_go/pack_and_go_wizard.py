@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    OmniaSolutions, Open Source Management Solution    
+#    OmniaSolutions, Open Source Management Solution
 #    Copyright (C) 2010-2011 OmniaSolutions (<http://www.omniasolutions.eu>). All Rights Reserved
 #    $Id$
 #
@@ -68,16 +68,9 @@ class PackAndGo(osv.osv.osv_memory):
                                     ('only_pdf', _('Only PDF')),
                                     ('drawings_and_pdf', _('Drawings and PDF'))
                                     ], _('Export Type'), default='all')
-    export_rel = fields.Many2many('pack_and_go_view',
-                                  string=_('Select Rows to export'))
+    export_rel = fields.Many2many('pack_and_go_view', 'table_pack_and_go_view', string=_('Select Rows to export'))
 
-    @api.onchange('component_id')
-    def onChangeCompId(self):
-        '''
-            Recompute related field every time the root component changes
-        '''
-        self.computeExportRelField()
-
+    @api.multi
     def computeExportRelField(self):
         '''
             Populate related field with all components and documents of Bill of Materials
@@ -96,6 +89,14 @@ class PackAndGo(osv.osv.osv_memory):
                                                  })
                 viewObjs.append(newViewObj.id)
         self.export_rel = viewObjs
+        return {'name': _('Pack and Go'),
+                'view_type': 'form',
+                "view_mode": 'form',
+                'res_model': 'pack.and_go',
+                'target': 'new',
+                'res_id': self.ids[0],
+                'type': 'ir.actions.act_window',
+                'domain': "[]"}
 
     def getBomCompIds(self):
         '''
