@@ -49,8 +49,8 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
             myKey = product.name
             if recursion or leaf or flat:
                 myNewBom = None
-                for bomBws in l.product_id.bom_ids:
-                    if bomBws.type == l.bom_id.type:
+                for bomBws in l.related_bom_ids:
+                    if bomBws.type == l.type:
                         myNewBom = bomBws
                         break
                 if leaf and not myNewBom:
@@ -77,7 +77,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 res['level'] = level
                 res['prodBrws'] = l.product_id
                 res['prodTmplBrws'] = product
-                if leaf and not 'leaf_' in myKey:
+                if leaf and 'leaf_' not in myKey:
                     continue
                 listed[myKey] = res
                 LL = sortIndex.setdefault(res['item'], [])
