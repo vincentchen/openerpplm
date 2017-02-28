@@ -331,13 +331,14 @@ class plm_relation(models.Model):
         prtDatas = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
-    def GetExplose(self, cr, uid, ids, lastRev=False, context=None):
+    def GetExplose(self, cr, uid, ids, context=None):
         """
             Returns a list of all children in a Bom (all levels)
         """
         self._packed = []
+        objId, _sourceID, lastRev = ids
         # get all ids of the children product in structured way like [[id,childids]]
-        relDatas = [ids[0], self._explodebom(cr, uid, self._getbom(cr, uid, ids[0]), False)]
+        relDatas = [objId, self._explodebom(cr, uid, self._getbom(cr, uid, objId), False, lastRev)]
         prtDatas = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
@@ -353,7 +354,7 @@ class plm_relation(models.Model):
                     continue
                 tmpl_id = bom_line.product_id.product_tmpl_id.id
                 prod_id = bom_line.product_id.id
-                if lastRev and bom_line.product_id.state in ['undermodify', 'obsoleted']:
+                if lastRev:
                     newerCompId = self.getLastCompId(cr, uid, prod_id)
                     if newerCompId:
                         prod_id = newerCompId
