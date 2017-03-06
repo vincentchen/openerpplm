@@ -336,12 +336,13 @@ class plm_relation(models.Model):
             Returns a list of all children in a Bom (all levels)
         """
         self._packed = []
+        objId, _sourceID, lastRev = ids
         # get all ids of the children product in structured way like [[id,childids]]
-        relDatas = [ids[0], self._explodebom(cr, uid, self._getbom(cr, uid, ids[0]), False)]
+        relDatas = [objId, self._explodebom(cr, uid, self._getbom(cr, uid, objId), False, lastRev)]
         prtDatas = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 
-    def _explodebom(self, cr, uid, bids, check=True):
+    def _explodebom(self, cr, uid, bids, check=True, lastRev=False):
         """
             Explodes a bom entity  ( check=False : all levels, check=True : one level )
         """
@@ -351,9 +352,17 @@ class plm_relation(models.Model):
             for bom_line in bid.bom_line_ids:
                 if check and (bom_line.product_id.id in self._packed):
                     continue
-                innerids = self._explodebom(cr, uid, self._getbom(cr, uid, bom_line.product_id.product_tmpl_id.id), check)
-                self._packed.append(bom_line.product_id.id)
-                output.append([bom_line.product_id.id, innerids])
+                tmpl_id = bom_line.product_id.product_tmpl_id.id
+                prod_id = bom_line.product_id.id
+                if lastRev:
+                    newerCompId = self.getLastCompId(cr, uid, prod_id)
+                    if newerCompId:
+                        prod_id = newerCompId
+                        newerCompBrws = self.pool.get('product.product').browse(cr, uid, newerCompId)
+                        tmpl_id = newerCompBrws.product_tmpl_id.id
+                innerids = self._explodebom(cr, uid, self._getbom(cr, uid, tmpl_id), check)
+                self._packed.append(prod_id)
+                output.append([prod_id, innerids])
         return(output)
 
     def GetTmpltIdFromProductId(self, cr, uid, product_id=False):
@@ -365,15 +374,25 @@ class plm_relation(models.Model):
             return tmplTuple[0]
         return False
 
+    def getLastCompId(self, cr, uid, compId):
+        prodProdObj = self.pool.get('product.product')
+        compBrws = prodProdObj.browse(cr, uid, compId)
+        if compBrws:
+            prodIds = prodProdObj.search(cr, uid, [('engineering_code', '=', compBrws.engineering_code)], order='engineering_revision DESC')
+            if prodIds:
+                return prodIds[0]
+        return False
+
     def GetExploseSum(self, cr, uid, ids, context=None):
         """
             Return a list of all children in a Bom taken once (all levels)
         """
+        compId, _source_id, latestFlag = ids
         self._packed    = []
-        prodTmplId      = self.GetTmpltIdFromProductId(cr, uid, ids[0])
+        prodTmplId      = self.GetTmpltIdFromProductId(cr, uid, compId)
         bomId           = self._getbom(cr, uid, prodTmplId)
-        explosedBomIds  = self._explodebom(cr, uid, bomId, True)
-        relDatas        = [ids[0], explosedBomIds]
+        explosedBomIds  = self._explodebom(cr, uid, bomId, True, latestFlag)
+        relDatas        = [compId, explosedBomIds]
         prtDatas        = self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
 

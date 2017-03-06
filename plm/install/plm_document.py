@@ -1014,7 +1014,7 @@ class plm_document(models.Model):
         for checkoutID in checkoutIDs:
             objDoc=checkoutType.browse(cr,uid,checkoutID)
             return(objDoc.documentid.name,objDoc.documentid.revisionid,self.getUserSign(cr,objDoc.userid.id,1),objDoc.hostname)
-        return False
+        return ()
 
     def _file_delete(self, cr, uid, fname):
         '''
