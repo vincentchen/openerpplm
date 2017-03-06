@@ -77,7 +77,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 res['level'] = level
                 res['prodBrws'] = l.product_id
                 res['prodTmplBrws'] = product
-                if leaf and not 'leaf_' in myKey:
+                if leaf and 'leaf_' not in myKey:
                     continue
                 listed[myKey] = res
                 LL = sortIndex.setdefault(res['item'], [])
