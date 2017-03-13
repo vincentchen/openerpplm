@@ -347,10 +347,10 @@ class plm_relation(models.Model):
             Explodes a bom entity  ( check=False : all levels, check=True : one level )
         """
         output = []
-        self._packed = []
+        _packed = []
         for bid in bids:
             for bom_line in bid.bom_line_ids:
-                if check and (bom_line.product_id.id in self._packed):
+                if check and (bom_line.product_id.id in _packed):
                     continue
                 tmpl_id = bom_line.product_id.product_tmpl_id.id
                 prod_id = bom_line.product_id.id
@@ -361,7 +361,7 @@ class plm_relation(models.Model):
                         newerCompBrws = self.pool.get('product.product').browse(cr, uid, newerCompId)
                         tmpl_id = newerCompBrws.product_tmpl_id.id
                 innerids = self._explodebom(cr, uid, self._getbom(cr, uid, tmpl_id), check)
-                self._packed.append(prod_id)
+                _packed.append(prod_id)
                 output.append([prod_id, innerids])
         return(output)
 
