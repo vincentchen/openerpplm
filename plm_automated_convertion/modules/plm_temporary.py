@@ -37,10 +37,14 @@ _logger = logging.getLogger(__name__)
 
 
 def getCadAndConvertionAvailabe(fromExtention):
-    availabeFormat = {'.e2': ('thinkdesign', ['.dxf', '.dwg']),
-                      '.e3': ('thinkdesign', ['.iges', '.step']),
-                      }
-    return availabeFormat.get(str(fromExtention).lower(), ('', []))
+    serverName = self.env['ir.config_parameter'].get_param('plm_convetion_server')
+    if not serverName:
+        raise Exception("Configure plm_convetion_server to use this functionality")
+    url = 'http://%s/odooplm/api/v1.0/getAvailableExtention' % serverName
+    response = requests.post(url)
+    if response.status_code != 200:
+        raise UserError("Conversion of cad server failed, check the cad server log")
+    return response.content.get(str(fromExtention).lower(), ('', []))
 
 
 class plm_temporary_batch_converter(osv.osv.osv_memory):
