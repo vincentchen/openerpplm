@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+    <record model="ir.ui.view" id="view_plm_batch_form">
+        <field name="name">plm.batch.form.view</field>
+        <field name="model">plm.batch_save</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form>
+            	<sheet>	
+                	<group>
+                		<field name="id" readonly="1" string="Client starting folder"/>
+                		<field name="create_uid" readonly="1"/>
+                		<field name="create_date" readonly="1"/>
+                    	<field name="document_ids" readonly="1"/>
+                	</group>
+               	</sheet> 
+            </form>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="view_plm_batch_tree">
+        <field name="name">plm.batch.tree.view</field>
+        <field name="model">plm.batch_save</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Batch Savings">
+                <field name="create_uid"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+        <record model="ir.actions.act_window" id="action_plm_batch_save">
+             <field name="name">Batch Savings</field>
+             <field name="res_model">plm.batch_save</field>
+        	 <field name="view_type">form</field>
+        	 <field name="view_mode">tree,form</field>
+             <field name="view_id" ref="view_plm_batch_tree"/>
+        </record>
+
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save"/>
+
+    </data>
+</openerp>
