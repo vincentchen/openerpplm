@@ -181,7 +181,7 @@ class plm_component(osv.osv):
                 defaults={}
                 defaults['engineering_writable']=False
                 defaults['state']='undermodify'
-                self.write(cr, uid, [oldObject.id], defaults, context=context, check=False)
+                self.write(cr, uid, [oldObject.id], defaults, context=context)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Status moved to: %s.' %(USEDIC_STATES[defaults['state']])))
                 # store updated infos in "revision" object
                 defaults['name'] = oldObject.engineering_code                 # copy function needs an explicit name value
@@ -228,7 +228,7 @@ class plm_component(osv.osv):
                 if (self.getUpdTime(objPart)<datetime.strptime(part['lastupdate'],'%Y-%m-%d %H:%M:%S')):
                     if self._iswritable(cr,uid,objPart):
                         del(part['lastupdate'])
-                        if not self.write(cr,uid,[existingID], part , context=context, check=True):
+                        if not self.write(cr,uid,[existingID], part , context=context):
                             raise osv.except_osv(_('Update Part Error'), _("Part %r cannot be updated" %(part['engineering_code'])))
                         hasSaved=True
             part['componentID']=existingID

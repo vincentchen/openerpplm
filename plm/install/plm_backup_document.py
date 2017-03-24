@@ -98,12 +98,6 @@ class BackupDocWizard(osv.osv_memory):
         '''
             Restore document from backup data
         '''
-        def cleanAndLog(message, documentId, values, toRemove=[]):
-            for fieldName in toRemove:
-                if fieldName in values:
-                    del values[fieldName]
-            message = message + ' documentId: %r, values: %r' % (documentId, values)
-            logging.info(message)
 
         documentId = False
         backupDocIds = context.get('active_ids', [])
@@ -121,9 +115,9 @@ class BackupDocWizard(osv.osv_memory):
                 documentId = relDocBrws.id
                 writeRes = plmDocObj.write(cr, uid, relDocBrws.id, values)
                 if writeRes:
-                    cleanAndLog('[action_restore_document] Updated document', documentId, values, ['printout', 'preview'])
+                    logging.info('[action_restore_document] Updated document %r' % (documentId))
                 else:
-                    cleanAndLog('[action_restore_document] Updated document failed for', documentId, values, ['printout', 'preview'])
+                    logging.warning('[action_restore_document] Updated document failed for %r' % (documentId))
             else:
                 # Note that if I don't have a document I can't relate it to it's component
                 # User have to do it hand made
@@ -134,9 +128,9 @@ class BackupDocWizard(osv.osv_memory):
                               )
                 documentId = plmDocObj.create(cr, uid, values)
                 if documentId:
-                    cleanAndLog('[action_restore_document] Created document', documentId, values, ['printout', 'preview'])
+                    logging.info('[action_restore_document] Created document %r' % (documentId))
                 else:
-                    cleanAndLog('[action_restore_document] Create document failed for', documentId, values, ['printout', 'preview'])
+                    logging.warning('[action_restore_document] Create document failed for %r' % (documentId))
         if documentId:
             return {'name': _('Document'),
                     'view_type': 'form',

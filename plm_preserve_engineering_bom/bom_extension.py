@@ -44,7 +44,6 @@ class BomExtension(osv.osv):
                 if parentProductID:
                     bomLineList = []
                     bom_ids = self.search(cr, uid, [('product_id', '=', parentProductID), ('type', '=', 'ebom')])
-                    print 'bom_ids : ' + str(bom_ids)
                     for bom_id in bom_ids:
                         bomBrws = self.browse(cr, uid, bom_id)
                         for bomLineBrws in bomBrws.bom_line_ids:
@@ -57,7 +56,6 @@ class BomExtension(osv.osv):
 
         dictToRewrite = getBomLinesToReWrite(relations)
         super(BomExtension, self).SaveStructure(cr, uid, relations, level=level, currlevel=currlevel)
-        print dictToRewrite
         for parentProductID, bomLineList in dictToRewrite.items():
             bom_ids = self.search(cr, uid, [('product_id', '=', parentProductID), ('type', '=', 'ebom')])
             if not bom_ids:

@@ -517,7 +517,6 @@ class plm_relation(osv.osv):
             if not ids:
                 bomID=saveParent(parentName, parentID, sourceID, kindBom='ebom')
                 for rel in subRelations:
-                    #print "Save Relation ", rel
                     parentName, parentID, childName, childID, sourceID, relArgs=rel
                     if parentName == childName:
                         logging.error('toCompute : Father (%s) refers to himself' %(str(parentName)))

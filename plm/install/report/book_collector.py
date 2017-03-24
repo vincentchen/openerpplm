@@ -28,7 +28,7 @@ def getDocumentStream(docRepository,objDoc):
         else:
             content = file(os.path.join(docRepository, objDoc.store_fname), 'rb').read()
     except Exception, ex:
-        print "getFileStream : Exception (%s)reading  stream on file : %s." %(str(ex),objDoc.datas_fname)
+        logging.error("getFileStream : Exception (%r)reading  stream on file : %r." %(ex, objDoc.datas_fname))
     return content
 
 class BookCollector(object):
