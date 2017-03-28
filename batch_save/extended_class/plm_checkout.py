@@ -45,7 +45,7 @@ class PlmCheckout(models.Model):
     def unlink(self):
         for checkoutBrws in self:
             docBrws = checkoutBrws.documentid
-            if docBrws.batch_id:
+            if docBrws.batch_id and docBrws.batch_id.active:
                 raise UserError(_('A batch save is already linked to the document %r and revision %r. You cannot check-in.' % (docBrws.name, docBrws.revisionid)))
         return super(PlmCheckout, self).unlink()
 

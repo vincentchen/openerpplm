@@ -25,11 +25,12 @@ Created on 9 Dec 2016
 
 @author: Daniel Smerghetto
 '''
-
+import requests
 from openerp import models
 from openerp import api
 from openerp import fields
 from openerp import _
+from openerp.exceptions import UserError
 import logging
 
 
@@ -41,6 +42,7 @@ class PlmBatchSave(models.Model):
     document_ids = fields.One2many('plm.document', 'batch_id', string=_('Related Documents'))
     errors_ids = fields.One2many('plm.batch_save_err', 'batch_id', string=_('Errors'))
     active = fields.Boolean(_('Active'), default=True)
+    url_for_resave = fields.Text(_('URL For Resave'))
 
     def _compute_name(self):
         for record in self:
@@ -49,10 +51,17 @@ class PlmBatchSave(models.Model):
     @api.model
     def clearBatchRelations(self, batchID):
         # document relations and deactivate batch
-        return self.browse(batchID).write({'document_ids': [(5, False, False)],
-                                           'active': False
-                                           })
+        return self.browse(batchID).write({'active': False})
 
+    @api.multi
+    def resave_batch(self):
+        if not self.url_for_resave:
+            raise UserError(_('No saving url found! Cannot re-save!'))
+        try:
+            requests.post(self.url_for_resave)
+        except Exception, ex:
+            raise UserError(_('Could not save again from the CAD. Error: %r' % (ex)))
+        
 PlmBatchSave()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
