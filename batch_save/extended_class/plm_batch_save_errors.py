@@ -25,9 +25,18 @@ Created on 9 Dec 2016
 
 @author: Daniel Smerghetto
 '''
-import plm_document
-import plm_batch_save_errors
-import plm_batch_save
-import plm_checkout
+
+from openerp import models
+from openerp import fields
+from openerp import _
+
+
+class PlmBatchSaveErr(models.Model):
+    _name = 'plm.batch_save_err'
+
+    name = fields.Text(_('Error'))
+    batch_id = fields.Many2one('plm.batch_save', string=_('Related Batch'))
+
+PlmBatchSaveErr()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

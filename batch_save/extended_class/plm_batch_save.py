@@ -36,8 +36,22 @@ import logging
 class PlmBatchSave(models.Model):
     _name = 'plm.batch_save'
 
+    name = fields.Char(compute='_compute_name', readonly=True)
     file_size = fields.Float(string=_('File Size'), readonly=True)
-    document_ids = fields.One2many('plm.document', 'batch_id', string=_('Related Batch'))
+    document_ids = fields.One2many('plm.document', 'batch_id', string=_('Related Documents'))
+    errors_ids = fields.One2many('plm.batch_save_err', 'batch_id', string=_('Errors'))
+    active = fields.Boolean(_('Active'), default=True)
+
+    def _compute_name(self):
+        for record in self:
+            record.name = '%s' % (record.id)
+
+    @api.model
+    def clearBatchRelations(self, batchID):
+        # document relations and deactivate batch
+        return self.browse(batchID).write({'document_ids': [(5, False, False)],
+                                           'active': False
+                                           })
 
 PlmBatchSave()
 
