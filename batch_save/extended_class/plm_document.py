@@ -36,6 +36,10 @@ class PlmDocument(models.Model):
 
     batch_id = fields.Many2one('plm.batch_save', string=_('Related Batch'))
 
+    @api.multi
+    def write(self, vals):
+        return super(PlmDocument, self).write(vals)
+
 PlmDocument()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

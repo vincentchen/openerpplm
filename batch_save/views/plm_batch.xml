@@ -51,16 +51,30 @@
             </field>
         </record>
 
-        <record model="ir.actions.act_window" id="action_plm_batch_save">
+        <record model="ir.actions.act_window" id="action_plm_batch_save_view">
              <field name="name">Batch Savings</field>
              <field name="res_model">plm.batch_save</field>
         	 <field name="view_type">form</field>
         	 <field name="view_mode">tree,form</field>
              <field name="view_id" ref="view_plm_batch_tree"/>
              <field name="search_view_id" ref="batch_save.view_batch_save_search"/>
+             <field name="domain">[('create_uid', '=', uid)]</field>
         </record>
 
-	<menuitem name="Batch Savings" id="plm_batch_save_tree_form" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save"/>
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_integration" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_view" groups="plm.group_plm_integrationuser"/>
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_view" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_view" groups="plm.group_plm_viewuser"/>
+
+        <record model="ir.actions.act_window" id="action_plm_batch_save_admin">
+             <field name="name">Batch Savings</field>
+             <field name="res_model">plm.batch_save</field>
+        	 <field name="view_type">form</field>
+        	 <field name="view_mode">tree,form</field>
+             <field name="view_id" ref="view_plm_batch_tree"/>
+             <field name="search_view_id" ref="batch_save.view_batch_save_search"/>
+             <field name="domain">[]</field>
+        </record>
+
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_admin" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_admin" groups="plm.group_plm_admin"/>
 
     </data>
 </openerp>
