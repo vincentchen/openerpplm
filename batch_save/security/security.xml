@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+        <data>
+        
+                <record id="plm_batch_access_view_user" model="ir.model.access">
+		            <field name="name">PLM Batch View</field>
+		            <field name="model_id" ref="model_plm_batch_save"/>
+		            <field name="group_id" ref="plm.group_plm_viewuser"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="False"/>
+		            <field name="perm_create" eval="False"/>
+		            <field name="perm_unlink" eval="False"/>
+        		</record>
+        		
+                <record id="plm_batch_err_access_view_user" model="ir.model.access">
+		            <field name="name">PLM Batch Errors View</field>
+		            <field name="model_id" ref="model_plm_batch_save_err"/>
+		            <field name="group_id" ref="plm.group_plm_viewuser"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="False"/>
+		            <field name="perm_create" eval="False"/>
+		            <field name="perm_unlink" eval="False"/>
+        		</record>
+        		
+                <record id="plm_batch_access_integration_user" model="ir.model.access">
+		            <field name="name">PLM Batch Integration</field>
+		            <field name="model_id" ref="model_plm_batch_save"/>
+		            <field name="group_id" ref="plm.group_plm_integrationuser"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="True"/>
+		            <field name="perm_create" eval="True"/>
+		            <field name="perm_unlink" eval="True"/>
+        		</record>
+        		
+                <record id="plm_batch_err_access_integration_user" model="ir.model.access">
+		            <field name="name">PLM Batch Errors Integration</field>
+		            <field name="model_id" ref="model_plm_batch_save_err"/>
+		            <field name="group_id" ref="plm.group_plm_integrationuser"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="True"/>
+		            <field name="perm_create" eval="True"/>
+		            <field name="perm_unlink" eval="True"/>
+        		</record>
+   
+                 <record id="plm_batch_access_admin_user" model="ir.model.access">
+		            <field name="name">PLM Batch Admin</field>
+		            <field name="model_id" ref="model_plm_batch_save"/>
+		            <field name="group_id" ref="plm.group_plm_admin"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="True"/>
+		            <field name="perm_create" eval="True"/>
+		            <field name="perm_unlink" eval="True"/>
+        		</record>
+        		
+                <record id="plm_batch_err_access_admin_user" model="ir.model.access">
+		            <field name="name">PLM Batch Errors Admin</field>
+		            <field name="model_id" ref="model_plm_batch_save_err"/>
+		            <field name="group_id" ref="plm.group_plm_admin"/>
+		            <field name="perm_read" eval="True"/>
+		            <field name="perm_write" eval="True"/>
+		            <field name="perm_create" eval="True"/>
+		            <field name="perm_unlink" eval="True"/>
+        		</record>
+
+        </data>
+</openerp>

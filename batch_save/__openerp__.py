@@ -40,6 +40,7 @@ This module to work requires OmniaSolutions Batch Save software and need to be e
             'views/plm_checkout.xml',
             'views/plm_batch.xml',
             'views/plm_batch_err.xml',
+            'security/security.xml',
     ],
     'demo': [],
     'test': [],
