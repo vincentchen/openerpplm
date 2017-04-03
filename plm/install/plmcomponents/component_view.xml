@@ -110,7 +110,7 @@
 		                </div>  	
 			           	<field name="type" invisible="1"/>	
 		                 <group colspan="6" col="2">
-		                      <field name="name" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+		                      <field name="name" attrs="{'readonly':[('state','in',['released','obsoleted'])]}" groups="plm.group_plm_admin"/>
 		                 </group>
 		           		<group colspan="6" col="6" name="PNArea">
 		             		<group colspan="6" col="6">
