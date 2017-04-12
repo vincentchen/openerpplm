@@ -37,8 +37,8 @@ class PlmDocument(models.Model):
     batch_id = fields.Many2one('plm.batch_save', string=_('Related Batch'))
 
     @api.multi
-    def write(self, vals):
-        return super(PlmDocument, self).write(vals)
+    def write(self, vals, check=True):
+        return super(PlmDocument, self).write(vals, check=check)
 
 PlmDocument()
 
