@@ -130,7 +130,7 @@ class plm_document(osv.osv):
                         else:
                             result.append((objDoc.id,objDoc.datas_fname,False, isCheckedOutToMe, timeDoc))
                 except Exception, ex:
-                    logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
+                    logging.error("_data_get_files : Unable to access to document ("+unicode(objDoc.name)+"). Error :" + unicode(ex))
                     result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
 
