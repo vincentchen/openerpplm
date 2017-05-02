@@ -1278,19 +1278,19 @@ class plm_checkout(models.Model):
         return newID
 
     def unlink(self, cr, uid, ids, context=None):
-        documentType=self.pool.get('plm.document')
-        checkObjs=self.browse(cr, uid, ids, context=context)
-        docids=[]
+        documentType = self.pool.get('plm.document')
+        checkObjs = self.browse(cr, uid, ids, context=context)
+        docids = []
         for checkObj in checkObjs:
-            checkObj.documentid.writable=False
-            values={'writable':False,}
+            checkObj.documentid.writable = False
+            values = {'writable': False}
             docids.append(checkObj.documentid.id)
             if not documentType.write(cr, uid, [checkObj.documentid.id], values):
-                logging.warning("unlink : Unable to check-in the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag.")
-                raise UserError( _("Unable to Check-In the document ("+str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag."))
+                logging.warning("unlink : Unable to check-in the document (" + str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag.")
+                raise UserError(_("Unable to Check-In the document (" + str(checkObj.documentid.name)+"-"+str(checkObj.documentid.revisionid)+").\n You can't change writable flag."))
                 return False
         self._adjustRelations(cr, uid, docids, False)
-        dummy = super(plm_checkout,self).unlink(cr, uid, ids, context=context)
+        dummy = super(plm_checkout, self).unlink(cr, uid, ids, context=context)
         if dummy:
             documentType.wf_message_post(cr, uid, docids, body=_('Checked-In'))
         return dummy

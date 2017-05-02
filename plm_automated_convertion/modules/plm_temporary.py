@@ -36,19 +36,19 @@ import requests
 _logger = logging.getLogger(__name__)
 
 
-def getCadAndConvertionAvailabe(fromExtention):
-    serverName = self.env['ir.config_parameter'].get_param('plm_convetion_server')
-    if not serverName:
-        raise Exception("Configure plm_convetion_server to use this functionality")
-    url = 'http://%s/odooplm/api/v1.0/getAvailableExtention' % serverName
-    response = requests.post(url)
-    if response.status_code != 200:
-        raise UserError("Conversion of cad server failed, check the cad server log")
-    return response.content.get(str(fromExtention).lower(), ('', []))
-
-
 class plm_temporary_batch_converter(osv.osv.osv_memory):
     _name = 'plm.convert'
+
+    @api.model
+    def getCadAndConvertionAvailabe(self, fromExtention):
+        serverName = self.env['ir.config_parameter'].get_param('plm_convetion_server')
+        if not serverName:
+            raise Exception("Configure plm_convetion_server to use this functionality")
+        url = 'http://%s/odooplm/api/v1.0/getAvailableExtention' % serverName
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise UserError("Conversion of cad server failed, check the cad server log")
+        return response.json().get(str(fromExtention).lower(), ('', []))
 
     @api.model
     def getAllFiles(self, document):
@@ -103,7 +103,7 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
         datas_fname = self.env.context.get('datas_fname', False)
         if datas_fname:
             _, file_extension = os.path.splitext(datas_fname)
-            _, avilableFormat = getCadAndConvertionAvailabe(file_extension)
+            _, avilableFormat = self.getCadAndConvertionAvailabe(file_extension)
             return [(a, a) for a in avilableFormat]
         return []
 
@@ -124,7 +124,7 @@ class plm_temporary_batch_converter(osv.osv.osv_memory):
         out = []
         for brwWizard in self:
             _, fileExtension = os.path.splitext(self.document_id.datas_fname)
-            cadName, _ = getCadAndConvertionAvailabe(fileExtension)
+            cadName, _ = self.getCadAndConvertionAvailabe(fileExtension)
             newFileName = ''
             for component in brwWizard.document_id.linkedcomponents:
                 newFileName = component.engineering_code + brwWizard.targetFormat

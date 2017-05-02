@@ -219,7 +219,7 @@ class plm_relation(models.Model):
         " Ship this product as a set of components (kit)."))
     weight_net      =   fields.Float('Weight', digits_compute=dp.get_precision(_('Stock Weight')), help=_("The BoM net weight in Kg."))
     ebom_source_id  = fields.Integer('Source Ebom ID')
-    
+
 
     _defaults = {
         'product_uom': 1,
@@ -537,8 +537,8 @@ class plm_relation(models.Model):
                 if ('product_qty' in res):
                     res['product_qty'] = repairQty(res['product_qty'])
                 return self.create(cr, uid, res)
-            except:
-                logging.error("saveParent :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
+            except Exception, ex:
+                logging.error("saveParent :  unable to create a relation for part (%s) with source (%d) : %s. %r" % (name, sourceID, str(args), ex))
                 raise AttributeError(_("saveParent :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(sys.exc_info()))))
 
         def saveChild(name, partID, sourceID, bomID=None, kindBom=None, args=None):

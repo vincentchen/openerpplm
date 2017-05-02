@@ -31,7 +31,7 @@ from openerp.osv import osv
 class MrpProductionExtension(osv.osv):
     _name = 'mrp.production'
     _inherit = 'mrp.production'
-    
+
     def product_id_change(self, cr, uid, ids, product_id, product_qty=0, context=None):
         """ Finds UoM of changed product.
         @param product_id: Id of changed product.
