@@ -261,6 +261,7 @@ class plm_document(models.Model):
         if len(listedFiles) > 0:
             datefiles, listfiles = listedFiles
         for objDoc in self.browse(cr, uid, list(set(ids)), context=context):
+            logging.info("work on on id %r" % objDoc.id)
             if objDoc.type == 'binary':
                 checkOutUser = ''
                 isCheckedOutToMe = False
