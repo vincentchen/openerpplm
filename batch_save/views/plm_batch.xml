@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+    <record model="ir.ui.view" id="view_plm_batch_form">
+        <field name="name">plm.batch.form.view</field>
+        <field name="model">plm.batch_save</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form>
+            	<sheet>
+                    <div class="oe_button_box">
+                        <button name="resave_batch" string="Re-save" type="object"/>
+                    </div>
+                	<group>
+                		<field name="name"/>
+                		<field name="create_uid" readonly="1"/>
+                		<field name="create_date" readonly="1"/>
+                    	<field name="document_ids" readonly="1"/>
+                    	<field name="errors_ids" readonly="1"/>
+                    	<field name="active"/>
+                	</group>
+               	</sheet> 
+            </form>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="view_plm_batch_tree">
+        <field name="name">plm.batch.tree.view</field>
+        <field name="model">plm.batch_save</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Batch Savings">
+            	<field name="name"/>
+                <field name="create_uid"/>
+                <field name="create_date"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+        <record id="view_batch_save_search" model="ir.ui.view">
+            <field name="name">plm.batch_save.search</field>
+            <field name="model">plm.batch_save</field>
+            <field name="arch" type="xml">
+                <search string="Batch Save">
+					<filter string="Not Archived" domain="[('active','=',True)]" name="active_batch"/>
+					<filter string="Archived" domain="[('active','!=',True)]" name="archived_batch"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_plm_batch_save_view">
+             <field name="name">Batch Savings</field>
+             <field name="res_model">plm.batch_save</field>
+        	 <field name="view_type">form</field>
+        	 <field name="view_mode">tree,form</field>
+             <field name="view_id" ref="view_plm_batch_tree"/>
+             <field name="search_view_id" ref="batch_save.view_batch_save_search"/>
+             <field name="domain">[('create_uid', '=', uid)]</field>
+        </record>
+
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_integration" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_view" groups="plm.group_plm_integrationuser"/>
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_view" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_view" groups="plm.group_plm_viewuser"/>
+
+        <record model="ir.actions.act_window" id="action_plm_batch_save_admin">
+             <field name="name">Batch Savings</field>
+             <field name="res_model">plm.batch_save</field>
+        	 <field name="view_type">form</field>
+        	 <field name="view_mode">tree,form</field>
+             <field name="view_id" ref="view_plm_batch_tree"/>
+             <field name="search_view_id" ref="batch_save.view_batch_save_search"/>
+             <field name="domain">[]</field>
+        </record>
+
+	<menuitem name="Batch Savings" id="plm_batch_save_tree_form_admin" parent="plm.plm_menu_dictionaries" sequence="11" action="action_plm_batch_save_admin" groups="plm.group_plm_admin"/>
+
+    </data>
+</openerp>

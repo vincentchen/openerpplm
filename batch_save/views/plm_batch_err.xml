@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+    <record model="ir.ui.view" id="view_plm_batch_save_err_form">
+        <field name="name">plm.batch_save_err.form.view</field>
+        <field name="model">plm.batch_save_err</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form>
+            	<sheet>	
+                	<group>
+                		<field name="batch_id"/>
+                		<field name="name"/>
+                	</group>
+               	</sheet> 
+            </form>
+        </field>
+    </record>
+    
+    <record model="ir.ui.view" id="view_plm_batch_err_tree">
+        <field name="name">plm.batch_save_err.tree.view</field>
+        <field name="model">plm.batch_save_err</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Batch Errors">
+            	<field name="batch_id"/>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+
+    </data>
+</openerp>

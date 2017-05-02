@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+<!-- Views -->		
+
+	    <record id="plm_check_out_batch_save" model="ir.ui.view">
+            <field name="name">plm.checkout.batch.save</field>
+            <field name="model">plm.checkout</field>
+            <field name="inherit_id" ref="plm.view_plm_checkout_form"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<data>
+	            	<xpath expr="//field[@name='create_date']" position="after"> 
+		               	<field name="batch_save_id" readonly="1"/>
+		           	</xpath>
+	           	</data>
+			</field>
+        </record>
+
+    </data>
+</openerp>

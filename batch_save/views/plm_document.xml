@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+<!-- Views -->		
+
+	    <record id="plm_document_batch_save" model="ir.ui.view">
+            <field name="name">plm.document.batch.save</field>
+            <field name="model">plm.document</field>
+            <field name="inherit_id" ref="plm.view_plm_document"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<data>
+	            	<xpath expr="//field[@name='is_checkout']" position="after"> 
+		               	<field name="batch_id" readonly="1"/>
+		           	</xpath>
+	           	</data>
+			</field>
+        </record>
+
+    </data>
+</openerp>
