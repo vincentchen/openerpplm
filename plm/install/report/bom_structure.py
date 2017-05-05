@@ -40,7 +40,7 @@ def _translate(value):
 
 def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, summarize=False):
 
-    def summarize_level(bomObj, recursion=False, flat=False, level=1, leaf=False, parentKey='', summarize=False):
+    def summarize_level(bomObj, recursion=False, flat=False, level=1, leaf=False, parentKey='', summarize=False, parentQty=1):
         if leaf:
             recursion = True
         for l in bomObj.bom_line_ids:
@@ -59,10 +59,13 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                     myKey = parentKey + myKey + '_' + str(level)
                 if myNewBom:
                     if flat or myKey not in listed.keys():
-                        summarize_level(myNewBom, recursion, flat, level + 1, leaf, myKey, summarize)
+                        summarize_level(myNewBom, recursion, flat, level + 1, leaf, myKey, summarize, l.product_qty)
             if myKey in listed.keys() and summarize:
-                listed[myKey]['pqty'] = listed[myKey].get('pqty', 0) + l.product_qty
+                listed[myKey]['pqty'] = listed[myKey].get('pqty', 0) + l.product_qty * parentQty
             else:
+                prodQty = l.product_qty
+                if flat or leaf:
+                    prodQty = prodQty * parentQty
                 res['row_bom_line'] = l
                 res['name'] = product.engineering_code
                 res['item'] = l.itemnum
@@ -70,7 +73,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 res['pdesc'] = _(product.description)
                 res['pcode'] = l.product_id.default_code
                 res['previ'] = product.engineering_revision
-                res['pqty'] = l.product_qty
+                res['pqty'] = prodQty
                 res['uname'] = l.product_uom.name
                 res['pweight'] = product.weight
                 res['code'] = l.product_id.default_code
