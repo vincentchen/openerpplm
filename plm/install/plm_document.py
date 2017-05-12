@@ -695,7 +695,7 @@ class plm_document(models.Model):
                 oldObject = self.browse(cr, uid, existingID[0], context=context)
                 if oldObject.state in checkState:
                     self.wf_message_post(cr, uid, [oldObject.id], body=_('Removed : Latest Revision.'))
-                    if not self.write(cr, uid, [oldObject.id], values, context, check=False):
+                    if not self.write(cr, uid, [oldObject.id], values, context=context, check=False):
                         logging.warning("unlink : Unable to update state to old document (" + str(oldObject.name) + "-" + str(oldObject.revisionid) + ").")
                         return False
         return super(plm_document, self).unlink(cr, uid, ids, context=context)
@@ -1151,19 +1151,19 @@ class plm_document(models.Model):
         # Save the document
         logging.info("Savind Document")
         for documentAttribute in documentAttributes.values():
-            documentAttribute['TO_UPDATE'] = False
+            # documentAttribute['TO_UPDATE'] = False
             docId = False
             for brwItem in self.search([('name', '=', documentAttribute.get('name')),
                                         ('revisionid', '=', documentAttribute.get('revisionid'))]):
                 if brwItem.state not in ['released', 'obsoleted']:
                     if brwItem.needUpdate():
                         brwItem.write(documentAttribute)
-                        documentAttribute['TO_UPDATE'] = True
+                        # documentAttribute['TO_UPDATE'] = True
                 docId = brwItem
             if not docId:
                 docId = self.create(documentAttribute)
                 docId.checkout(hostName, hostPws)
-                documentAttribute['TO_UPDATE'] = True
+                # documentAttribute['TO_UPDATE'] = True
             documentAttribute['id'] = docId.id
 
         # Save the product
@@ -1198,7 +1198,7 @@ class plm_document(models.Model):
                 found = False
                 for childId, relationType in childrenRelations:
                     trueChildId = documentAttributes.get(childId, {}).get('id', 0)
-                    if objBrw.parent_id == trueParentId and objBrw.child_id == trueChildId and objBrw.type == relationType:
+                    if objBrw.parent_id.id == trueParentId and objBrw.child_id.id == trueChildId and objBrw.type == relationType:
                         found = True
                         itemFound.add((childId, relationType))
                         break
