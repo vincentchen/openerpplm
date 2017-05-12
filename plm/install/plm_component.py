@@ -227,35 +227,38 @@ class plm_component(models.Model):
         listedParts = []
         retValues = []
         for part in vals:
-            hasSaved=False
+            hasSaved = False
             if part['engineering_code'] in listedParts:
                 continue
-            if not ('engineering_code' in part) or (not 'engineering_revision' in part):
-                part['componentID']=False
-                part['hasSaved']=hasSaved
+            if 'engineering_code' not in part or 'engineering_revision' not in part:
+                part['componentID'] = False
+                part['hasSaved'] = hasSaved
+                retValues.append(part)
                 continue
-            existingID=self.search(cr,uid,[
-                                           ('engineering_code','=',part['engineering_code'])
-                                          ,('engineering_revision','=',part['engineering_revision'])],
-                                   context=context)
+            existingID = self.search(cr, uid, [('engineering_code', '=', part['engineering_code']),
+                                               ('engineering_revision', '=', part['engineering_revision'])],
+                                     context=context)
             if not existingID:
-                existingID=self.create(cr,uid,part)
-                hasSaved=True
+                existingID = self.create(cr, uid, part)
+                hasSaved = True
             else:
-                existingID=existingID[0]
-                objPart=self.browse(cr, uid, existingID, context=context)
-                part['name']=objPart.name
-                if (self.getUpdTime(objPart)<datetime.strptime(part['lastupdate'],'%Y-%m-%d %H:%M:%S')):
-                    if self._iswritable(cr,uid,objPart):
+                existingID = existingID[0]
+                objPart = self.browse(cr, uid, existingID, context=context)
+                part['name'] = objPart.name
+                if self._iswritable(cr, uid, objPart):
+                    if (self.getUpdTime(objPart) < datetime.strptime(part['lastupdate'], '%Y-%m-%d %H:%M:%S')):
                         del(part['lastupdate'])
-                        if not self.write(cr,uid,[existingID], part , context=context):
+                        if not self.write(cr, uid, [existingID], part, context=context):
                             raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
-                        hasSaved=True
-            part['componentID']=existingID
-            part['hasSaved']=hasSaved
+                        hasSaved = True
+                    else:
+                        if not self.write(cr, uid, [existingID], {'weight': part['weight']}, context=context):
+                            raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
+            part['componentID'] = existingID
+            part['hasSaved'] = hasSaved
             retValues.append(part)
             listedParts.append(part['engineering_code'])
-        return retValues 
+        return retValues
 
 
     def QueryLast(self, cr, uid, request=([],[]), default=None, context=None):
@@ -527,19 +530,19 @@ class plm_component(models.Model):
             elif action_name=='obsolete':
                 documentType.signal_workflow(cr, uid, docIDs, action_name)
         return docIDs
-    
+
     def _iswritable(self, cr, user, oid):
-        checkState=('draft')
+        checkState = ('draft')
         if not oid.engineering_writable:
-            logging.warning("_iswritable : Part (%r - %d) is not writable." %(oid.engineering_code,oid.engineering_revision))
+            logging.warning("_iswritable : Part (%r - %d) is not writable." % (oid.engineering_code, oid.engineering_revision))
             return False
-        if not oid.state in checkState:
-            logging.warning("_iswritable : Part (%r - %d) is in status %r." %(oid.engineering_code,oid.engineering_revision,oid.state))
+        if oid.state not in checkState:
+            logging.warning("_iswritable : Part (%r - %d) is in status %r." % (oid.engineering_code, oid.engineering_revision, oid.state))
             return False
-        if oid.engineering_code == False:
-            logging.warning("_iswritable : Part (%r - %d) is without Engineering P/N." %(oid.name,oid.engineering_revision))
+        if oid.engineering_code is False:
+            logging.warning("_iswritable : Part (%r - %d) is without Engineering P/N." % (oid.name, oid.engineering_revision))
             return False
-        return True  
+        return True
 
     def wf_message_post_client(self, cr, uid, args, body='', context=None):
         '''
