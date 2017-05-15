@@ -825,10 +825,11 @@ class plm_document(models.Model):
                 getCompIds(docName, docRev)
         return list(set(ids))
 
-    def isCheckedOutByMe(self, cr, uid, docId, context):
-        checkoutIds = self.pool.get('plm.checkout').search(cr, uid, [('documentid', '=', docId), ('userid', '=', uid)])
-        for checkoutId in checkoutIds:
-            return checkoutId
+    @api.multi
+    def isCheckedOutByMe(self):
+        checkoutBrwsList = self.env['plm.checkout'].search([('documentid', '=', self.id), ('userid', '=', self.env.uid)])
+        for checkoutBrws in checkoutBrwsList:
+            return checkoutBrws.id
         return None
 
     def CheckAllFiles(self, cr, uid, request, default=None, context=None):

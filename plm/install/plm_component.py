@@ -220,48 +220,61 @@ class plm_component(models.Model):
             break
         return (newID, newIndex)
 
+    @api.model
+    def isDocumentWritable(self, infoDict):
+        docName = infoDict.get('name')
+        docRev = infoDict.get('revisionid')
+        if docName and docRev:
+            for document in self.env['plm.document'].search([('name', '=', docName),
+                                                             ('revisionid', '=', docRev)]):
+                if not document.isCheckedOutByMe():
+                    return False
+                return True
+        return False
+
     def SaveOrUpdate(self, cr, uid, vals, context={}):
         """
             Save or Update Parts
         """
         listedParts = []
         retValues = []
-        for part in vals:
+        for partVals in vals:
             hasSaved = False
-            if part['engineering_code'] in listedParts:
+            if partVals['engineering_code'] in listedParts:
                 continue
-            if 'engineering_code' not in part or 'engineering_revision' not in part:
-                part['componentID'] = False
-                part['hasSaved'] = hasSaved
-                retValues.append(part)
+            if 'engineering_code' not in partVals or 'engineering_revision' not in partVals:
+                partVals['componentID'] = False
+                partVals['hasSaved'] = hasSaved
+                retValues.append(partVals)
                 continue
-            existingID = self.search(cr, uid, [('engineering_code', '=', part['engineering_code']),
-                                               ('engineering_revision', '=', part['engineering_revision'])],
+            existingID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
+                                               ('engineering_revision', '=', partVals['engineering_revision'])],
                                      context=context)
             if not existingID:
-                existingID = self.create(cr, uid, part)
+                existingID = self.create(cr, uid, partVals)
                 hasSaved = True
             else:
                 existingID = existingID[0]
                 objPart = self.browse(cr, uid, existingID, context=context)
-                part['name'] = objPart.name
-                if self._iswritable(cr, uid, objPart):
-                    if (self.getUpdTime(objPart) < datetime.strptime(part['lastupdate'], '%Y-%m-%d %H:%M:%S')):
-                        del(part['lastupdate'])
-                        if not self.write(cr, uid, [existingID], part, context=context):
-                            raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
-                        hasSaved = True
-                    else:
-                        weight = part.get('weight')
-                        if (weight):
-                            if not self.write(cr, uid, [existingID], {'weight': weight}, context=context):
-                                raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
+                partVals['name'] = objPart.name
+                if self.isDocumentWritable(cr, uid, partVals, context=context ):
+                    if self._iswritable(cr, uid, objPart):
+                        if (self.getUpdTime(objPart) < datetime.strptime(partVals['lastupdate'], '%Y-%m-%d %H:%M:%S')):
+                            del(partVals['lastupdate'])
+                            if not self.write(cr, uid, [existingID], partVals, context=context):
+                                raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
+                            hasSaved = True
                         else:
-                            logging.warning("No Weight property set unable to update !!")
-            part['componentID'] = existingID
-            part['hasSaved'] = hasSaved
-            retValues.append(part)
-            listedParts.append(part['engineering_code'])
+                            weight = partVals.get('weight')
+                            if (weight):
+                                if not self.write(cr, uid, [existingID], {'weight': weight}, context=context):
+                                    raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
+                            else:
+                                logging.warning("No Weight property set unable to update !!")
+            partVals['componentID'] = existingID
+            partVals['hasSaved'] = hasSaved
+            retValues.append(partVals)
+            listedParts.append(partVals['engineering_code'])
         return retValues
 
     def QueryLast(self, cr, uid, request=([], []), default=None, context=None):
