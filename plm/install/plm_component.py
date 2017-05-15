@@ -252,16 +252,19 @@ class plm_component(models.Model):
                             raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
                         hasSaved = True
                     else:
-                        if not self.write(cr, uid, [existingID], {'weight': part['weight']}, context=context):
-                            raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
+                        weight = part.get('weight')
+                        if (weight):
+                            if not self.write(cr, uid, [existingID], {'weight': weight}, context=context):
+                                raise UserError(_("Part %r cannot be updated" % (part['engineering_code'])))
+                        else:
+                            logging.warning("No Weight property set unable to update !!")
             part['componentID'] = existingID
             part['hasSaved'] = hasSaved
             retValues.append(part)
             listedParts.append(part['engineering_code'])
         return retValues
 
-
-    def QueryLast(self, cr, uid, request=([],[]), default=None, context=None):
+    def QueryLast(self, cr, uid, request=([], []), default=None, context=None):
         """
             Query to return values based on columns selected.
         """
