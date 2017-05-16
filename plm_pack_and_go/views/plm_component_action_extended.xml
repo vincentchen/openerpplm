@@ -16,8 +16,9 @@
 		            <field name="export_rel" >
 			            <tree>
 			                <field name="component_id"/>
-			                <field name="comp_rev"/>
+			                <field name="comp_description"/>
 			                <field name="document_id"/>
+			                <field name="document_description"/>
 			                <field name="doc_rev"/>
 			            </tree>
 			        </field>

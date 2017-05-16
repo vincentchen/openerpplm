@@ -42,10 +42,22 @@ _logger = logging.getLogger(__name__)
 class AdvancedPackView(models.Model):
     _name = 'pack_and_go_view'
 
+    @api.model
+    def _getComponentDescription(self):
+        for row in self:
+            row.comp_description = row.component_id.description
+
+    @api.model
+    def _getDocumentDescription(self):
+        for row in self:
+            row.document_description = row.document_id.description
+
     component_id = fields.Many2one('product.product', _('Component'))
     document_id = fields.Many2one('plm.document', _('Document'))
     comp_rev = fields.Integer(_('Component Revision'))
+    comp_description = fields.Char(compute='_getComponentDescription')
     doc_rev = fields.Integer(_('Document Revision'))
+    document_description = fields.Char(compute='_getDocumentDescription')
     preview = fields.Binary(_('Preview Content'))
 
 
