@@ -136,6 +136,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
     out = []
     def getOutList(outDict, parentQty=1):
         itemNums = outDict.keys()
+        itemNums.sort()
         for itemNum in itemNums:
             valsDict = outDict.get(itemNum, {})
             for valDict in valsDict:
