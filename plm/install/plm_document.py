@@ -867,6 +867,10 @@ class plm_document(models.Model):
         for docBrws in docBrwsList:
             checkOutId = docBrws.isCheckedOutByMe()
             if not checkOutId:
+                logging.info('Document %r is not in check out by user %r so cannot be checked-in' % (docBrws.id, self.env.user_id))
+                return False
+            if docBrws.file_size <= 0:
+                logging.warning('Document %r has not document content so cannot be checked-in' % (docBrws.id))
                 return False
             self.env['plm.checkout'].browse(checkOutId).unlink()
             return docBrws.id
@@ -887,8 +891,13 @@ class plm_document(models.Model):
 
         oid, _listedFiles, selection = request
         oid = getDocId(oid)
+        docBrws = self.browse(cr, uid, oid, context)
         checkRes = self.isCheckedOutByMe(cr, uid, oid, context)
         if not checkRes:
+            logging.info('Document %r is not in check out by user %r so cannot be checked-in recursively' % (oid, uid))
+            return False
+        if docBrws.file_size <= 0:
+            logging.warning('Document %r has not document content so cannot be checked-in recirsively' % (oid))
             return False
         if selection is False:
             selection = 1
