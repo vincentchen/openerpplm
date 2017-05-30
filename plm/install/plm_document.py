@@ -443,25 +443,27 @@ class plm_document(models.Model):
         """
         retValues = []
         for document in documents:
-            hasSaved = False
+            hasToBeSaved = False
             if not ('name' in document) or (not 'revisionid' in document):
                 document['documentID']  = False
-                document['hasSaved']    = hasSaved
+                document['hasSaved']    = hasToBeSaved
                 continue
             existingID = self.search(cr, uid, [
                                            ('name', '=', document['name']),
                                            ('revisionid', '=', document['revisionid'])], order='revisionid')
             if not existingID:
-                hasSaved = True
+                hasToBeSaved = True
             else:
                 existingID  = existingID[0]
                 objDocument = self.browse(cr, uid, existingID, context=context)
-#               logging.info("CheckSaveUpdate : time db : %s time file : %s" %(str(self.getLastTime(cr,uid,existingID).strftime('%Y-%m-%d %H:%M:%S')), str(document['lastupdate'])))
-                if self.getLastTime(cr, uid, existingID) < datetime.strptime(str(document['lastupdate']), '%Y-%m-%d %H:%M:%S'):
-                    if objDocument.writable:
-                        hasSaved = True
+                if objDocument.writable:
+                    if objDocument.file_size > 0:
+                        if self.getLastTime(cr, uid, existingID) < datetime.strptime(str(document['lastupdate']), '%Y-%m-%d %H:%M:%S'):
+                            hasToBeSaved = True
+                    else:
+                        hasToBeSaved = True
             document['documentID'] = existingID
-            document['hasSaved'] = hasSaved
+            document['hasSaved'] = hasToBeSaved
             retValues.append(document)
         return retValues
 
@@ -856,6 +858,20 @@ class plm_document(models.Model):
             outIds = self._getlastrev(cr, uid, outIds, context)
         return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
+    @api.model
+    def CheckIn(self, attrs):
+        documentName = attrs.get('name', '')
+        revisionId = attrs.get('revisionid', False)
+        docBrwsList = self.search([('name', '=', documentName),
+                                   ('revisionid', '=', revisionId)])
+        for docBrws in docBrwsList:
+            checkOutId = docBrws.isCheckedOutByMe()
+            if not checkOutId:
+                return False
+            self.env['plm.checkout'].browse(checkOutId).unlink()
+            return docBrws.id
+        return False
+        
     def CheckInRecursive(self, cr, uid, request, default=None, context=None):
         """
             Evaluate documents to return
