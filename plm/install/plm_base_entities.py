@@ -355,7 +355,7 @@ class plm_relation(osv.osv):
         relDatas.append(self._implodebom(cr, uid, self._getinbom(cr, uid, oid, sid)))
         prtDatas=self._getpackdatas(cr, uid, relDatas)
         return (relDatas, prtDatas, self._getpackreldatas(cr, uid, relDatas, prtDatas))
-    
+
     def GetExplose(self, cr, uid, ids, context=None):
         """
             Returns a list of all children in a Bom (all levels)
@@ -402,11 +402,11 @@ class plm_relation(osv.osv):
     def GetTmpltIdFromProductId(self, cr, uid, product_id=False):
         if not product_id:
             return False
-        tmplDict = self.pool.get('product.product').read(cr , uid, product_id, ['product_tmpl_id'])  #tmplDict = {'product_tmpl_id': (tmpl_id, u'name'), 'id': product_product_id}
+        tmplDict = self.pool.get('product.product').read(cr, uid, product_id, ['product_tmpl_id'])  #tmplDict = {'product_tmpl_id': (tmpl_id, u'name'), 'id': product_product_id}
         tmplTuple = tmplDict.get('product_tmpl_id', {})
         if len(tmplTuple) == 2:
             return tmplTuple[0]
-        
+
     def GetExploseSum(self, cr, uid, ids, context=None):
         """
             Return a list of all children in a Bom taken once (all levels)
@@ -504,7 +504,7 @@ class plm_relation(osv.osv):
 
         def toCompute(parentName, relations):
             """
-                Processes relations  
+                Processes relations
             """
             sourceIDParent=None
             sourceID=None
@@ -521,7 +521,6 @@ class plm_relation(osv.osv):
                     if parentName == childName:
                         logging.error('toCompute : Father (%s) refers to himself' %(str(parentName)))
                         raise Exception('saveChild.toCompute : Father "%s" refers to himself' %(str(parentName)))
-    
                     tmpBomId=saveChild(childName, childID, sourceID, bomID, kindBom='ebom', args=relArgs)
                     tmpBomId=toCompute(childName, relations)
                 self.RebaseProductWeight(cr, uid, bomID, self.RebaseBomWeight(cr, uid, bomID))
@@ -551,10 +550,10 @@ class plm_relation(osv.osv):
                         res['product_qty']=1.0
                 return self.create(cr, uid, res)
             except:
-                logging.error("saveParent :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(args)))
-                raise AttributeError(_("saveParent :  unable to create a relation for part (%s) with source (%d) : %s." %(name,sourceID,str(sys.exc_info()))))
+                logging.error("saveParent :  unable to create a relation for part (%r) with source (%r) : %s." % (name, sourceID, args))
+                raise AttributeError(_("saveParent :  unable to create a relation for part (%r) with source (%r) : %r." % (name, sourceID, sys.exc_info())))
 
-        def saveChild(name,  partID, sourceID, bomID=None, kindBom=None, args=None):
+        def saveChild(name, partID, sourceID, bomID=None, kindBom=None, args=None):
             """
                 Saves the relation ( child side in mrp.bom.line )
             """
@@ -576,10 +575,9 @@ class plm_relation(osv.osv):
                     if(type(res['product_qty']) != types.FloatType) or (res['product_qty'] < 1e-6):
                         res['product_qty'] = 1.0
                 return self.pool.get('mrp.bom.line').create(cr, uid, res)
-            except:
-                logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(args)))
-                raise AttributeError(_("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(sys.exc_info()))))
-
+            except Exception:
+                logging.error("saveChild :  unable to create a relation for part (%r) with source (%r) : %r." % (name, sourceID, args))
+                raise AttributeError(_("saveChild :  unable to create a relation for part (%r) with source (%r) : %r." % (name, sourceID, sys.exc_info())))
         if len(relations) < 1:  # no relation to save
             return False
         parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]

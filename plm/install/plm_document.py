@@ -1070,7 +1070,7 @@ class plm_checkout(osv.osv):
         newID = super(plm_checkout,self).create(cr, uid, vals, context=context)   
         documentType.wf_message_post(cr, uid, [docID.id], body=_('Checked-Out'))
         return newID
-         
+
     def unlink(self, cr, uid, ids, context=None):
         res = False
         groupType=self.pool.get('res.groups')
@@ -1157,7 +1157,7 @@ class plm_document_relation(osv.osv):
             except Exception,ex:
                 logging.error("saveChild : Unable to create a relation. Arguments (%s) Exception (%s)" %(str(relation), str(ex)))
                 raise Exception(_("saveChild: Unable to create a relation."))
-            
+
         savedItems=[]
         if len(relations)<1: # no relation to save 
             return False
