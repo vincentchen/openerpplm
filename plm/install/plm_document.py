@@ -130,7 +130,7 @@ class plm_document(osv.osv):
                         else:
                             result.append((objDoc.id,objDoc.datas_fname,False, isCheckedOutToMe, timeDoc))
                 except Exception, ex:
-                    logging.error("_data_get_files : Unable to access to document ("+str(objDoc.name)+"). Error :" + str(ex))
+                    logging.error("_data_get_files : Unable to access to document ("+unicode(objDoc.name)+"). Error :" + unicode(ex))
                     result.append((objDoc.id,objDoc.datas_fname,False, True, self.getServerTime(cr, uid, ids)))
         return result
 
@@ -750,7 +750,7 @@ class plm_document(osv.osv):
         def getcheckedfiles(files):
             res=[]
             for fileName in files:
-                ids=self.search(cr,uid,[('datas_fname','=',fileName)],order='revisionid')
+                ids=self.search(cr,uid,[('datas_fname','=ilike',fileName)],order='revisionid')
                 if len(ids)>0:
                     ids.sort()
                     res.append([fileName,not(self._is_checkedout_for_me(cr, uid, ids[len(ids)-1], context))])

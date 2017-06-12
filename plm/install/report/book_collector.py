@@ -159,8 +159,8 @@ def packDocuments(docRepository,documents,bookCollector):
                         input1 = StringIO.StringIO(value)
                         Flag=True
                 if Flag:
-                    page=PdfFileReader(input1)
-                    orientation,paper=paperFormat(page.getPage(0).mediaBox)
+                    page = PdfFileReader(input1)
+                    orientation, paper=paperFormat(page.getPage(0).mediaBox)
                     if(paper==0)  :
                         output0.append((input1, document))
                     elif(paper==1):
