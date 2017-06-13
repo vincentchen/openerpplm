@@ -572,7 +572,7 @@ class plm_document(models.Model):
         defaults = {}
         defaults['writable'] = True
         defaults['state'] = 'draft'
-        objId = self.write(cr, uid, ids, defaults)
+        objId = self.write(cr, uid, ids, defaults, check=False)
         if (objId):
             self.wf_message_post(cr, uid, ids, body=_('Status moved to: %s.' % (USEDIC_STATES[defaults['state']])))
         return objId
