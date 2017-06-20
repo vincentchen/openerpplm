@@ -79,6 +79,8 @@
                             <field name="bom_line_ids" widget="one2many_list">
                                 <tree string="Components" editable="bottom">
                                 	<button name="openRelatedBoms" type="object" string="Related BOM" attrs="{'invisible':[('related_bom_ids', '=', [])]}"/>	
+                                	<field name="related_document_ids" invisible="True"/>
+	           						<button name="openRelatedDocuments" type="object" string="Related DOCS" attrs="{'invisible':[('related_document_ids', '=', [])]}"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="itemnum"/>
                                     <field name="product_id" on_change="onchange_product_id(product_id, product_qty)"/>
@@ -160,6 +162,8 @@
             	<data>
 	            	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='product_id']" position="before">
 	            		<button name="openRelatedBoms" type="object" string="Related BOM" attrs="{'invisible':[('related_bom_ids', '=', [])]}"/>	
+	            		<field name="related_document_ids" invisible="True"/>
+	           			<button name="openRelatedDocuments" type="object" string="Related DOCS" attrs="{'invisible':[('related_document_ids', '=', [])]}"/>
 		            	<field name="itemnum"/>
 	           		</xpath>
              	</data>

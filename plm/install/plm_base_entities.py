@@ -190,6 +190,23 @@ class plm_relation_line(models.Model):
     _name = 'mrp.bom.line'
     _inherit = 'mrp.bom.line'
 
+
+    @api.multi
+    def openRelatedDocuments(self):
+        domain = [('id', 'in', self.related_document_ids.ids)]
+        outActDict = {'name': _('Documents'),
+                      'view_type': 'form',
+                      'res_model': 'plm.document',
+                      'type': 'ir.actions.act_window',
+                      'view_mode': 'tree,form'}
+        outActDict['domain'] = domain
+        return outActDict
+        
+    @api.multi
+    def _related_doc_ids(self):
+        for bomLineBrws in self:
+            bomLineBrws.related_document_ids = bomLineBrws.product_id.linkeddocuments
+
     create_date     = fields.Datetime(_('Creation Date'), readonly=True)
     source_id       = fields.Many2one('plm.document', 'name', ondelete='no action', readonly=True, help=_("This is the document object that declares this BoM."))
     type            = fields.Selection([('normal', _('Normal BoM')), ('phantom', _('Sets / Phantom')), ('ebom', _('Engineering BoM')), ('spbom', _('Spare BoM'))], _('BoM Type'), required=True, help=
@@ -198,6 +215,7 @@ class plm_relation_line(models.Model):
     itemnum         = fields.Integer(_('CAD Item Position'), help=_("This is the item reference position into the CAD document that declares this BoM."))
     itemlbl         = fields.Char(_('CAD Item Position Label'), size=64)
     ebom_source_id  = fields.Integer('Source Ebom ID')
+    related_document_ids = fields.One2many(compute='_related_doc_ids', comodel_name='plm.document', string=_('Related Documents'))
  
     _defaults = {
         'product_uom': 1,
