@@ -748,6 +748,30 @@ class plm_document(models.Model):
         else:
             self.is_checkout = False
 
+    def getFileExtension(self, docBrws):
+        fileExtension = ''
+        datas_fname = docBrws.datas_fname
+        if datas_fname:
+            fileExtension = '.' + datas_fname.split('.')[-1]
+        return fileExtension
+
+    @api.multi
+    def _compute_document_type(self):
+        configParamObj = self.env['ir.config_parameter']
+        str2DExtensions = configParamObj._get_param('file_exte_type_rel_2D')
+        str3DExtensions = configParamObj._get_param('file_exte_type_rel_3D')
+        for docBrws in self:
+            try:
+                fileExtension = docBrws.getFileExtension(docBrws)
+                extensions2D = eval(str2DExtensions)
+                extensions3D = eval(str3DExtensions)
+                if fileExtension in extensions2D:
+                    docBrws.document_type = '2d'
+                elif fileExtension in extensions3D:
+                    docBrws.document_type = '3d'
+            except Exception, ex:
+                logging.error('Unable to compute document type for document %r' % (docBrws.id))
+
     usedforspare    =   fields.Boolean(_('Used for Spare'), help=_("Drawings marked here will be used printing Spare Part Manual report."))
     revisionid      =   fields.Integer(_('Revision Index'), required=True)
     writable        =   fields.Boolean(_('Writable'))
@@ -757,6 +781,12 @@ class plm_document(models.Model):
     state           =   fields.Selection(USED_STATES, _('Status'), help=_("The status of the product."), readonly="True", required=True)
     checkout_user   =   fields.Char(string=_("Checked-Out to"), compute=_get_checkout_state)
     is_checkout     =   fields.Boolean(_('Is Checked-Out'), compute=_is_checkout, store=False)
+    
+    document_type = fields.Selection([('2d', _('2D')),
+                                      ('3d', _('3D')),
+                                      ], 
+                                     compute=_compute_document_type,
+                                     string= _('Document Type'))
 
     _columns = {
                 'datas': oldFields.function(_data_get, method=True, fnct_inv=_data_set, string=_('File Content'), type="binary"),
@@ -1036,10 +1066,10 @@ class plm_document(models.Model):
         return result
 
     def getCheckedOut(self, cr, uid, oid, default=None, context=None):
-        checkoutType=self.pool.get('plm.checkout')
-        checkoutIDs=checkoutType.search(cr,uid,[('documentid', '=',oid)])
+        checkoutType = self.pool.get('plm.checkout')
+        checkoutIDs = checkoutType.search(cr,uid,[('documentid', '=', oid)])
         for checkoutID in checkoutIDs:
-            objDoc=checkoutType.browse(cr,uid,checkoutID)
+            objDoc = checkoutType.browse(cr,uid,checkoutID)
             return(objDoc.documentid.name,objDoc.documentid.revisionid,self.getUserSign(cr,objDoc.userid.id,1),objDoc.hostname)
         return ()
 

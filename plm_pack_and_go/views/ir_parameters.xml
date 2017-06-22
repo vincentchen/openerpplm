@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp> 
+	<data noupdate="1">
+        <record id="flask_server_parameter" model="ir.config_parameter">
+            <field name="key">Flask server Address</field>
+            <field name="value">http://192.168.99.5:5000</field>
+        </record> 
+
+    </data>
+</openerp>
