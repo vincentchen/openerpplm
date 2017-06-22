@@ -20,7 +20,7 @@
 #
 ##############################################################################
 import json
-from __builtin__ import False
+import tempfile
 '''
 Created on Mar 30, 2016
 
@@ -124,6 +124,7 @@ class PackAndGo(osv.osv.osv_memory):
     force_types_3d = fields.Many2one('pack_and_go_types', _('Force Types'))
     force_types_2d = fields.Many2one('pack_and_go_types', _('Force Types'))
 
+    convertion_server_available = fields.Boolean(_('Convertion server available'), default=False)
 
     @api.multi
     def computeExportRelField(self, forceType=False):
@@ -259,24 +260,33 @@ class PackAndGo(osv.osv.osv_memory):
         '''
             Read from flask server and create all needed extensions
         '''
-        typesObj = self.env['pack_and_go_types']
-
-        def checkCreateType(typeStr):
-            res = typesObj.search([('name', '=', typeStr)])
-            if not res:
-                typesObj.create({'name': typeStr})
-        
-        # Read from flask server
-        serverAddress = self.env['ir.config_parameter']._get_param('Flask server Address')
-        fileExtensionsRes = requests.get(serverAddress + '/odooplm/api/v1.0/getAvailableExtention')
-        res = json.loads(fileExtensionsRes.content)
-        
-        # Create all extensions
-        for fileExtension, tupleConversion in res.items():
-            checkCreateType(fileExtension)
-            for ext in tupleConversion[-1]:
-                checkCreateType(ext)
-        return res
+        try:
+            typesObj = self.env['pack_and_go_types']
+    
+            def checkCreateType(typeStr):
+                res = typesObj.search([('name', '=', typeStr)])
+                if not res:
+                    typesObj.create({'name': typeStr})
+            
+            # Read from flask server
+            paramObj = self.env['ir.config_parameter']
+            serverAddress = paramObj._get_param('plm_convetion_server')
+            if serverAddress is None:
+                paramObj.create({'key':'plm_convetion_server', 'value':'my.servrer.com:5000'})
+                serverAddress = 'no_host_in_odoo_parameter"plm_convetion_server"!'
+            fileExtensionsRes = requests.get('http://' + serverAddress + '/odooplm/api/v1.0/getAvailableExtention')
+            res = json.loads(fileExtensionsRes.content)
+            
+            # Create all extensions
+            for fileExtension, tupleConversion in res.items():
+                checkCreateType(fileExtension)
+                for ext in tupleConversion[-1]:
+                    checkCreateType(ext)
+            self.convertion_server_available = True
+            return res
+        except Exception, ex:
+            logging.error('Error during call server to get available types: %r' % (ex))
+            return {}
 
     def getBomFromTemplate(self, prodTmpl):
         bomBrwsList = prodTmpl.bom_ids
@@ -312,16 +322,13 @@ class PackAndGo(osv.osv.osv_memory):
         compIds.append(self.component_id.id)
         return compIds
 
-    def generateTmpFolder(self):
-        '''
-            Create temporary folder
-        '''
-        tmpSubFolder = tools.config.get('document_path', os.path.join(tools.config['root_path'], 'filestore'))
-        logging.info("Pack Go sub folder is %r" % tmpSubFolder)
-        tmpSubSubFolder = os.path.join(tmpSubFolder, 'export', self.component_id.engineering_code)
-        if not os.path.exists(tmpSubSubFolder):
-            os.makedirs(tmpSubSubFolder)
-        return tmpSubFolder, tmpSubSubFolder
+    @api.multi
+    def checkPlmConvertionInstalled(self):
+        domain = [('state', 'in', ['installed', 'to upgrade', 'to remove']), ('name', '=', 'plm_automated_convertion')]
+        apps = self.env['ir.module.module'].sudo().search_read(domain, ['name'])
+        if apps:
+            return True
+        return False
 
     @api.multi
     def action_export_zip(self):
@@ -329,48 +336,85 @@ class PackAndGo(osv.osv.osv_memory):
             action to import the data
         """
         def checkCreateFolder(path):
-            if not os.path.exists(path):
-                os.makedirs(path, 0777)
-            
-        tmpSubFolder, tmpSubSubFolder = self.generateTmpFolder()
-        export_zip_folder = os.path.join(tmpSubFolder, 'export_zip')
+            if os.path.exists(path):
+                shutil.rmtree(path, ignore_errors=True)
+            os.makedirs(path, 0777)
+
+        convetionModuleInstalled = self.checkPlmConvertionInstalled()
+        tmpSubFolder = tools.config.get('document_path', os.path.join(tools.config['root_path'], 'filestore'))
+        tmpDir = tempfile.gettempdir()
+        export_zip_folder = os.path.join(tmpDir, 'export_zip')
         checkCreateFolder(export_zip_folder)
         outZipFile = os.path.join(export_zip_folder, self.component_id.engineering_code)
         checkCreateFolder(outZipFile)
 
-        def exportSingle(docBws, filestorePath, outZipFile, withPdf=False, onlyPdf=False):
-            if withPdf:
-                srv = report.interface.report_int._reports['report.' + 'plm.document.pdf']
+        def export2D():
+            for lineBrws in self.export_2d:
+                if lineBrws.available_types and convetionModuleInstalled:
+                    exportConverted(lineBrws.document_id, lineBrws.available_types)
+                else:
+                    exportSingle(lineBrws.document_id)
+        
+        def export3D():
+            for lineBrws in self.export_3d:
+                if lineBrws.available_types and convetionModuleInstalled:
+                    exportConverted(lineBrws.document_id, lineBrws.available_types)
+                else:
+                    exportSingle(lineBrws.document_id)
+        
+        def exportPdf():
+            srv = report.interface.report_int._reports['report.' + 'plm.document.pdf']
+            for lineBrws in self.export_pdf:
+                docBws = lineBrws.document_id
                 datas, fileExtention = srv.create(self.env.cr, self.env.uid, [docBws.id], False, context=self.env.context)
                 outFilePath = os.path.join(outZipFile, docBws.name + '.' + fileExtention)
                 fileObj = file(outFilePath, 'wb')
                 fileObj.write(datas)
-            if not onlyPdf:
-                fileName = os.path.join(filestorePath, self.env.cr.dbname, docBws.store_fname)
-                if os.path.exists(fileName):
-                    outFilePath = os.path.join(outZipFile, docBws.datas_fname)
-                    shutil.copyfile(fileName, outFilePath)
+        
+        def exportOther():
+            for lineBrws in self.export_other:
+                exportSingle(lineBrws.document_id)
 
-        for viewObj in self.export_rel:
-            docBws = viewObj.document_id
-            if self.export_type in ('2d', '3d', '3d2d'):
-                exportSingle(docBws, tmpSubFolder, outZipFile, False, False)
-            elif self.export_type in ('2dpdf', '3dpdf', 'all'):
-                exportSingle(docBws, tmpSubFolder, outZipFile, True, False)
-            elif self.export_type in ('pdf'):
-                exportSingle(docBws, tmpSubFolder, outZipFile, True, True)
+        def exportConverted(docBws, extentionBrws):
+            paramObj = self.env['ir.config_parameter']
+            relStr = paramObj._get_param('extension_integration_rel')
+            try:
+                rel = eval(relStr)
+            except Exception, ex:
+                logging.error('Unable to get extension_integration_rel parameter. EX: %r' % (ex))
+                rel = {}
+            integration = rel.get(self.getFileExtension(docBws), '')
+            convertObj = self.env['plm.convert']
+            filePath = convertObj.getFileConverted(docBws, integration, extentionBrws.name)
+            if not os.path.exists(filePath):
+                logging.error('Unable to convert correctly file %r, does not exists' % (filePath))
+                return
+            outFilePath = os.path.join(outZipFile, os.path.basename(filePath))
+            shutil.copyfile(filePath, outFilePath)
+
+        def exportSingle(docBws):
+            fileName = os.path.join(tmpSubFolder, self.env.cr.dbname, docBws.store_fname)
+            if os.path.exists(fileName):
+                outFilePath = os.path.join(outZipFile, docBws.datas_fname)
+                shutil.copyfile(fileName, outFilePath)
+            else:
+                logging.error('Unable to export file from document ID %r. File %r does not exists.' % (docBws.id, fileName))
+
+        export2D()
+        export3D()
+        exportPdf()
+        exportOther()
 
         # Make archive, upload it and clean
-        outZipFile2 = shutil.make_archive(outZipFile, 'zip', tmpSubSubFolder)
+        outZipFile2 = shutil.make_archive(outZipFile, 'zip', outZipFile)
         with open(outZipFile2, 'rb') as f:
             fileContent = f.read()
             if fileContent:
                 self.datas = base64.encodestring(fileContent)
         try:
-            shutil.rmtree(tmpSubSubFolder)
-            shutil.rmtree(fileContent)
+            shutil.rmtree(outZipFile)
         except Exception, ex:
-            logging.error("Enable to delete file from export function %r %r" % (tmpSubSubFolder, unicode(ex)))
+            logging.error("Unable to delete file from export function %r %r" % (outZipFile, unicode(ex)))
         fileName = os.path.basename(outZipFile2)
         self.datas_fname = fileName
         self.name = fileName

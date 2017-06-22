@@ -10,14 +10,18 @@
         	<group>
         			<field name="component_id" colspan="2"/>
         			<field name="export_type" />
+        			<field name="convertion_server_available" invisible="0"/>
         			<button string="Compute Bom" name="computeExportRelField" type="object"/>
 		    </group>
 		    
 		    	<notebook>
                         <page string="2D" id="2d_page">
                         	<group>
-			        			<field name="force_types_2d" options="{'no_open':True,'no_create':True}"/>
-			        			<button string="Force Types" name="forceTypes2d" type="object"/>
+			        			<field name="force_types_2d"
+			        			options="{'no_open':True,'no_create':True}"
+			        			attrs="{'readonly': [('convertion_server_available', '=', False)]}"/>
+			        			<button string="Force Types" name="forceTypes2d" type="object"
+			        			attrs="{'readonly': [('convertion_server_available', '=', False)]}"/>
 			        			<button string="Clear" name="clear2d" type="object"/>
 			        		</group>
 			        		<group>
@@ -53,8 +57,10 @@
                 		</page>
                         <page string="3D" id="3d_page">
                         	<group>
-			        			<field name="force_types_3d" options="{'no_open':True,'no_create':True}"/>
-			        			<button string="Force Types" name="forceTypes3d" type="object"/>
+			        			<field name="force_types_3d" options="{'no_open':True,'no_create':True}"
+			        			attrs="{'readonly': [('convertion_server_available', '=', False)]}"/>
+			        			<button string="Force Types" name="forceTypes3d" type="object"
+			        			attrs="{'readonly': [('convertion_server_available', '=', False)]}"/>
 			        			<button string="Clear" name="clear3d" type="object"/>
 			        		</group>
 			        		<group>

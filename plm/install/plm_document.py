@@ -770,7 +770,7 @@ class plm_document(models.Model):
                 elif fileExtension in extensions3D:
                     docBrws.document_type = '3d'
             except Exception, ex:
-                logging.error('Unable to compute document type for document %r' % (docBrws.id))
+                logging.error('Unable to compute document type for document %r, error %r' % (docBrws.id, ex))
 
     usedforspare    =   fields.Boolean(_('Used for Spare'), help=_("Drawings marked here will be used printing Spare Part Manual report."))
     revisionid      =   fields.Integer(_('Revision Index'), required=True)
