@@ -1207,19 +1207,19 @@ class plm_document(models.Model):
         # Save the document
         logging.info("Savind Document")
         for documentAttribute in documentAttributes.values():
-            # documentAttribute['TO_UPDATE'] = False
+            documentAttribute['TO_UPDATE'] = False
             docId = False
             for brwItem in self.search([('name', '=', documentAttribute.get('name')),
                                         ('revisionid', '=', documentAttribute.get('revisionid'))]):
                 if brwItem.state not in ['released', 'obsoleted']:
                     if brwItem.needUpdate():
                         brwItem.write(documentAttribute)
-                        # documentAttribute['TO_UPDATE'] = True
+                        documentAttribute['TO_UPDATE'] = True
                 docId = brwItem
             if not docId:
                 docId = self.create(documentAttribute)
                 docId.checkout(hostName, hostPws)
-                # documentAttribute['TO_UPDATE'] = True
+                documentAttribute['TO_UPDATE'] = True
             documentAttribute['id'] = docId.id
 
         # Save the product
