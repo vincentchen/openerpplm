@@ -10,7 +10,7 @@
         	<group>
         			<field name="component_id" colspan="2"/>
         			<field name="export_type" />
-        			<field name="convertion_server_available" invisible="0"/>
+        			<field name="convertion_server_available" invisible="1"/>
         			<button string="Compute Bom" name="computeExportRelField" type="object"/>
 		    </group>
 		    
