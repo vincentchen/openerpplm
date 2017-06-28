@@ -92,7 +92,7 @@ class PackAndGo(osv.osv.osv_memory):
         """
             set the default value from getting the value from the context
         """
-        return self._context.get('active_id', 0)
+        return self._context.get('active_id', False)
 
     component_id = fields.Many2one('product.product',
                                    _('Component'),
@@ -352,14 +352,14 @@ class PackAndGo(osv.osv.osv_memory):
                     exportConverted(lineBrws.document_id, lineBrws.available_types)
                 else:
                     exportSingle(lineBrws.document_id)
-        
+
         def export3D():
             for lineBrws in self.export_3d:
                 if lineBrws.available_types and convetionModuleInstalled:
                     exportConverted(lineBrws.document_id, lineBrws.available_types)
                 else:
                     exportSingle(lineBrws.document_id)
-        
+
         def exportPdf():
             srv = report.interface.report_int._reports['report.' + 'plm.document.pdf']
             for lineBrws in self.export_pdf:
@@ -368,7 +368,7 @@ class PackAndGo(osv.osv.osv_memory):
                 outFilePath = os.path.join(outZipFile, docBws.name + '.' + fileExtention)
                 fileObj = file(outFilePath, 'wb')
                 fileObj.write(datas)
-        
+
         def exportOther():
             for lineBrws in self.export_other:
                 exportSingle(lineBrws.document_id)
@@ -377,11 +377,11 @@ class PackAndGo(osv.osv.osv_memory):
             paramObj = self.env['ir.config_parameter']
             relStr = paramObj._get_param('extension_integration_rel')
             try:
-                rel = eval(relStr)
+                rel = eval(unicode(relStr).lower())
             except Exception, ex:
                 logging.error('Unable to get extension_integration_rel parameter. EX: %r' % (ex))
                 rel = {}
-            integration = rel.get(self.getFileExtension(docBws), '')
+            integration = rel.get(unicode(self.getFileExtension(docBws)).lower(), '')
             convertObj = self.env['plm.convert']
             filePath = convertObj.getFileConverted(docBws, integration, extentionBrws.name)
             if not os.path.exists(filePath):
