@@ -199,11 +199,9 @@ class PackAndGo(osv.osv.osv_memory):
     def getDocumentsByLinks(self, docBrws):
         docId = docBrws.id
         docRelObj = self.env['plm.document.relation']
-        docRels = docRelObj.search([
-                                    '|',
+        docRels = docRelObj.search(['|',
                                     ('parent_id', '=', docId),
-                                    ('child_id', '=', docId),
-                                    ])
+                                    ('child_id', '=', docId)])
         outBrwsList = []
         for relation in docRels:
             parenBrws = relation.parent_id
@@ -224,7 +222,7 @@ class PackAndGo(osv.osv.osv_memory):
                 'res_id': self.ids[0],
                 'type': 'ir.actions.act_window',
                 'domain': "[]"}
-        
+
     @api.multi
     def clear2d(self):
         self.write({'export_2d': [(5, 0, 0)]})
@@ -244,7 +242,7 @@ class PackAndGo(osv.osv.osv_memory):
     def clearother(self):
         self.write({'export_other': [(5, 0, 0)]})
         return self.returnWizard()
-               
+
     @api.multi
     def clearAll(self):
         '''
@@ -260,21 +258,21 @@ class PackAndGo(osv.osv.osv_memory):
         '''
         try:
             typesObj = self.env['pack_and_go_types']
-    
+
             def checkCreateType(typeStr):
                 res = typesObj.search([('name', '=', typeStr)])
                 if not res:
                     typesObj.create({'name': typeStr})
-            
             # Read from flask server
             paramObj = self.env['ir.config_parameter']
             serverAddress = paramObj._get_param('plm_convetion_server')
             if serverAddress is None:
-                paramObj.create({'key':'plm_convetion_server', 'value':'my.servrer.com:5000'})
+                paramObj.create({'key': 'plm_convetion_server',
+                                 'value': 'my.servrer.com:5000'})
                 serverAddress = 'no_host_in_odoo_parameter"plm_convetion_server"!'
             fileExtensionsRes = requests.get('http://' + serverAddress + '/odooplm/api/v1.0/getAvailableExtention')
             res = json.loads(fileExtensionsRes.content)
-            
+
             # Create all extensions
             for fileExtension, tupleConversion in res.items():
                 checkCreateType(fileExtension)
