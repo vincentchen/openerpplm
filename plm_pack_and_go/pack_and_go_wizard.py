@@ -42,7 +42,7 @@ import requests
 _logger = logging.getLogger(__name__)
 
 
-class AvailableTypes(models.Model):
+class AvailableTypes(osv.osv.osv_memory):
     _name = 'pack_and_go_types'
 
     name = fields.Char(_('Name'))
@@ -66,7 +66,7 @@ class AdvancedPackView(osv.osv.osv_memory):
     def _getDocumentFileName(self):
         for row in self:
             row.doc_file_name = row.document_id.datas_fname
-        
+
     component_id = fields.Many2one('product.product', _('Component'))
     document_id = fields.Many2one('plm.document', _('Document'))
     comp_rev = fields.Integer(_('Component Revision'))
@@ -137,8 +137,7 @@ class PackAndGo(osv.osv.osv_memory):
         export_3d = []
         export_other = []
         export_pdf = []
-        
-        checkedDocumentIds = [] # To know if the same document has been already analyzed
+        checkedDocumentIds = []  # To know if the same document has been already analyzed
         objProduct = self.env['product.product']
         objPackView = self.env['pack_and_go_view']
 
@@ -180,8 +179,7 @@ class PackAndGo(osv.osv.osv_memory):
                 checkedDocumentIds.append(docBrws2.id)
                 docCheckCreate(docBrws2)
                 recursionDocuments(docBrws2)
-            
-        self.getAllAvailableTypes() # Setup available types
+        self.getAllAvailableTypes()   # Setup available types
         compIds = self.getBomCompIds()
         for compBrws in objProduct.browse(compIds):
             for docBrws in compBrws.linkeddocuments:
