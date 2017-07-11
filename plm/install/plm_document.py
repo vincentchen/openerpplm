@@ -487,7 +487,6 @@ class plm_document(models.Model):
             else:
                 existingID = existingID[0]
                 objDocument = self.browse(cr, uid, existingID, context=context)
-#                logging.info("SaveOrUpdate : time db : %s time file : %s" %(str(self.getLastTime(cr,uid,existingID).strftime('%Y-%m-%d %H:%M:%S')), str(document['lastupdate'])))
                 if self.getLastTime(cr, uid, existingID) < datetime.strptime(str(document['lastupdate']), '%Y-%m-%d %H:%M:%S'):
                     if self._iswritable(cr, uid, objDocument):
                         del(document['lastupdate'])

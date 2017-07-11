@@ -220,18 +220,6 @@ class plm_component(models.Model):
             break
         return (newID, newIndex)
 
-    @api.model
-    def isDocumentWritable(self, infoDict):
-        docName = infoDict.get('name')
-        docRev = infoDict.get('revisionid')
-        if docName and docRev:
-            for document in self.env['plm.document'].search([('name', '=', docName),
-                                                             ('revisionid', '=', docRev)]):
-                if not document.isCheckedOutByMe():
-                    return False
-                return True
-        return False
-
     def SaveOrUpdate(self, cr, uid, vals, context={}):
         """
             Save or Update Parts
@@ -247,31 +235,26 @@ class plm_component(models.Model):
                 partVals['hasSaved'] = hasSaved
                 retValues.append(partVals)
                 continue
-            existingID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
+            existingComponentID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
                                                ('engineering_revision', '=', partVals['engineering_revision'])],
                                      context=context)
-            if not existingID:
-                existingID = self.create(cr, uid, partVals)
+            if not existingComponentID:
+                existingComponentID = self.create(cr, uid, partVals)
                 hasSaved = True
             else:
-                existingID = existingID[0]
-                objPart = self.browse(cr, uid, existingID, context=context)
+                existingComponentID = existingComponentID[0]
+                objPart = self.browse(cr, uid, existingComponentID, context=context)
                 partVals['name'] = objPart.name
-                if self.isDocumentWritable(cr, uid, partVals, context=context ):
-                    if self._iswritable(cr, uid, objPart):
-                        if (self.getUpdTime(objPart) < datetime.strptime(partVals['lastupdate'], '%Y-%m-%d %H:%M:%S')):
-                            del(partVals['lastupdate'])
-                            if not self.write(cr, uid, [existingID], partVals, context=context):
-                                raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
-                            hasSaved = True
-                        else:
-                            weight = partVals.get('weight')
-                            if (weight):
-                                if not self.write(cr, uid, [existingID], {'weight': weight}, context=context):
-                                    raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
-                            else:
-                                logging.warning("No Weight property set unable to update !!")
-            partVals['componentID'] = existingID
+                if self._iswritable(cr, uid, objPart):
+                    hasSaved = True
+                    self.write(cr, uid, [existingComponentID], partVals, context=context)
+                    weight = partVals.get('weight')
+                    if (weight):
+                        if not self.write(cr, uid, [existingComponentID], {'weight': weight}, context=context):
+                            raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
+                    else:
+                        logging.warning("No Weight property set unable to update !!")
+            partVals['componentID'] = existingComponentID
             partVals['hasSaved'] = hasSaved
             retValues.append(partVals)
             listedParts.append(partVals['engineering_code'])
