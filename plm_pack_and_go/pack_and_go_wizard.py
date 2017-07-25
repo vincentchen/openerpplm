@@ -299,7 +299,8 @@ class PackAndGo(osv.osv.osv_memory):
             return list(set(outCompIds))
 
         compIds = []
-        startingBom = self.getBomFromTemplate(self.component_id.product_tmpl_id)
+        tmplBrws = self.component_id.product_tmpl_id
+        startingBom = self.getBomFromTemplate(tmplBrws)
         if not startingBom:
             return [self.component_id.id]
         compIds.append(self.component_id.id)
