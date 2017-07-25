@@ -324,7 +324,7 @@ class plm_component(models.Model):
             bomIds = bomType.search(cr, uid, [('product_tmpl_id', '=', product_template_id),
                                               ('type', '=', 'ebom')])
             if not bomIds:
-                UserError(_("No Enginnering bom provided"))
+                raise UserError(_("No Enginnering bom provided"))
             for eBomId in bomIds:
                 newidBom = bomType.copy(cr, uid, eBomId, {}, context)
                 values = {'name': objProductProductBrw.name,

@@ -1030,7 +1030,7 @@ class plm_document(models.Model):
             read_docs.extend(self._relatedbydocs(cr, uid, oid, kinds, listed_documents, False))
         documents = self.browse(cr, uid, read_docs, context=context)
         for document in documents:
-            related_documents.append([document.id, document.name, document.preview])
+            related_documents.append([document.id, document.name, document.preview, document.revisionid, document.description])
         return related_documents
 
     def getServerTime(self, cr, uid, oid, default=None, context=None):
