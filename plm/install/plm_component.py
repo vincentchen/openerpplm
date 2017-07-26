@@ -227,6 +227,7 @@ class plm_component(models.Model):
         listedParts = []
         retValues = []
         for partVals in vals:
+            logging.info('Part Values to analyze: %r' % (partVals))
             hasSaved = False
             if partVals['engineering_code'] in listedParts:
                 continue
@@ -235,6 +236,7 @@ class plm_component(models.Model):
                 partVals['hasSaved'] = hasSaved
                 retValues.append(partVals)
                 continue
+            
             existingComponentID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
                                                ('engineering_revision', '=', partVals['engineering_revision'])],
                                      context=context)
@@ -324,7 +326,7 @@ class plm_component(models.Model):
             bomIds = bomType.search(cr, uid, [('product_tmpl_id', '=', product_template_id),
                                               ('type', '=', 'ebom')])
             if not bomIds:
-                raise UserError(_("No Enginnering bom provided"))
+                logging.info("No Enginnering bom provided for product template %r" % (product_template_id))
             for eBomId in bomIds:
                 newidBom = bomType.copy(cr, uid, eBomId, {}, context)
                 values = {'name': objProductProductBrw.name,
