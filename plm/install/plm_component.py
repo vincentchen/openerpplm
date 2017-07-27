@@ -283,7 +283,7 @@ class plm_component(models.Model):
                 expData=tmpData['datas']
         return expData
 
-    def create_bom_from_ebom(self, cr, uid, objProductProductBrw, newBomType, summarize=False, context={}):
+    def create_bom_from_ebom(self, cr, uid, objProductProductBrw, newBomType, summarize=False, migrate_custom_lines=True, context={}):
         """
             create a new bom starting from ebom
         """
@@ -352,7 +352,7 @@ class plm_component(models.Model):
                     self.create_bom_from_ebom(cr, uid, bom_line.product_id, newBomType, context)
                 self.wf_message_post(cr, uid, [objProductProductBrw.id], body=_('Created %r' % newBomType))
                 break
-        if newidBom and eBomId:
+        if newidBom and eBomId and migrate_custom_lines:
             bomBrws = bomType.browse(cr, uid, eBomId, context)
             oldBomList = getPreviousNormalBOM(bomBrws)
             for oldNBom in oldBomList:

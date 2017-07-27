@@ -705,12 +705,17 @@ class plm_temporary(osv.osv.osv_memory):
     _description = "Temporary Class"
     name = fields.Char(_('Temp'), size=128)
     summarize = fields.Boolean('Summarize Bom Lines if needed.', help="If set as true, when a Bom line comes from EBOM was in the old normal BOM two lines where been summarized.")
+    migrate_custom_lines = fields.Boolean(_('Preserve custom BOM lines from previous Normal BOM revision'),
+                                          default=True,
+                                          help=_("If the user adds custom BOM lines in the revision 0 BOM, than makes the revision 1, creates it's engineering BOM and than create the new Normal BOM form EBOM your revision 0 custom BOM lines are created in the new BOM"))
 
     def action_create_normalBom(self, cr, uid, ids, context=None):
         """
             Create a new Normal Bom if doesn't exist (action callable from views)
         """
-        summarize = self.browse(cr, uid, ids[0], context).summarize
+        objBrws = self.browse(cr, uid, ids[0], context)
+        summarize = objBrws.summarize
+        migrate_custom_lines = objBrws.migrate_custom_lines
         selectdIds = context.get('active_ids', [])
         objType = context.get('active_model', '')
         if objType != 'product.product':
@@ -725,7 +730,7 @@ class plm_temporary(osv.osv.osv_memory):
                                                                 ('type', '=', 'normal')])
             if objBoms:
                 raise UserError(_("Normal BoM for Part %r already exists." % (objBoms)))
-            lineMessaggesList = product_product_type_object.create_bom_from_ebom(cr, uid, productBrowse, 'normal', summarize, context)
+            lineMessaggesList = product_product_type_object.create_bom_from_ebom(cr, uid, productBrowse, 'normal', summarize, migrate_custom_lines, context)
             if lineMessaggesList:
                 outMess = ''
                 for mess in lineMessaggesList:
