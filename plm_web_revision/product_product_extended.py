@@ -127,7 +127,7 @@ class ProductProductExtended(models.Model):
         bomObj = self.env['mrp.bom']
         newProdBrws = prodProdEnv.browse(newID)
         for bomBrws in bomObj.search([('product_tmpl_id', '=', oldProdBrws.product_tmpl_id.id), ('type', '=', 'ebom')]):
-            newBomBrws = bomObj.copy(bomBrws.id)
+            newBomBrws = bomBrws.copy()
             newbomLines = []
             newBomBrws.product_tmpl_id = newProdBrws.product_tmpl_id.id
             for oldBomLineBrws in bomBrws.bom_line_ids:
