@@ -567,13 +567,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='draft'
-        action='draft'
+        workflow_signal='correct'   # Solved bug!!!
         docaction='draft'
         defaults['engineering_writable']=True
         defaults['state']=status
         excludeStatuses=['draft','released','undermodify','obsoleted']
         includeStatuses=['confirmed','transmitted']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_confirm(self,cr,uid,ids,context=None):
         """
@@ -581,13 +581,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='confirmed'
-        action='confirm'
+        workflow_signal='confirm'
         docaction='confirm'
         defaults['engineering_writable']=False
         defaults['state']=status
         excludeStatuses=['confirmed','transmitted','released','undermodify','obsoleted']
         includeStatuses=['draft']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_release(self, cr, uid, ids, context=None):
         """
@@ -630,13 +630,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='obsoleted'
-        action='obsolete'
+        workflow_signal='obsolete'
         docaction='obsolete'
         defaults['engineering_writable']=False
         defaults['state']=status
         excludeStatuses=['draft', 'confirmed', 'transmitted', 'undermodify', 'obsoleted']
         includeStatuses=['released']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_reactivate(self,cr,uid,ids,context=None):
         """
@@ -644,17 +644,17 @@ class plm_component(models.Model):
         """
         defaults={}
         status='released'
-        action=''
+        workflow_signal=''
         docaction='release'
         defaults['engineering_writable']=True
         defaults['state']=status
         excludeStatuses=['draft', 'confirmed', 'transmitted', 'released', 'undermodify', 'obsoleted']
         includeStatuses=['obsoleted']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
     
 #   WorkFlow common internal method to apply changes
 
-    def _action_to_perform(self, cr, uid, ids, status, action, docaction, defaults=[], excludeStatuses=[], includeStatuses=[], context=None):
+    def _action_to_perform(self, cr, uid, ids, status, workflow_signal, docaction, defaults=[], excludeStatuses=[], includeStatuses=[], context=None):
         childrenProductToEmit=[]
         product_tmpl_ids=[]
         userErrors, allProduct_ids = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
@@ -666,8 +666,8 @@ class plm_component(models.Model):
             if not(currId.id in ids):
                 childrenProductToEmit.append(currId.id)
             product_tmpl_ids.append(currId.product_tmpl_id.id)
-        if action:
-            self.signal_workflow(cr, uid, childrenProductToEmit, action)
+        if workflow_signal:
+            self.signal_workflow(cr, uid, childrenProductToEmit, workflow_signal)
         objId = self.pool.get('product.template').write(cr, uid, product_tmpl_ids, defaults, context=context)
         if (objId):
             self.wf_message_post(cr, uid, allProduct_ids, body=_('Status moved to: %s.' % (USEDIC_STATES[defaults['state']])))
