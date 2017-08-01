@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+	    <record id="plm_component_workflow_draft" model="ir.ui.view">
+            <field name="name">product.product.form.workflow.draft</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <header position="inside">
+                        <button string="Set Multiple To Draft"
+                            type="object"
+                            name="action_draft_multiple"
+                            attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                    </header>
+                </data>
+	        </field>
+	    </record>
+
+	    <record id="plm_component_draft_multiple" model="ir.ui.view">
+	        <field name="name">plm.component.draft.multiple</field>
+	        <field name="model">product.workflow_draft</field>
+	        <field name="type">form</field>
+	        <field name="arch" type="xml">
+	        <form string="Products to be set as draft">
+	        	<group> 
+	        		<field name="draft_components" nolabel="1"/>	
+	        	</group>	
+	        	<separator string="" colspan="4" />
+	        	<label string="Set components to be set in draft state" colspan="2"/>
+	            <separator string="" colspan="4" />
+	            <group colspan="2" col="2">
+	            	<button icon="gtk-cancel" special="cancel" string="Cancel"/>
+	            	<button icon="terp-gtk-go-back-rtl" string="Set To Draft" name="setMultipleToDraft" type="object"/>
+	            </group>
+	        </form>
+	        </field>
+	    </record>
+
+</data>
+</openerp>
+
