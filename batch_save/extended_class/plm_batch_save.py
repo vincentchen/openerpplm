@@ -61,7 +61,7 @@ class PlmBatchSave(models.Model):
             requests.post(self.url_for_resave)
         except Exception, ex:
             raise UserError(_('Could not save again from the CAD. Error: %r' % (ex)))
-        
+
 PlmBatchSave()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
