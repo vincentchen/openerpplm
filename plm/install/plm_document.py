@@ -487,7 +487,6 @@ class plm_document(models.Model):
             else:
                 existingID = existingID[0]
                 objDocument = self.browse(cr, uid, existingID, context=context)
-#                logging.info("SaveOrUpdate : time db : %s time file : %s" %(str(self.getLastTime(cr,uid,existingID).strftime('%Y-%m-%d %H:%M:%S')), str(document['lastupdate'])))
                 if self.getLastTime(cr, uid, existingID) < datetime.strptime(str(document['lastupdate']), '%Y-%m-%d %H:%M:%S'):
                     if self._iswritable(cr, uid, objDocument):
                         del(document['lastupdate'])
@@ -1031,7 +1030,7 @@ class plm_document(models.Model):
             read_docs.extend(self._relatedbydocs(cr, uid, oid, kinds, listed_documents, False))
         documents = self.browse(cr, uid, read_docs, context=context)
         for document in documents:
-            related_documents.append([document.id, document.name, document.preview])
+            related_documents.append([document.id, document.name, document.preview, document.revisionid, document.description])
         return related_documents
 
     def getServerTime(self, cr, uid, oid, default=None, context=None):

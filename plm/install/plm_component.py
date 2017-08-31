@@ -220,18 +220,6 @@ class plm_component(models.Model):
             break
         return (newID, newIndex)
 
-    @api.model
-    def isDocumentWritable(self, infoDict):
-        docName = infoDict.get('name')
-        docRev = infoDict.get('revisionid')
-        if docName and docRev:
-            for document in self.env['plm.document'].search([('name', '=', docName),
-                                                             ('revisionid', '=', docRev)]):
-                if not document.isCheckedOutByMe():
-                    return False
-                return True
-        return False
-
     def SaveOrUpdate(self, cr, uid, vals, context={}):
         """
             Save or Update Parts
@@ -239,6 +227,7 @@ class plm_component(models.Model):
         listedParts = []
         retValues = []
         for partVals in vals:
+            logging.info('Part Values to analyze: %r' % (partVals))
             hasSaved = False
             if partVals['engineering_code'] in listedParts:
                 continue
@@ -247,31 +236,27 @@ class plm_component(models.Model):
                 partVals['hasSaved'] = hasSaved
                 retValues.append(partVals)
                 continue
-            existingID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
+            
+            existingComponentID = self.search(cr, uid, [('engineering_code', '=', partVals['engineering_code']),
                                                ('engineering_revision', '=', partVals['engineering_revision'])],
                                      context=context)
-            if not existingID:
-                existingID = self.create(cr, uid, partVals)
+            if not existingComponentID:
+                existingComponentID = self.create(cr, uid, partVals)
                 hasSaved = True
             else:
-                existingID = existingID[0]
-                objPart = self.browse(cr, uid, existingID, context=context)
+                existingComponentID = existingComponentID[0]
+                objPart = self.browse(cr, uid, existingComponentID, context=context)
                 partVals['name'] = objPart.name
-                if self.isDocumentWritable(cr, uid, partVals, context=context ):
-                    if self._iswritable(cr, uid, objPart):
-                        if (self.getUpdTime(objPart) < datetime.strptime(partVals['lastupdate'], '%Y-%m-%d %H:%M:%S')):
-                            del(partVals['lastupdate'])
-                            if not self.write(cr, uid, [existingID], partVals, context=context):
-                                raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
-                            hasSaved = True
-                        else:
-                            weight = partVals.get('weight')
-                            if (weight):
-                                if not self.write(cr, uid, [existingID], {'weight': weight}, context=context):
-                                    raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
-                            else:
-                                logging.warning("No Weight property set unable to update !!")
-            partVals['componentID'] = existingID
+                if self._iswritable(cr, uid, objPart):
+                    hasSaved = True
+                    self.write(cr, uid, [existingComponentID], partVals, context=context)
+                    weight = partVals.get('weight')
+                    if (weight):
+                        if not self.write(cr, uid, [existingComponentID], {'weight': weight}, context=context):
+                            raise UserError(_("Part %r cannot be updated" % (partVals['engineering_code'])))
+                    else:
+                        logging.warning("No Weight property set unable to update !!")
+            partVals['componentID'] = existingComponentID
             partVals['hasSaved'] = hasSaved
             retValues.append(partVals)
             listedParts.append(partVals['engineering_code'])
@@ -298,7 +283,7 @@ class plm_component(models.Model):
                 expData=tmpData['datas']
         return expData
 
-    def create_bom_from_ebom(self, cr, uid, objProductProductBrw, newBomType, summarize=False, context={}):
+    def create_bom_from_ebom(self, cr, uid, objProductProductBrw, newBomType, summarize=False, migrate_custom_lines=True, context={}):
         """
             create a new bom starting from ebom
         """
@@ -341,7 +326,7 @@ class plm_component(models.Model):
             bomIds = bomType.search(cr, uid, [('product_tmpl_id', '=', product_template_id),
                                               ('type', '=', 'ebom')])
             if not bomIds:
-                UserError(_("No Enginnering bom provided"))
+                logging.info("No Enginnering bom provided for product template %r" % (product_template_id))
             for eBomId in bomIds:
                 newidBom = bomType.copy(cr, uid, eBomId, {}, context)
                 values = {'name': objProductProductBrw.name,
@@ -367,7 +352,7 @@ class plm_component(models.Model):
                     self.create_bom_from_ebom(cr, uid, bom_line.product_id, newBomType, context)
                 self.wf_message_post(cr, uid, [objProductProductBrw.id], body=_('Created %r' % newBomType))
                 break
-        if newidBom and eBomId:
+        if newidBom and eBomId and migrate_custom_lines:
             bomBrws = bomType.browse(cr, uid, eBomId, context)
             oldBomList = getPreviousNormalBOM(bomBrws)
             for oldNBom in oldBomList:
@@ -582,13 +567,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='draft'
-        action='draft'
+        workflow_signal='correct'   # Solved bug!!!
         docaction='draft'
         defaults['engineering_writable']=True
         defaults['state']=status
         excludeStatuses=['draft','released','undermodify','obsoleted']
         includeStatuses=['confirmed','transmitted']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_confirm(self,cr,uid,ids,context=None):
         """
@@ -596,13 +581,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='confirmed'
-        action='confirm'
+        workflow_signal='confirm'
         docaction='confirm'
         defaults['engineering_writable']=False
         defaults['state']=status
         excludeStatuses=['confirmed','transmitted','released','undermodify','obsoleted']
         includeStatuses=['draft']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_release(self, cr, uid, ids, context=None):
         """
@@ -645,13 +630,13 @@ class plm_component(models.Model):
         """
         defaults={}
         status='obsoleted'
-        action='obsolete'
+        workflow_signal='obsolete'
         docaction='obsolete'
         defaults['engineering_writable']=False
         defaults['state']=status
         excludeStatuses=['draft', 'confirmed', 'transmitted', 'undermodify', 'obsoleted']
         includeStatuses=['released']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
 
     def action_reactivate(self,cr,uid,ids,context=None):
         """
@@ -659,17 +644,17 @@ class plm_component(models.Model):
         """
         defaults={}
         status='released'
-        action=''
+        workflow_signal=''
         docaction='release'
         defaults['engineering_writable']=True
         defaults['state']=status
         excludeStatuses=['draft', 'confirmed', 'transmitted', 'released', 'undermodify', 'obsoleted']
         includeStatuses=['obsoleted']
-        return self._action_to_perform(cr, uid, ids, status, action, docaction, defaults, excludeStatuses, includeStatuses, context)
+        return self._action_to_perform(cr, uid, ids, status, workflow_signal, docaction, defaults, excludeStatuses, includeStatuses, context)
     
 #   WorkFlow common internal method to apply changes
 
-    def _action_to_perform(self, cr, uid, ids, status, action, docaction, defaults=[], excludeStatuses=[], includeStatuses=[], context=None):
+    def _action_to_perform(self, cr, uid, ids, status, workflow_signal, docaction, defaults=[], excludeStatuses=[], includeStatuses=[], context=None):
         childrenProductToEmit=[]
         product_tmpl_ids=[]
         userErrors, allProduct_ids = self._get_recursive_parts(cr, uid, ids, excludeStatuses, includeStatuses)
@@ -681,8 +666,8 @@ class plm_component(models.Model):
             if not(currId.id in ids):
                 childrenProductToEmit.append(currId.id)
             product_tmpl_ids.append(currId.product_tmpl_id.id)
-        if action:
-            self.signal_workflow(cr, uid, childrenProductToEmit, action)
+        if workflow_signal:
+            self.signal_workflow(cr, uid, childrenProductToEmit, workflow_signal)
         objId = self.pool.get('product.template').write(cr, uid, product_tmpl_ids, defaults, context=context)
         if (objId):
             self.wf_message_post(cr, uid, allProduct_ids, body=_('Status moved to: %s.' % (USEDIC_STATES[defaults['state']])))
