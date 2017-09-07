@@ -25,6 +25,7 @@ import base64
 import os
 import time
 import json
+import copy
 from datetime import datetime
 import odoo.tools as tools
 from odoo.exceptions import UserError
@@ -1395,12 +1396,46 @@ class PlmDocument(models.Model):
                 'datas_fname': self.datas_fname,
                 '_id': self.id,
                 'can_revise': self.canBeRevised(),
+                'DOC_TYPE': self.document_type
                 }
 
     @api.model
     def getCloneRevisionStructure(self, values=[]):
         if not values:
             return {}
+        docProps = values[0]
+        docName = docProps.get('name', '')
+        docRev = docProps.get('revisionid', None)
+        if not docName or docRev is None:
+            logging.warning('No name or not revision passed by the client %r' % (docProps))
+            return {}
+        docBrws = self.search([
+            ('name', '=', docName),
+            ('revisionid', '=', docRev)
+            ])
+        
+        rootDocInfos = docBrws.getDocumentInfos()
+        rootDocInfos['root_document'] = True
+        linkedDocs = [{'component': {}, 'document': rootDocInfos}]
+        linkedDocs.extend(docBrws.computeLikedDocuments())
+        return {
+            'root_props': docBrws.getDocumentInfos(),
+            'documents': linkedDocs,
+            'bom': [],
+            }
+
+    @api.multi
+    def computeLikedDocuments(self):
+        '''
+            Get child documents in document relations
+        '''
+        # Check dei grezzi e delle relazioni parte modello. Non devono comparire nella vista
+        docList = []
+        linkedDocEnv = self.env['plm.document.relation']
+        for linkedBrws in linkedDocEnv.search([('child_id', '=', self.id)]):
+            if linkedBrws.parent_id.document_type.upper() == '2D':  # Append only 2D relations
+                docList.append({'component': {}, 'document': linkedBrws.parent_id.getDocumentInfos()})
+        return docList
 
     @api.multi
     def canBeRevised(self):
@@ -1408,6 +1443,56 @@ class PlmDocument(models.Model):
             if docBrws.state == 'released' and docBrws.ischecked_in():
                 return True
         return False
+
+    @api.multi
+    def cleanDocumentRelations(self):
+        linkedDocEnv = self.env['plm.document.relation']
+        for docBrws in self:
+            for linkedBrws in linkedDocEnv.search([('child_id', '=', docBrws.id), ('parent_id', '=', docBrws.id)]):
+                linkedBrws.unlink()
+
+    def getDocumentBrws(self, docVals):
+        docName = docVals.get('name', '')
+        docRev = docVals.get('revisionid', None)
+        if not docName or docRev is None:
+            return self.browse()
+        return self.search([
+            ('name', '=', docName),
+            ('revisionid', '=', docRev),
+            ])
+        
+    @api.model
+    def checkStructureExistance(self, args):
+        prodProdEnv = self.env['product.product']
+        jsonNode = args[0]
+        rootNode = json.loads(jsonNode)
+
+        def recursionUpdate(node):
+            # Update root component and document ids
+            rootCompVals = node.get('PRODUCT_ATTRIBUTES', {})
+            rootCompBrws = prodProdEnv.getComponentBrws(rootCompVals)
+            node['PRODUCT_ATTRIBUTES'] = rootCompBrws.getComponentInfos()
+            node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = rootCompBrws.canBeRevised()
+            rootDocVals = node.get('DOCUMENT_ATTRIBUTES', {})
+            rootDocBrws = self.getDocumentBrws(rootDocVals)
+            node['DOCUMENT_ATTRIBUTES'] = rootDocBrws.getDocumentInfos()
+            node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = rootDocBrws.canBeRevised()
+            for relatedNode in node.get('RELATIONS', []):
+                recursionUpdate(relatedNode)
+            if node['PRODUCT_ATTRIBUTES'].get('_id'):
+                # In this case I start to clone a part/assembly which has a related drawing,
+                # I don't have in the CAD structure the link between them...
+                for docBrws in rootCompBrws.linkeddocuments:
+                    if docBrws.id == node['DOCUMENT_ATTRIBUTES'].get('_id'):
+                        # I'm evaluating root part/document
+                        continue
+                    newNode = copy.deepcopy(node)
+                    newNode['DOCUMENT_ATTRIBUTES'] = docBrws.getDocumentInfos()
+                    newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = docBrws.canBeRevised()
+                    node['RELATIONS'].append(newNode)
+        recursionUpdate(rootNode)
+        return json.dumps(rootNode)
+        
 
 PlmDocument()
 

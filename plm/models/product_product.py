@@ -33,6 +33,7 @@ from odoo import SUPERUSER_ID
 import odoo.tools as tools
 import copy
 import os
+import json
 from __builtin__ import False
 
 _logger = logging.getLogger(__name__)
@@ -1115,58 +1116,178 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
     def cloneCompAndDoc(self, elementsToClone):
         if not elementsToClone:
             return []
-        listToClone = elementsToClone[0]
-        componentFieldsToRead = copy.deepcopy(elementsToClone[1])
-        documentFieldsToRead = copy.deepcopy(elementsToClone[2])
-        hostName = elementsToClone[3]
-        hostPws = elementsToClone[4]
-        out = []
+
         docEnv = self.env['plm.document']
-        isRoot = True
-        for compId, docId in listToClone:
-            if isRoot:  # Skip cloning of root component because Edit Parts has already done it
-                isRoot = False
-                continue
-            if not docId:
-                raise Exception(_('Unable to clone because there is a file without document id'))
-            oldDocBrws = docEnv.browse(docId)
+        updatedJsonNode = elementsToClone[0]
+        updatedNode = json.loads(updatedJsonNode)
+        hostName, hostPws = elementsToClone[1], elementsToClone[2]
+        oldRootCompVals, oldRootDocVals = elementsToClone[3]
+        newRootCompProps = updatedNode.get('PRODUCT_ATTRIBUTES')
+
+        def nodeResursionUpdate(node):
+            cloneComponent = node.get('COMPONENT_CHECKED', False)
+            cloneDocument = node.get('DOCUMENT_CHECKED', False)
+            
+            compProps = node.get('PRODUCT_ATTRIBUTES', {})
+            docProps = node.get('DOCUMENT_ATTRIBUTES', {})
+            
+            engCode = newRootCompProps.get('engineering_code', '')
+            compId = compProps.get('_id', None)
+            docName = docProps.get('name', '')
+            docId = docProps.get('_id', None)
+            oldDocBrws = False
+            newDocBrws = False
+            compBrws = False
+            if docId:
+                oldDocBrws = docEnv.browse(docId)
+            else:
+                oldDocBrws = docEnv.getDocumentBrws(docProps)
             if compId:
                 compBrws = self.browse(compId)
-                startingComputeName = compBrws.engineering_code
             else:
-                startingComputeName = oldDocBrws.name
+                compBrws = self.getComponentBrws(compProps)
+                
             
+            if engCode:  # Node to clone is a component
+                if not cloneComponent and compBrws:
+                    # User made and edit parts in the client but he unchecked the component in the interface
+                    # So I need to delete it and clone only the document
+                    compBrws.unlink()
+                    node['PRODUCT_ATTRIBUTES'] = {}
+                if cloneDocument:
+                    if docId:
+                        _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
+                        newDocBrws = self.getNewDoc(oldDocBrws, engCode, file_extension)
+                        newDocBrws.checkout(hostName, hostPws)
+                        node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
+                        node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
+                        node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
+                else:
+                    node['DOCUMENT_ATTRIBUTES'] = {}
+            elif docName:   # Node to clone has only document infos
+                if not cloneDocument and oldDocBrws:
+                    oldDocBrws.unlink()
+                    node['DOCUMENT_ATTRIBUTES'] = {}
+                else:
+                    rootOldDocBrws = docEnv.getDocumentBrws(oldRootDocVals)
+                    _filename, file_extension = os.path.splitext(rootOldDocBrws.datas_fname)
+                    newDocBrws = oldDocBrws
+                    newDocBrws.datas_fname = '%s%s' % (newDocBrws.name, file_extension)
+                    node['DOCUMENT_ATTRIBUTES']['datas_fname'] = newDocBrws.datas_fname
+                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = rootOldDocBrws._is_checkedout_for_me()
+                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = rootOldDocBrws.datas_fname
+                    newDocBrws.checkout(hostName, hostPws)
+                    # E' necessario mettere old file name e checkout by me 
+            if newDocBrws:
+                newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
+                if compBrws: # Add link to component
+                    compBrws.write({'linkeddocuments': [(4, newDocBrws.id, False)]})
+            for childNode in node.get('RELATIONS', []):
+                if childNode.get('DOCUMENT_ATTRIBUTES', {}).get('DOC_TYPE').upper() == '2D':
+                    # If is a 2D document I have to erase the value before to compute it
+                    # Or the procedure with think that is a component
+                    childNode['COMPONENT_CHECKED'] = True # To skip component deletion
+                    childNode['PRODUCT_ATTRIBUTES'] = node['PRODUCT_ATTRIBUTES']    # Setup the correct parent component
+                nodeResursionUpdate(childNode)
+        
+        nodeResursionUpdate(updatedNode)
+        return json.dumps(updatedNode)
+        
+    def cloneComponentStructure(self, rootCompId, childList, hostName, hostPws, documentFieldsToRead, componentFieldsToRead):
+        out = []
+        docEnv = self.env['plm.document']
+        compBrws = self.browse(rootCompId)
+        startingComputeName = compBrws.engineering_code
+        for compId, docId, _rootDocFlag in childList:
+            oldDocBrws = docEnv.browse(docId)
             _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
-            newDocName = docEnv.GetNextDocumentName(startingComputeName)
-            docDefaultVals = {
-                'revisionid': 0,
-                'name': newDocName,
-                'datas_fname': '%s%s' % (newDocName, file_extension),
-                'checkout_user': self.env.uid,
-                }
-            newDocVals = oldDocBrws.Clone(docDefaultVals)
-            newDocId = newDocVals.get('_id')
-            newDocBrws = docEnv.browse(newDocId)
-            
-            if newDocBrws.document_type.upper() != 'OTHER': # Skip update properties of other documents. Only CAD documents has to be updated
-                newDocBrws.checkout(hostName, hostPws)  # Check out only non CAD files because next time file will be need to be revised workflow can go on
-                documentFieldsToRead.append('datas_fname')
-                outdocInfos = newDocBrws.read(documentFieldsToRead)[0]
-                outdocInfos['old_file_name'] = oldDocBrws.datas_fname
-                outdocInfos['check_out_by_me'] = oldDocBrws._is_checkedout_for_me()
-                compBrws = self.browse(compId)
-                out.append({
-                    'comp_id': compId,
-                    'comp_vals': compBrws.read(componentFieldsToRead)[0],
-                    'doc_id': newDocId,
-                    'doc_vals': outdocInfos,
-                    })
+            newDocBrws = self.getNewDoc(oldDocBrws, startingComputeName, file_extension)
+            newDocId = newDocBrws.id
+            if newDocBrws.document_type.upper() == 'OTHER': # Skip update properties of other documents. Only CAD documents has to be updated
+                continue
+            newDocBrws.checkout(hostName, hostPws)  # Check out only non CAD files because next time file will be need to be revised workflow can go on
+            documentFieldsToRead.append('datas_fname')
+            outdocInfos = newDocBrws.read(documentFieldsToRead)[0]
+            outdocInfos['old_file_name'] = oldDocBrws.datas_fname
+            outdocInfos['check_out_by_me'] = oldDocBrws._is_checkedout_for_me()
+            compBrws = self.browse(compId)
+            compVals = {}
+            if compBrws:
+                compVals = compBrws.read(componentFieldsToRead)[0]
+            out.append({
+                'comp_id': compId,
+                'comp_vals': compVals,
+                'doc_id': newDocId,
+                'doc_vals': outdocInfos,
+                })
             newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
             if compId: # Add link to component
-                compBrws.write({'linkeddocuments': [(4, newDocId, False)]})  
-
+                compBrws.write({'linkeddocuments': [(4, newDocId, False)]})
+        return out
+    
+    def cloneDocumentStructure(self, rootDocId, childList, hostName, hostPws, documentFieldsToRead):
+        docEnv = self.env['plm.document']
+        out = []
+        startingComputeName = docEnv.browse(rootDocId).name
+        for _compId, docId, rootDocFlag in childList:
+            newDocId = False
+            oldDocBrws = docEnv.browse(docId)
+            _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
+            if not rootDocFlag:
+                if not docId:
+                    raise Exception(_('Unable to clone because there is a file without document id'))
+                newDocBrws = self.getNewDoc(oldDocBrws, startingComputeName, file_extension)
+                newDocId = newDocBrws.id
+                # Skip update properties of other documents. Only CAD documents has to be updated
+                # Don't move it after if-else condition because file has not been uploaded and this check is always "OTHER"
+                if newDocBrws.document_type.upper() == 'OTHER':
+                    continue
+            else:
+                # If I'm evaluating root document I don't need to clone it but only make a browse
+                newDocBrws = docEnv.browse(rootDocId)
+                newDocBrws.datas_fname = '%s%s' % (newDocBrws.name, file_extension)
+                newDocId = newDocBrws.id
+            # Check out only non CAD files because next time file will be need to be revised workflow can go on
+            newDocBrws.checkout(hostName, hostPws)
+            documentFieldsToRead.append('datas_fname')
+            outdocInfos = newDocBrws.read(documentFieldsToRead)[0]
+            outdocInfos['old_file_name'] = oldDocBrws.datas_fname
+            outdocInfos['check_out_by_me'] = oldDocBrws._is_checkedout_for_me()
+            out.append({
+                'comp_id': 0,
+                'comp_vals': {},
+                'doc_id': newDocId,
+                'doc_vals': outdocInfos,
+                })
+            newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
+            newDocBrws.cleanDocumentRelations() # Clean document relations
         return out
 
+    def getNewDoc(self, oldDocBrws, startingComputeName, file_extension):
+        docEnv = self.env['plm.document']
+        newDocName = docEnv.GetNextDocumentName(startingComputeName)
+        docDefaultVals = {
+            'revisionid': 0,
+            'name': newDocName,
+            'datas_fname': '%s%s' % (newDocName, file_extension),
+            'checkout_user': self.env.uid,
+            }
+        newDocVals = oldDocBrws.Clone(docDefaultVals)
+        newDocId = newDocVals.get('_id')
+        newDocBrws = docEnv.browse(newDocId)
+        return newDocBrws
+
+    def getComponentBrws(self, componentVals):
+        engCode = componentVals.get('engineering_code', '')
+        engRev = componentVals.get('engineering_revision', None)
+        if not engCode or engRev is None:
+            return self.browse()
+        return self.search([
+            ('engineering_code', '=', engCode),
+            ('engineering_revision', '=', engRev),
+            ])
+
+        
 PlmComponent()
 
 

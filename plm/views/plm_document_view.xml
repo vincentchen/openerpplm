@@ -230,6 +230,26 @@
         <field name="context">{"search_default_latest":1}</field>      
     </record>
 
+    <record model="ir.ui.view" id="view_plm_document_form_client">
+        <field name="name">plm_document_form_client</field>
+        <field name="model">plm.document</field>
+        <field name="priority" eval="2"/>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Document"  version="7.0">
+               <sheet>
+				  <group>
+	               <field name="name" select="1" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+		           <field name="revisionid" readonly="True"/>
+				   <field name="document_type" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+				   <field name="datas_fname" readonly='True'/>
+                   <field name="description" attrs="{'readonly':[('state','in',['released','obsoleted'])]}" colspan="4" />
+                   <field name="desc_modify" attrs="{'readonly':[('state','in',['released','obsoleted'])], 'invisible': [('revisionid', '=', 0)]}" colspan="4" />
+                  </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
 
 </data>
 </openerp>
