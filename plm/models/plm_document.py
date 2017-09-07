@@ -1466,20 +1466,12 @@ class PlmDocument(models.Model):
         prodProdEnv = self.env['product.product']
         jsonNode = args[0]
         rootNode = json.loads(jsonNode)
-
-        def recursionUpdate(node):
-            # Update root component and document ids
-            rootCompVals = node.get('PRODUCT_ATTRIBUTES', {})
-            rootCompBrws = prodProdEnv.getComponentBrws(rootCompVals)
-            node['PRODUCT_ATTRIBUTES'] = rootCompBrws.getComponentInfos()
-            node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = rootCompBrws.canBeRevised()
-            rootDocVals = node.get('DOCUMENT_ATTRIBUTES', {})
-            rootDocBrws = self.getDocumentBrws(rootDocVals)
-            node['DOCUMENT_ATTRIBUTES'] = rootDocBrws.getDocumentInfos()
-            node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = rootDocBrws.canBeRevised()
-            for relatedNode in node.get('RELATIONS', []):
-                recursionUpdate(relatedNode)
-            if node['PRODUCT_ATTRIBUTES'].get('_id'):
+        
+        def getLinkedDocumentsByComponent(node, rootCompBrws):
+            '''
+                Append in the node relations documents taken by linkeddocuments
+            '''
+            if rootCompBrws.id:
                 # In this case I start to clone a part/assembly which has a related drawing,
                 # I don't have in the CAD structure the link between them...
                 for docBrws in rootCompBrws.linkeddocuments:
@@ -1490,9 +1482,50 @@ class PlmDocument(models.Model):
                     newNode['DOCUMENT_ATTRIBUTES'] = docBrws.getDocumentInfos()
                     newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = docBrws.canBeRevised()
                     node['RELATIONS'].append(newNode)
+        
+        def getLinkedDocumentsByDocument(node, docBrws):
+            '''
+                Append in the node relations documents taken by plm.document.relation
+            '''
+            linkedDocEnv = self.env['plm.document.relation']
+            if docBrws.id:
+                typeDoc = ''
+                if docBrws.document_type.upper() == '3D':
+                    typeDoc = 'child_id'
+                else:
+                    typeDoc = 'parent_id'
+                for docLinkBrws in linkedDocEnv.search([(typeDoc, '=', docBrws.id)]):
+                    relatedDocBrws = False
+                    if docLinkBrws.child_id.id == docBrws.id:
+                        relatedDocBrws = docLinkBrws.parent_id
+                    else:
+                        relatedDocBrws = docLinkBrws.child_id
+                    if relatedDocBrws:
+                        newNode = copy.deepcopy(node)
+                        newNode['DOCUMENT_ATTRIBUTES'] = relatedDocBrws.getDocumentInfos()
+                        newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = relatedDocBrws.canBeRevised()
+                        node['RELATIONS'].append(newNode)
+                    
+        def recursionUpdate(node):
+            # Update root component and document ids
+            rootCompVals = node.get('PRODUCT_ATTRIBUTES', {})
+            rootCompBrws = prodProdEnv.getComponentBrws(rootCompVals)
+            node['PRODUCT_ATTRIBUTES'] = rootCompBrws.getComponentInfos()
+            node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = rootCompBrws.canBeRevised()
+            rootDocVals = node.get('DOCUMENT_ATTRIBUTES', {})
+            rootDocBrws = self.getDocumentBrws(rootDocVals)
+            node['DOCUMENT_ATTRIBUTES'] = rootDocBrws.getDocumentInfos()
+            node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = rootDocBrws.canBeRevised()
+            compId = rootCompBrws.id
+            for relatedNode in node.get('RELATIONS', []):
+                recursionUpdate(relatedNode)
+            if compId:
+                getLinkedDocumentsByComponent(node, rootCompBrws)   # Only if component infos
+            else:
+                getLinkedDocumentsByDocument(node, rootDocBrws) # Only for document infos
+
         recursionUpdate(rootNode)
         return json.dumps(rootNode)
-        
 
 PlmDocument()
 

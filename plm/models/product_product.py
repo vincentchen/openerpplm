@@ -1121,54 +1121,36 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         updatedJsonNode = elementsToClone[0]
         updatedNode = json.loads(updatedJsonNode)
         hostName, hostPws = elementsToClone[1], elementsToClone[2]
-        oldRootCompVals, oldRootDocVals = elementsToClone[3]
+        _oldRootCompVals, oldRootDocVals = elementsToClone[3]
         newRootCompProps = updatedNode.get('PRODUCT_ATTRIBUTES')
+        newRootDocProps = updatedNode.get('DOCUMENT_ATTRIBUTES')
 
-        def nodeResursionUpdate(node):
-            cloneComponent = node.get('COMPONENT_CHECKED', False)
-            cloneDocument = node.get('DOCUMENT_CHECKED', False)
-            
-            compProps = node.get('PRODUCT_ATTRIBUTES', {})
-            docProps = node.get('DOCUMENT_ATTRIBUTES', {})
-            
-            engCode = newRootCompProps.get('engineering_code', '')
-            compId = compProps.get('_id', None)
-            docName = docProps.get('name', '')
-            docId = docProps.get('_id', None)
-            oldDocBrws = False
+        def cloneWithComp(cloneComponent, cloneDocument, docId, engCode, oldDocBrws, compBrws, node):
             newDocBrws = False
-            compBrws = False
-            if docId:
-                oldDocBrws = docEnv.browse(docId)
+            if not cloneComponent and compBrws:
+                # User made and edit parts in the client but he unchecked the component in the interface
+                # So I need to delete it and clone only the document
+                compBrws.unlink()
+                node['PRODUCT_ATTRIBUTES'] = {}
+            if cloneDocument:
+                if docId:
+                    _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
+                    newDocBrws = self.getNewDoc(oldDocBrws, engCode, file_extension)
+                    newDocBrws.checkout(hostName, hostPws)
+                    node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
+                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
+                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
             else:
-                oldDocBrws = docEnv.getDocumentBrws(docProps)
-            if compId:
-                compBrws = self.browse(compId)
+                node['DOCUMENT_ATTRIBUTES'] = {}
+            return newDocBrws
+
+        def cloneWithDoc(cloneDocument, oldDocBrws, node, isRoot, baseName):
+            newDocBrws = False
+            if not cloneDocument and oldDocBrws:
+                oldDocBrws.unlink()
+                node['DOCUMENT_ATTRIBUTES'] = {}
             else:
-                compBrws = self.getComponentBrws(compProps)
-                
-            
-            if engCode:  # Node to clone is a component
-                if not cloneComponent and compBrws:
-                    # User made and edit parts in the client but he unchecked the component in the interface
-                    # So I need to delete it and clone only the document
-                    compBrws.unlink()
-                    node['PRODUCT_ATTRIBUTES'] = {}
-                if cloneDocument:
-                    if docId:
-                        _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
-                        newDocBrws = self.getNewDoc(oldDocBrws, engCode, file_extension)
-                        newDocBrws.checkout(hostName, hostPws)
-                        node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
-                        node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
-                        node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
-                else:
-                    node['DOCUMENT_ATTRIBUTES'] = {}
-            elif docName:   # Node to clone has only document infos
-                if not cloneDocument and oldDocBrws:
-                    oldDocBrws.unlink()
-                    node['DOCUMENT_ATTRIBUTES'] = {}
-                else:
+                if isRoot:
                     rootOldDocBrws = docEnv.getDocumentBrws(oldRootDocVals)
                     _filename, file_extension = os.path.splitext(rootOldDocBrws.datas_fname)
                     newDocBrws = oldDocBrws
@@ -1178,10 +1160,55 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                     node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = rootOldDocBrws.datas_fname
                     newDocBrws.checkout(hostName, hostPws)
                     # E' necessario mettere old file name e checkout by me 
+                else:
+                    _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
+                    newDocBrws = self.getNewDoc(oldDocBrws, baseName, file_extension)
+                    newDocBrws.checkout(hostName, hostPws)
+                    node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
+                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
+                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
+            return newDocBrws
+
+        def getDocBrws(docId, docProps):
+            oldDocBrws = False
+            if docId:
+                oldDocBrws = docEnv.browse(docId)
+            else:
+                oldDocBrws = docEnv.getDocumentBrws(docProps)
+            return oldDocBrws
+        
+        def getCompBrws(compProps):
+            compId = compProps.get('_id', None)
+            compBrws = False
+            if compId:
+                compBrws = self.browse(compId)
+            else:
+                compBrws = self.getComponentBrws(compProps)
+            return compBrws
+            
+        def nodeResursionUpdate(node, isRoot=False):
+            cloneComponent = node.get('COMPONENT_CHECKED', False)
+            cloneDocument = node.get('DOCUMENT_CHECKED', False)
+            compProps = node.get('PRODUCT_ATTRIBUTES', {})
+            docProps = node.get('DOCUMENT_ATTRIBUTES', {})
+            rootEngCode = newRootCompProps.get('engineering_code', '')
+            rootDocName = newRootDocProps.get('name', '')
+            docName = docProps.get('name', '')
+            docId = docProps.get('_id', None)
+            newDocBrws = False
+            oldDocBrws = getDocBrws(docId, docProps)
+            compBrws = getCompBrws(compProps)
+            if rootEngCode:
+                newDocBrws = cloneWithComp(cloneComponent, cloneDocument, docId, rootEngCode, oldDocBrws, compBrws, node)
+            elif docName:
+                baseName = rootDocName
+                if rootEngCode:
+                    baseName = rootEngCode
+                newDocBrws = cloneWithDoc(cloneDocument, oldDocBrws, node, isRoot, baseName)
             if newDocBrws:
                 newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
-                if compBrws: # Add link to component
-                    compBrws.write({'linkeddocuments': [(4, newDocBrws.id, False)]})
+                if compBrws:
+                    compBrws.write({'linkeddocuments': [(4, newDocBrws.id, False)]}) # Add link to component
             for childNode in node.get('RELATIONS', []):
                 if childNode.get('DOCUMENT_ATTRIBUTES', {}).get('DOC_TYPE').upper() == '2D':
                     # If is a 2D document I have to erase the value before to compute it
@@ -1190,7 +1217,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                     childNode['PRODUCT_ATTRIBUTES'] = node['PRODUCT_ATTRIBUTES']    # Setup the correct parent component
                 nodeResursionUpdate(childNode)
         
-        nodeResursionUpdate(updatedNode)
+        nodeResursionUpdate(updatedNode, True)
         return json.dumps(updatedNode)
         
     def cloneComponentStructure(self, rootCompId, childList, hostName, hostPws, documentFieldsToRead, componentFieldsToRead):
