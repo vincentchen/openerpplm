@@ -1214,7 +1214,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                     # If is a 2D document I have to erase the value before to compute it
                     # Or the procedure with think that is a component
                     childNode['COMPONENT_CHECKED'] = True # To skip component deletion
-                    childNode['PRODUCT_ATTRIBUTES'] = node['PRODUCT_ATTRIBUTES']    # Setup the correct parent component
+                    childNode['PRODUCT_ATTRIBUTES'] = {}    # Setup the correct parent component
                 nodeResursionUpdate(childNode)
         
         nodeResursionUpdate(updatedNode, True)
