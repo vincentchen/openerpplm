@@ -66,6 +66,130 @@ class PlmDocument(models.Model):
     _inherit = ['mail.thread', 'ir.attachment']
 
     @api.multi
+    def _compute_document_type(self):
+        configParamObj = self.env['ir.config_parameter']
+        str2DExtensions = configParamObj._get_param('file_exte_type_rel_2D')
+        str3DExtensions = configParamObj._get_param('file_exte_type_rel_3D')
+        for docBrws in self:
+            try:
+                fileExtension = docBrws.getFileExtension(docBrws)
+                extensions2D = eval(str2DExtensions)
+                extensions3D = eval(str3DExtensions)
+                if fileExtension in extensions2D:
+                    docBrws.document_type = '2d'
+                elif fileExtension in extensions3D:
+                    docBrws.document_type = '3d'
+                else:
+                    docBrws.document_type = 'other'
+            except Exception, ex:
+                logging.error('Unable to compute document type for document %r, error %r' % (docBrws.id, ex))
+
+    @api.one
+    def _get_checkout_state(self):
+        chechRes = self.getCheckedOut(self.id, None)
+        if chechRes:
+            self.checkout_user = str(chechRes[2])
+        else:
+            self.checkout_user = ''
+
+    @api.one
+    def _is_checkout(self):
+        chechRes = self.getCheckedOut(self.id, None)
+        if chechRes:
+            self.is_checkout = True
+        else:
+            self.is_checkout = False
+
+
+    @api.depends('store_fname', 'db_datas')
+    def _compute_datas(self):
+        for objDoc in self:
+            if objDoc.type == 'binary':
+                if objDoc.store_fname:
+                    filestore = os.path.join(self._get_filestore(), objDoc.store_fname)
+                    if os.path.exists(filestore):
+                        objDoc.datas = file(filestore, 'rb').read().encode('base64')
+                else:
+                    objDoc.datas = objDoc.db_datas
+
+    @api.multi
+    def _inverse_datas(self):
+        filestore = self._get_filestore()
+        for docBrws in self:
+            oid = docBrws.id
+            if docBrws.type == 'binary':
+                value = docBrws.datas
+                if not value:
+                    filename = docBrws.store_fname
+                    try:
+                        os.unlink(os.path.join(filestore, filename))
+                    except:
+                        pass
+                    self.env.cr.execute('update plm_document set store_fname=NULL WHERE id=%s', (oid,))
+                    return True
+                printout = False
+                preview = False
+                if docBrws.printout:
+                    printout = docBrws.printout
+                if docBrws.preview:
+                    preview = docBrws.preview
+                db_datas = b''                    # Clean storage field.
+                fname, filesize = self._manageFile(filestore, value)
+                self.env.cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,
+                                                                                                                    filesize,
+                                                                                                                    db_datas,
+                                                                                                                    oid))
+                self.env['plm.backupdoc'].create({'userid': self.env.uid,
+                                                  'existingfile': fname,
+                                                  'documentid': oid,
+                                                  'printout': printout,
+                                                  'preview': preview
+                                                  })
+
+
+    revisionid = fields.Integer(_('Revision Index'),
+                                default=0,
+                                required=True)
+    writable = fields.Boolean(_('Writable'),
+                              default=True)
+    printout = fields.Binary(_('Printout Content'),
+                             help=_("Print PDF content."))
+    preview = fields.Binary(_('Preview Content'),
+                            help=_("Static preview."))
+    state = fields.Selection(USED_STATES,
+                             _('Status'),
+                             help=_("The status of the product."),
+                             readonly="True",
+                             default='draft',
+                             required=True)
+    checkout_user = fields.Char(string=_("Checked-Out to"),
+                                compute=_get_checkout_state)
+    is_checkout = fields.Boolean(_('Is Checked-Out'),
+                                 compute=_is_checkout,
+                                 store=False)
+    linkedcomponents = fields.Many2many('product.product',
+                                        'plm_component_document_rel',
+                                        'document_id',
+                                        'component_id',
+                                        _('Linked Parts'))
+    datas = fields.Binary(string='File Content', compute='_compute_datas', inverse='_inverse_datas')
+    datas = fields.Binary(string=_('File Content'),
+                          compute='_compute_datas',
+                          inverse='_inverse_datas',
+                          method=True)
+    document_type = fields.Selection([('other', _('Other')),
+                                      ('2d', _('2D')),
+                                      ('3d', _('3D')),
+                                      ], 
+                                     compute=_compute_document_type,
+                                     string= _('Document Type'))
+    desc_modify = fields.Text(_('Modification Description'), default='')
+
+    _sql_constraints = [
+        ('name_unique', 'unique (name, revisionid)', 'File name has to be unique!')  # qui abbiamo la sicurezza dell'univocita del nome file
+    ]
+
+    @api.multi
     def get_checkout_user(self):
         lastDoc = self._getlastrev(self.ids)
         if lastDoc:
@@ -141,51 +265,6 @@ class PlmDocument(models.Model):
                     logging.error("_data_get_files : Unable to access to document (" + str(objDoc.name) + "). Error :" + str(ex))
                     result.append((objDoc.id, objDoc.datas_fname, False, True, self.getServerTime()))
         return result
-
-    @api.depends('store_fname', 'db_datas')
-    def _compute_datas(self):
-        for objDoc in self:
-            if objDoc.type == 'binary':
-                if objDoc.store_fname:
-                    filestore = os.path.join(self._get_filestore(), objDoc.store_fname)
-                    if os.path.exists(filestore):
-                        objDoc.datas = file(filestore, 'rb').read().encode('base64')
-                else:
-                    objDoc.datas = objDoc.db_datas
-
-    @api.multi
-    def _inverse_datas(self):
-        filestore = self._get_filestore()
-        for docBrws in self:
-            oid = docBrws.id
-            if docBrws.type == 'binary':
-                value = docBrws.datas
-                if not value:
-                    filename = docBrws.store_fname
-                    try:
-                        os.unlink(os.path.join(filestore, filename))
-                    except:
-                        pass
-                    self.env.cr.execute('update plm_document set store_fname=NULL WHERE id=%s', (oid,))
-                    return True
-                printout = False
-                preview = False
-                if docBrws.printout:
-                    printout = docBrws.printout
-                if docBrws.preview:
-                    preview = docBrws.preview
-                db_datas = b''                    # Clean storage field.
-                fname, filesize = self._manageFile(filestore, value)
-                self.env.cr.execute('update plm_document set store_fname=%s,file_size=%s,db_datas=%s where id=%s', (fname,
-                                                                                                                    filesize,
-                                                                                                                    db_datas,
-                                                                                                                    oid))
-                self.env['plm.backupdoc'].create({'userid': self.env.uid,
-                                                  'existingfile': fname,
-                                                  'documentid': oid,
-                                                  'printout': printout,
-                                                  'preview': preview
-                                                  })
 
     @api.model
     def _explodedocs(self, oid, kinds, listed_documents=[], recursion=True):
@@ -727,14 +806,6 @@ class PlmDocument(models.Model):
         return True
 #   Overridden methods for this entity
 
-    @api.one
-    def _get_checkout_state(self):
-        chechRes = self.getCheckedOut(self.id, None)
-        if chechRes:
-            self.checkout_user = str(chechRes[2])
-        else:
-            self.checkout_user = ''
-
     @api.model
     def CheckIn(self, attrs):
         documentName = attrs.get('name', '')
@@ -753,14 +824,6 @@ class PlmDocument(models.Model):
             return docBrws.id
         return False
 
-    @api.one
-    def _is_checkout(self):
-        chechRes = self.getCheckedOut(self.id, None)
-        if chechRes:
-            self.is_checkout = True
-        else:
-            self.is_checkout = False
-
     def getFileExtension(self, docBrws):
         fileExtension = ''
         datas_fname = docBrws.datas_fname
@@ -769,66 +832,22 @@ class PlmDocument(models.Model):
         return fileExtension
 
     @api.multi
-    def _compute_document_type(self):
+    def _compute_single_doc_type(self, fileExtension):
         configParamObj = self.env['ir.config_parameter']
         str2DExtensions = configParamObj._get_param('file_exte_type_rel_2D')
         str3DExtensions = configParamObj._get_param('file_exte_type_rel_3D')
-        for docBrws in self:
-            try:
-                fileExtension = docBrws.getFileExtension(docBrws)
-                extensions2D = eval(str2DExtensions)
-                extensions3D = eval(str3DExtensions)
-                if fileExtension in extensions2D:
-                    docBrws.document_type = '2d'
-                elif fileExtension in extensions3D:
-                    docBrws.document_type = '3d'
-                else:
-                    docBrws.document_type = 'other'
-            except Exception, ex:
-                logging.error('Unable to compute document type for document %r, error %r' % (docBrws.id, ex))
-
-    revisionid = fields.Integer(_('Revision Index'),
-                                default=0,
-                                required=True)
-    writable = fields.Boolean(_('Writable'),
-                              default=True)
-    printout = fields.Binary(_('Printout Content'),
-                             help=_("Print PDF content."))
-    preview = fields.Binary(_('Preview Content'),
-                            help=_("Static preview."))
-    state = fields.Selection(USED_STATES,
-                             _('Status'),
-                             help=_("The status of the product."),
-                             readonly="True",
-                             default='draft',
-                             required=True)
-    checkout_user = fields.Char(string=_("Checked-Out to"),
-                                compute=_get_checkout_state)
-    is_checkout = fields.Boolean(_('Is Checked-Out'),
-                                 compute=_is_checkout,
-                                 store=False)
-    linkedcomponents = fields.Many2many('product.product',
-                                        'plm_component_document_rel',
-                                        'document_id',
-                                        'component_id',
-                                        _('Linked Parts'))
-    datas = fields.Binary(string='File Content', compute='_compute_datas', inverse='_inverse_datas')
-    datas = fields.Binary(string=_('File Content'),
-                          compute='_compute_datas',
-                          inverse='_inverse_datas',
-                          method=True)
-    document_type = fields.Selection([('other', _('Other')),
-                                      ('2d', _('2D')),
-                                      ('3d', _('3D')),
-                                      ], 
-                                     compute=_compute_document_type,
-                                     string= _('Document Type'))
-    desc_modify = fields.Text(_('Modification Description'), default='')
-
-    _sql_constraints = [
-        ('name_unique', 'unique (name, revisionid)', 'File name has to be unique!')  # qui abbiamo la sicurezza dell'univocita del nome file
-    ]
-
+        try:
+            extensions2D = eval(str2DExtensions)
+            extensions3D = eval(str3DExtensions)
+            if fileExtension in extensions2D:
+                return '2d'
+            elif fileExtension in extensions3D:
+                return '3d'
+            else:
+                return 'other'
+        except Exception, ex:
+            logging.error('Unable to compute document type, error %r' % (ex))
+        
     @api.model
     def CheckedIn(self, files, default=None):
         """
@@ -1224,8 +1243,10 @@ class PlmDocument(models.Model):
                     listItem = productRelations.get(parentProductId, [])
                     listItem.append(itemTuple)
                     productRelations[parentProductId] = listItem
-                else:   # Case of drawing - model relation
-                    if productId and parentDocumentId:
+                else:
+                    _basePath, fileExt = os.path.splitext(structure.get('FILE_PATH'))
+                    fileType = self._compute_single_doc_type(fileExt)
+                    if productId and parentDocumentId and fileType.upper() == '2D': # Case of drawing - model relation
                         listRelated = productDocumentRelations.get(productId, [])
                         listRelated.append(parentDocumentId)
                         productDocumentRelations[productId] = listRelated
@@ -1467,14 +1488,14 @@ class PlmDocument(models.Model):
         jsonNode = args[0]
         rootNode = json.loads(jsonNode)
         
-        def getLinkedDocumentsByComponent(node, rootCompBrws):
+        def getLinkedDocumentsByComponent(node, compBrws):
             '''
                 Append in the node relations documents taken by linkeddocuments
             '''
-            if rootCompBrws.id:
+            if compBrws.id:
                 # In this case I start to clone a part/assembly which has a related drawing,
                 # I don't have in the CAD structure the link between them...
-                for docBrws in rootCompBrws.linkeddocuments:
+                for docBrws in compBrws.linkeddocuments:
                     if docBrws.id == node['DOCUMENT_ATTRIBUTES'].get('_id'):
                         # I'm evaluating root part/document
                         continue
@@ -1506,25 +1527,25 @@ class PlmDocument(models.Model):
                         newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = relatedDocBrws.canBeRevised()
                         node['RELATIONS'].append(newNode)
                     
-        def recursionUpdate(node):
+        def recursionUpdate(node, isRoot=False):
             # Update root component and document ids
-            rootCompVals = node.get('PRODUCT_ATTRIBUTES', {})
-            rootCompBrws = prodProdEnv.getComponentBrws(rootCompVals)
-            node['PRODUCT_ATTRIBUTES'] = rootCompBrws.getComponentInfos()
-            node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = rootCompBrws.canBeRevised()
+            compVals = node.get('PRODUCT_ATTRIBUTES', {})
+            compBrws = prodProdEnv.getComponentBrws(compVals)
+            node['PRODUCT_ATTRIBUTES'] = compBrws.getComponentInfos()
+            node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = compBrws.canBeRevised()
             rootDocVals = node.get('DOCUMENT_ATTRIBUTES', {})
             rootDocBrws = self.getDocumentBrws(rootDocVals)
             node['DOCUMENT_ATTRIBUTES'] = rootDocBrws.getDocumentInfos()
             node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = rootDocBrws.canBeRevised()
-            compId = rootCompBrws.id
-            for relatedNode in node.get('RELATIONS', []):
+            compId = compBrws.id
+            for relatedNode in node.get('RELATIONS', []):   # Caso grezzo
                 recursionUpdate(relatedNode)
             if compId:
-                getLinkedDocumentsByComponent(node, rootCompBrws)   # Only if component infos
+                getLinkedDocumentsByComponent(node, compBrws)   # Only if component infos
             else:
                 getLinkedDocumentsByDocument(node, rootDocBrws) # Only for document infos
 
-        recursionUpdate(rootNode)
+        recursionUpdate(rootNode, True)
         return json.dumps(rootNode)
 
 PlmDocument()
