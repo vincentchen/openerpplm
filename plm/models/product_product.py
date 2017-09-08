@@ -1125,13 +1125,22 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         newRootCompProps = updatedNode.get('PRODUCT_ATTRIBUTES')
         newRootDocProps = updatedNode.get('DOCUMENT_ATTRIBUTES')
 
-        def cloneWithComp(cloneComponent, cloneDocument, docId, engCode, oldDocBrws, compBrws, node):
+        def cloneWithComp(cloneComponent, cloneDocument, docId, engCode, oldDocBrws, compBrws, node, isRoot=False):
             newDocBrws = False
+            newRawComponent = False
             if not cloneComponent and compBrws:
                 # User made and edit parts in the client but he unchecked the component in the interface
                 # So I need to delete it and clone only the document
                 compBrws.unlink()
                 node['PRODUCT_ATTRIBUTES'] = {}
+            if not isRoot:  # Part-Part case
+                newBaseName = engCode + '_raw'
+                newCode = docEnv.GetNextDocumentName(newBaseName)
+                default = {'name': newCode,
+                           'engineering_code': newCode}
+                newRawComponent = compBrws.copy(default)
+                engCode = newCode
+                node['PRODUCT_ATTRIBUTES'] = newRawComponent.getComponentInfos()
             if cloneDocument:
                 if docId:
                     _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
@@ -1142,7 +1151,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                     node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
             else:
                 node['DOCUMENT_ATTRIBUTES'] = {}
-            return newDocBrws
+            return newDocBrws, newRawComponent
 
         def cloneWithDoc(cloneDocument, oldDocBrws, node, isRoot, baseName):
             newDocBrws = False
@@ -1187,6 +1196,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             return compBrws
             
         def nodeResursionUpdate(node, isRoot=False):
+            newRawComponent = False
             cloneComponent = node.get('COMPONENT_CHECKED', False)
             cloneDocument = node.get('DOCUMENT_CHECKED', False)
             compProps = node.get('PRODUCT_ATTRIBUTES', {})
@@ -1199,7 +1209,8 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             oldDocBrws = getDocBrws(docId, docProps)
             compBrws = getCompBrws(compProps)
             if rootEngCode:
-                newDocBrws = cloneWithComp(cloneComponent, cloneDocument, docId, rootEngCode, oldDocBrws, compBrws, node)
+                newDocBrws, newRawComponent = cloneWithComp(cloneComponent, cloneDocument, docId, rootEngCode, oldDocBrws, compBrws, node, isRoot)
+                compBrws = newRawComponent
             elif docName:
                 baseName = rootDocName
                 if rootEngCode:
