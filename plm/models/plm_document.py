@@ -1527,7 +1527,7 @@ class PlmDocument(models.Model):
                         newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = relatedDocBrws.canBeRevised()
                         node['RELATIONS'].append(newNode)
                     
-        def recursionUpdate(node, isRoot=False):
+        def recursionUpdate(node):
             # Update root component and document ids
             compVals = node.get('PRODUCT_ATTRIBUTES', {})
             compBrws = prodProdEnv.getComponentBrws(compVals)
@@ -1545,7 +1545,7 @@ class PlmDocument(models.Model):
             else:
                 getLinkedDocumentsByDocument(node, rootDocBrws) # Only for document infos
 
-        recursionUpdate(rootNode, True)
+        recursionUpdate(rootNode)
         return json.dumps(rootNode)
 
 PlmDocument()
