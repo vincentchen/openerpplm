@@ -1521,7 +1521,7 @@ class PlmDocument(models.Model):
                         relatedDocBrws = docLinkBrws.parent_id
                     else:
                         relatedDocBrws = docLinkBrws.child_id
-                    if relatedDocBrws:
+                    if relatedDocBrws and relatedDocBrws.document_type.upper() == '2D': # If not 2D is a raw part
                         newNode = copy.deepcopy(node)
                         newNode['DOCUMENT_ATTRIBUTES'] = relatedDocBrws.getDocumentInfos()
                         newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = relatedDocBrws.canBeRevised()
