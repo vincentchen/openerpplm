@@ -1244,12 +1244,11 @@ class PlmDocument(models.Model):
                     listItem.append(itemTuple)
                     productRelations[parentProductId] = listItem
                 else:
-                    _basePath, fileExt = os.path.splitext(structure.get('FILE_PATH'))
-                    fileType = self._compute_single_doc_type(fileExt)
-                    if productId and parentDocumentId and fileType.upper() == '2D': # Case of drawing - model relation
-                        listRelated = productDocumentRelations.get(productId, [])
-                        listRelated.append(parentDocumentId)
-                        productDocumentRelations[productId] = listRelated
+                    if productId and parentDocumentId:
+                        if not parentProductId: # Case of drawing - model relation
+                            listRelated = productDocumentRelations.get(productId, [])
+                            listRelated.append(parentDocumentId)
+                            productDocumentRelations[productId] = listRelated
             for subStructure in structure.get('RELATIONS', []):
                 populateStructure((documentId, productId), subStructure)
         populateStructure(structure=objStructure)

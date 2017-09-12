@@ -1087,6 +1087,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                 newDocId, _newDocIndex = docBrws.NewRevision()
                 newDocBrws = docEnv.browse(newDocId)
                 node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
+                node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = docBrws.datas_fname
             return newCompBrwse, newDocBrws
         
         def reviseDoc(node, reviseDocument, docBrws, isRoot):
@@ -1101,6 +1102,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                 newDocId, _newDocIndex = docBrws.NewRevision()
                 newDocBrws = docEnv.browse(newDocId)
                 node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
+                node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = docBrws.datas_fname
             return newDocBrws
 
         def nodeResursionUpdate(node, isRoot=False):
@@ -1113,14 +1115,14 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             docProps = node.get('DOCUMENT_ATTRIBUTES', {})
             rootEngCode = newRootCompProps.get('engineering_code', '')  # From edit parts (client)
             rootDocName = newRootDocProps.get('name', '')  # From edit parts or edit document (client)
-            docName = docProps.get('name', '')
+            engCode = compProps.get('engineering_code', '')
             docId = docProps.get('_id', None)
             docBrws = self.getDocBrws(docId, docProps)
             compBrws = self.getCompBrws(compProps)
-            if rootEngCode:
+            if engCode:
                 newCompBrwse, newDocBrws = reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent)
             elif rootDocName:
-                newDocBrws = reviseDoc(reviseDocument, docBrws)
+                newDocBrws = reviseDoc(node, reviseDocument, docBrws, isRoot)
             if newDocBrws:
                 newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
                 if newCompBrwse:
