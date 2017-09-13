@@ -1066,10 +1066,13 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         updatedJsonNode = elementsToClone[0]
         updatedNode = json.loads(updatedJsonNode)
         hostName, hostPws = elementsToClone[1], elementsToClone[2]
-        _oldRootCompVals, oldRootDocVals = elementsToClone[3]
-        newRootCompProps = updatedNode.get('PRODUCT_ATTRIBUTES')
-        newRootDocProps = updatedNode.get('DOCUMENT_ATTRIBUTES')
+        _oldRootCompVals, _oldRootDocVals = elementsToClone[3]
 
+
+        def updateDocAttrs(node, datasName):
+            node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = datasName
+            node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = True
+            
         def reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent):
             newCompBrwse = False
             if not reviseComponent and compBrws and isRoot:
@@ -1079,15 +1082,19 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                 node['PRODUCT_ATTRIBUTES'] = {}
             if isRoot:
                 newCompBrwse = compBrws
+                newCompBrwse.desc_modify = node['PRODUCT_ATTRIBUTES'].get('desc_modify', '')
             else:
                 newCompId, _newCompRev = compBrws.NewRevision()
                 newCompBrwse = self.browse(newCompId)
+                newCompBrwse.desc_modify = node['PRODUCT_ATTRIBUTES'].get('desc_modify', '')
                 node['PRODUCT_ATTRIBUTES'].update(newCompBrwse.getComponentInfos())
             if reviseDocument:
                 newDocId, _newDocIndex = docBrws.NewRevision()
                 newDocBrws = docEnv.browse(newDocId)
+                newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
                 node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
-                node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = docBrws.datas_fname
+                updateDocAttrs(node, docBrws.datas_fname)
+                newDocBrws.checkout(hostName, hostPws)
             return newCompBrwse, newDocBrws
         
         def reviseDoc(node, reviseDocument, docBrws, isRoot):
@@ -1098,30 +1105,33 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                 return
             if isRoot:
                 newDocBrws = docBrws
+                updateDocAttrs(node, docBrws.datas_fname)
+                docBrws.checkout(hostName, hostPws)
+                newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
             else:
                 newDocId, _newDocIndex = docBrws.NewRevision()
                 newDocBrws = docEnv.browse(newDocId)
+                newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
                 node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
-                node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = docBrws.datas_fname
+                updateDocAttrs(node, docBrws.datas_fname)
+                docEnv.browse(newDocId).checkout(hostName, hostPws)
             return newDocBrws
 
         def nodeResursionUpdate(node, isRoot=False):
-            newRawComponent = False
             newDocBrws = False
             newCompBrwse = False
             reviseComponent = node.get('COMPONENT_CHECKED', False)
             reviseDocument = node.get('DOCUMENT_CHECKED', False)
             compProps = node.get('PRODUCT_ATTRIBUTES', {})
             docProps = node.get('DOCUMENT_ATTRIBUTES', {})
-            rootEngCode = newRootCompProps.get('engineering_code', '')  # From edit parts (client)
-            rootDocName = newRootDocProps.get('name', '')  # From edit parts or edit document (client)
             engCode = compProps.get('engineering_code', '')
+            docName = docProps.get('name', '')
             docId = docProps.get('_id', None)
             docBrws = self.getDocBrws(docId, docProps)
             compBrws = self.getCompBrws(compProps)
             if engCode:
                 newCompBrwse, newDocBrws = reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent)
-            elif rootDocName:
+            elif docName:
                 newDocBrws = reviseDoc(node, reviseDocument, docBrws, isRoot)
             if newDocBrws:
                 newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
@@ -1134,50 +1144,8 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                     childNode['COMPONENT_CHECKED'] = True # To skip component deletion
                     childNode['PRODUCT_ATTRIBUTES'] = {}    # Setup the correct parent component
                 nodeResursionUpdate(childNode)
-            
 
         nodeResursionUpdate(updatedNode, True)
-
-#         def evalCompNode(rootnode, root=False):
-#             rootProps = rootnode.get('root_props', {})
-#             childrenDocuments = rootnode.get('documents', [])
-#             compId = rootProps.get('_id')
-#             revisedCompBrws = None
-#             if root:    # Root component has already been revised in the client
-#                 revisedCompBrws = self.browse(compId)
-#             else:
-#                 if not compId or not revisedCompBrws:  # Non root components have a wrong id inside, so I need to search
-#                     oldCompBrws = self.search([('enginering_code', '=', rootProps.get('engineering_code')),
-#                                             ('engineering_revision', '=', rootProps.get('engineering_revision'))])
-#                 if not oldCompBrws:
-#                     raise Exception(_('Unable to complete new revision because component with properties %r not found') % (rootProps))
-#                 newComponentId, _engineering_revision = oldCompBrws.NewRevision()
-#                 revisedCompBrws = self.browse(newComponentId)
-#                 revisedCompBrws.write({'linkeddocuments': [(5, 0, 0)]})
-#             reviseChildDocuments(revisedCompBrws, childrenDocuments)
-#             
-#         def reviseChildDocuments(revisedCompBrws, childrenDocuments):
-#             revisedCompBrws.write({'linkeddocuments': [(5, 0, 0)]}) # Clean copied links
-#             for childDocDict in childrenDocuments:
-#                 docInfos = childDocDict.get('document', {})
-#                 docName = docInfos.get('name', '')
-#                 docRevision = docInfos.get('revisionid', None)
-#                 docBrws = docEnv.search([('name', '=', docName),
-#                                          ('revisionid', '=', docRevision)])
-#                 if docBrws:
-#                     revisedDocId, _newDocIndex = docBrws.NewRevision()
-#                     newDocBrws = docEnv.browse(revisedDocId)
-#                     revisedCompBrws.write({'linkeddocuments': [(4, revisedDocId, False)]})
-#                     if newDocBrws.document_type.upper() == 'OTHER':
-#                         continue
-#                     newDocBrws.checkout(hostName, hostPws)
-#                     outList.append({'doc_vals': newDocBrws.getDocumentInfos(),
-#                                     'comp_vals': revisedCompBrws.getComponentInfos()})
-#                 else:
-#                     logging.warning('unable to find document to revise %r' % (childDocDict))
-#             
-#         rootNodeDict = elementsToClone[0]
-#         evalCompNode(rootNodeDict, root=True)
         return json.dumps(updatedNode)
 
     def getDocBrws(self, docId, docProps):
