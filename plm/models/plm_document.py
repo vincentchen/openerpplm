@@ -1526,7 +1526,7 @@ class PlmDocument(models.Model):
                         newNode['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = relatedDocBrws.canBeRevised()
                         node['RELATIONS'].append(newNode)
                     
-        def recursionUpdate(node):
+        def recursionUpdate(node, isRoot=False):
             # Update root component and document ids
             compVals = node.get('PRODUCT_ATTRIBUTES', {})
             compBrws = prodProdEnv.getComponentBrws(compVals)
@@ -1536,6 +1536,12 @@ class PlmDocument(models.Model):
             rootDocBrws = self.getDocumentBrws(rootDocVals)
             node['DOCUMENT_ATTRIBUTES'] = rootDocBrws.getDocumentInfos()
             node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = rootDocBrws.canBeRevised()
+            if isRoot:
+                node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = True # Has already been revised
+                engcode = compVals.get('engineering_code')
+                if not engcode: # Has already been revised and contains only document props
+                    node['PRODUCT_ATTRIBUTES']['CAN_BE_REVISED'] = False
+                    node['DOCUMENT_ATTRIBUTES']['CAN_BE_REVISED'] = True
             compId = compBrws.id
             for relatedNode in node.get('RELATIONS', []):   # Caso grezzo
                 recursionUpdate(relatedNode)
@@ -1544,7 +1550,7 @@ class PlmDocument(models.Model):
             else:
                 getLinkedDocumentsByDocument(node, rootDocBrws) # Only for document infos
 
-        recursionUpdate(rootNode)
+        recursionUpdate(rootNode, True)
         return json.dumps(rootNode)
 
 PlmDocument()
