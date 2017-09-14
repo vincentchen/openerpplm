@@ -1115,6 +1115,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             return False
             
         def reviseCompObj(compBrws, node):
+            # Raw component because BOM is not managed
             newCompId, _newCompRev = compBrws.NewRevision()
             newCompBrwse = self.browse(newCompId)
             updateCompDescModify(newCompBrwse, node)
