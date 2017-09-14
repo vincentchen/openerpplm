@@ -1072,51 +1072,104 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         def updateDocAttrs(node, datasName):
             node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = datasName
             node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = True
-            
-        def reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent):
-            newCompBrwse = False
-            if not reviseComponent and compBrws and isRoot:
-                # User made and edit parts in the client but he unchecked the component in the interface
-                # So I need to delete it and clone only the document
-                compBrws.unlink()
-                node['PRODUCT_ATTRIBUTES'] = {}
-            if isRoot:
-                newCompBrwse = compBrws
-                newCompBrwse.desc_modify = node['PRODUCT_ATTRIBUTES'].get('desc_modify', '')
-            else:
-                newCompId, _newCompRev = compBrws.NewRevision()
-                newCompBrwse = self.browse(newCompId)
-                newCompBrwse.desc_modify = node['PRODUCT_ATTRIBUTES'].get('desc_modify', '')
-                node['PRODUCT_ATTRIBUTES'].update(newCompBrwse.getComponentInfos())
-            if reviseDocument:
-                newDocId, _newDocIndex = docBrws.NewRevision()
-                newDocBrws = docEnv.browse(newDocId)
-                newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
-                node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
-                updateDocAttrs(node, docBrws.datas_fname)
-                newDocBrws.checkout(hostName, hostPws)
-            return newCompBrwse, newDocBrws
+
+        def cleanRootUnCheckedComponent(compBrws, node):
+            # User made and edit parts in the client but he unchecked the component in the interface
+            # So I need to delete it, restore previous revision and revise only the document
+            compBrws.unlink()
+            return restorePreviousComponentRevision(node)
+
+        def cleanRootUnCheckedDocument(docBrws, node):
+            # User made and edit document in the client but he unchecked the component in the interface
+            # So I need to delete it and restore previous revision
+            docBrws.unlink()
+            return restorePreviousDocumentRevision(node)
+
+        def restorePreviousDocumentRevision(node):
+            node['DOCUMENT_ATTRIBUTES']['revisionid'] = node['DOCUMENT_ATTRIBUTES']['revisionid'] - 1
+            return docEnv.getDocumentBrws(node['DOCUMENT_ATTRIBUTES']) # Try to restore previous revision (case of only document revision)
+
+        def restorePreviousComponentRevision(node):
+            node['PRODUCT_ATTRIBUTES']['engineering_revision'] = node['PRODUCT_ATTRIBUTES']['engineering_revision'] - 1
+            return self.getCompBrws(node['PRODUCT_ATTRIBUTES']) # Try to restore previous revision (case of only document revision)
         
-        def reviseDoc(node, reviseDocument, docBrws, isRoot):
-            newDocBrws = False
-            if not reviseDocument and docBrws and isRoot:
-                docBrws.unlink()
-                node['DOCUMENT_ATTRIBUTES'] = {}
-                return
-            if isRoot:
+        def updateCompDescModify(newCompBrwse, node):
+            newCompBrwse.desc_modify = node['PRODUCT_ATTRIBUTES'].get('desc_modify', '')
+
+        def updateDocDescModify(newDocBrws, node):
+            newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
+        
+        def updateDocNodeByBrws(node, newDocBrws):
+            node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
+            
+        def updateCompNodeByBrws(node, newCompBrwse):
+            node['PRODUCT_ATTRIBUTES'].update(newCompBrwse.getComponentInfos())
+
+        def updateRootDocument(docBrws, node):
+            if docBrws:
                 newDocBrws = docBrws
                 updateDocAttrs(node, docBrws.datas_fname)
                 docBrws.checkout(hostName, hostPws)
                 newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
-            else:
-                newDocId, _newDocIndex = docBrws.NewRevision()
-                newDocBrws = docEnv.browse(newDocId)
-                newDocBrws.desc_modify = node['DOCUMENT_ATTRIBUTES'].get('desc_modify', '')
-                node['DOCUMENT_ATTRIBUTES'].update(newDocBrws.getDocumentInfos())
-                updateDocAttrs(node, docBrws.datas_fname)
-                docEnv.browse(newDocId).checkout(hostName, hostPws)
+                return newDocBrws
+            return False
+            
+        def reviseCompObj(compBrws, node):
+            newCompId, _newCompRev = compBrws.NewRevision()
+            newCompBrwse = self.browse(newCompId)
+            updateCompDescModify(newCompBrwse, node)
+            updateCompNodeByBrws(node, newCompBrwse)
+            return newCompBrwse
+        
+        def reviseDocObj(docBrws, node):
+            newDocId, _newDocIndex = docBrws.NewRevision()
+            newDocBrws = docEnv.browse(newDocId)
+            updateDocDescModify(newDocBrws, node)
+            updateDocNodeByBrws(node, newDocBrws)
+            updateDocAttrs(node, docBrws.datas_fname)
+            newDocBrws.checkout(hostName, hostPws)
             return newDocBrws
 
+        def reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent):
+            newCompBrwse = False
+            newDocBrws = False
+            deleted = False
+            if not reviseComponent:
+                if compBrws and isRoot:
+                    compBrws = cleanRootUnCheckedComponent(compBrws, node)
+                else:
+                    compBrws = restorePreviousComponentRevision(node)
+                deleted = True
+            if not deleted:
+                if isRoot:
+                    newCompBrwse = compBrws
+                    updateCompDescModify(newCompBrwse, node)
+                else:
+                    newCompBrwse = reviseCompObj(compBrws, node)
+            if reviseDocument:
+                newDocBrws = reviseDocObj(docBrws, node)
+            return newCompBrwse, newDocBrws
+        
+        def reviseDoc(node, reviseDocument, docBrws, isRoot):
+            newDocBrws = False
+            if not reviseDocument:
+                if docBrws and isRoot:
+                    cleanRootUnCheckedDocument(docBrws, node)
+                else:
+                    restorePreviousDocumentRevision(node)
+                return False
+            if isRoot:
+                newDocBrws = updateRootDocument(docBrws, node)
+            else:
+                newDocBrws = reviseDocObj(docBrws, node)
+            return newDocBrws
+
+        def setupRelations(newDocBrws, newCompBrwse):
+            if newDocBrws:
+                newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
+                if newCompBrwse:
+                    newCompBrwse.write({'linkeddocuments': [(4, newDocBrws.id, False)]}) # Add link to component
+            
         def nodeResursionUpdate(node, isRoot=False):
             newDocBrws = False
             newCompBrwse = False
@@ -1133,16 +1186,10 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
                 newCompBrwse, newDocBrws = reviseComp(node, isRoot, compBrws, docBrws, reviseDocument, reviseComponent)
             elif docName:
                 newDocBrws = reviseDoc(node, reviseDocument, docBrws, isRoot)
-            if newDocBrws:
-                newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
-                if newCompBrwse:
-                    newCompBrwse.write({'linkeddocuments': [(4, newDocBrws.id, False)]}) # Add link to component
+            setupRelations(newDocBrws, newCompBrwse)
             for childNode in node.get('RELATIONS', []):
                 if childNode.get('DOCUMENT_ATTRIBUTES', {}).get('DOC_TYPE').upper() == '2D':
-                    # If is a 2D document I have to erase the value before to compute it
-                    # Or the procedure with think that is a component
-                    childNode['COMPONENT_CHECKED'] = True # To skip component deletion
-                    childNode['PRODUCT_ATTRIBUTES'] = {}    # Setup the correct parent component
+                    childNode['PRODUCT_ATTRIBUTES'] = {'engineering_code': ''}    # Setup the correct parent component
                 nodeResursionUpdate(childNode)
 
         nodeResursionUpdate(updatedNode, True)
@@ -1176,90 +1223,124 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         newRootCompProps = updatedNode.get('PRODUCT_ATTRIBUTES')
         newRootDocProps = updatedNode.get('DOCUMENT_ATTRIBUTES')
 
-        def cloneWithComp(cloneComponent, cloneDocument, docId, engCode, oldDocBrws, compBrws, node, isRoot=False):
+        def cleanRootDocument(oldDocBrws, node):
+            oldDocBrws.unlink()
+            cleanDocumentAttrs(node)
+
+        def cleanDocumentAttrs(node):
+            node['DOCUMENT_ATTRIBUTES'] = {}
+            
+        def cleanRootComponent(compBrws, node):
+            # User made and edit parts in the client but he unchecked the component in the interface
+            # So I need to delete it and clone only the document
+            compBrws.unlink()
+            cleanEngCode(node)
+            
+        def cleanEngCode(node):
+            node['PRODUCT_ATTRIBUTES'] = {'engineering_code': ''}
+
+        def createClonedRawComponent(engCode, compBrws, node):
+            newBaseName = engCode + '_raw'
+            newCode = docEnv.GetNextDocumentName(newBaseName)
+            default = {'name': newCode,
+                       'engineering_code': newCode}
+            newRawComponent = compBrws.copy(default)
+            node['PRODUCT_ATTRIBUTES'] = newRawComponent.getComponentInfos()
+            return newCode, newRawComponent
+
+        def cloneDocumentObj(oldDocBrws, engCode, node):
+            newDocBrws = False
+            if oldDocBrws.id:
+                _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
+                newDocBrws = self.getNewDoc(oldDocBrws, engCode, file_extension)
+                newDocBrws.checkout(hostName, hostPws)
+                node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
+                node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
+                node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
+            return newDocBrws
+
+        def setupRootDocument(clonedDocBrws, node):
+            # oldRootDocVals are starting document properties
+            # clonedDocBrws is cloned document browse
+            rootOldDocBrws = docEnv.getDocumentBrws(oldRootDocVals)
+            _filename, file_extension = os.path.splitext(rootOldDocBrws.datas_fname)
+            clonedDocBrws.datas_fname = '%s%s' % (clonedDocBrws.name, file_extension)
+            node['DOCUMENT_ATTRIBUTES']['datas_fname'] = clonedDocBrws.datas_fname
+            node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = True
+            node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = rootOldDocBrws.datas_fname
+            clonedDocBrws.checkout(hostName, hostPws)
+            return clonedDocBrws
+            
+        def cloneWithComp(cloneComponent, cloneDocument, rootEngCode, oldDocBrws, compBrws, node, isRoot=False):
             newDocBrws = False
             newRawComponent = False
-            if not cloneComponent and compBrws and isRoot:
-                # User made and edit parts in the client but he unchecked the component in the interface
-                # So I need to delete it and clone only the document
-                compBrws.unlink()
-                node['PRODUCT_ATTRIBUTES'] = {}
-            if not isRoot:  # Part-Part case
-                newBaseName = engCode + '_raw'
-                newCode = docEnv.GetNextDocumentName(newBaseName)
-                default = {'name': newCode,
-                           'engineering_code': newCode}
-                newRawComponent = compBrws.copy(default)
-                engCode = newCode
-                node['PRODUCT_ATTRIBUTES'] = newRawComponent.getComponentInfos()
+            if not cloneComponent:
+                if compBrws and isRoot: # Only root component has to be deleted
+                    cleanRootComponent(compBrws, node)
+                else:
+                    cleanEngCode(node)
+            else:   # Root case --> already cloned in the CAD otherwise ir a raw component
+                if not isRoot:  # Part-Part case because BOM is not managed
+                    rootEngCode, newRawComponent = createClonedRawComponent(rootEngCode, compBrws, node)
             if cloneDocument:
-                if docId:
-                    _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
-                    newDocBrws = self.getNewDoc(oldDocBrws, engCode, file_extension)
-                    newDocBrws.checkout(hostName, hostPws)
-                    node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
-                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
-                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
+                newDocBrws = cloneDocumentObj(oldDocBrws, rootEngCode, node)
             else:
                 node['DOCUMENT_ATTRIBUTES'] = {}
             return newDocBrws, newRawComponent
 
         def cloneWithDoc(cloneDocument, oldDocBrws, node, isRoot, baseName):
             newDocBrws = False
-            if not cloneDocument and oldDocBrws and isRoot:
-                oldDocBrws.unlink()
-                node['DOCUMENT_ATTRIBUTES'] = {}
-            else:
-                if isRoot:
-                    rootOldDocBrws = docEnv.getDocumentBrws(oldRootDocVals)
-                    _filename, file_extension = os.path.splitext(rootOldDocBrws.datas_fname)
-                    newDocBrws = oldDocBrws
-                    newDocBrws.datas_fname = '%s%s' % (newDocBrws.name, file_extension)
-                    node['DOCUMENT_ATTRIBUTES']['datas_fname'] = newDocBrws.datas_fname
-                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = rootOldDocBrws._is_checkedout_for_me()
-                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = rootOldDocBrws.datas_fname
-                    newDocBrws.checkout(hostName, hostPws)
-                    # E' necessario mettere old file name e checkout by me 
+            if not cloneDocument:
+                if oldDocBrws and isRoot:
+                    cleanRootDocument(oldDocBrws, node)
                 else:
-                    _filename, file_extension = os.path.splitext(oldDocBrws.datas_fname)
-                    newDocBrws = self.getNewDoc(oldDocBrws, baseName, file_extension)
-                    newDocBrws.checkout(hostName, hostPws)
-                    node['DOCUMENT_ATTRIBUTES'] = newDocBrws.getDocumentInfos()
-                    node['DOCUMENT_ATTRIBUTES']['OLD_FILE_NAME'] = oldDocBrws.datas_fname
-                    node['DOCUMENT_ATTRIBUTES']['CHECK_OUT_BY_ME'] = oldDocBrws._is_checkedout_for_me()
+                    cleanDocumentAttrs(node)
+                return newDocBrws
+            if isRoot:
+                newDocBrws = setupRootDocument(oldDocBrws, node)
+            else:
+                newDocBrws = cloneDocumentObj(oldDocBrws, baseName, node)
             return newDocBrws
 
+        def cleanAndSetupRelations(newDocBrws, compBrws):
+            if newDocBrws:
+                newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
+                if compBrws:
+                    compBrws.write({'linkeddocuments': [(4, newDocBrws.id, False)]}) # Add link to component
+            
         def nodeResursionUpdate(node, isRoot=False):
-            newRawComponent = False
-            cloneComponent = node.get('COMPONENT_CHECKED', False)
             cloneDocument = node.get('DOCUMENT_CHECKED', False)
             compProps = node.get('PRODUCT_ATTRIBUTES', {})
             docProps = node.get('DOCUMENT_ATTRIBUTES', {})
             rootEngCode = newRootCompProps.get('engineering_code', '')
-            rootDocName = newRootDocProps.get('name', '')
             docName = docProps.get('name', '')
             docId = docProps.get('_id', None)
             newDocBrws = False
             oldDocBrws = self.getDocBrws(docId, docProps)
             compBrws = self.getCompBrws(compProps)
-            if rootEngCode:
-                newDocBrws, newRawComponent = cloneWithComp(cloneComponent, cloneDocument, docId, rootEngCode, oldDocBrws, compBrws, node, isRoot)
+            if compProps.get('engineering_code', ''):    # Node is a component-document node
+                newDocBrws, newRawComponent = cloneWithComp(node.get('COMPONENT_CHECKED', False),
+                                                            cloneDocument,
+                                                            rootEngCode,
+                                                            oldDocBrws,
+                                                            compBrws,
+                                                            node,
+                                                            isRoot)
                 compBrws = newRawComponent
-            elif docName:
-                baseName = rootDocName
-                if rootEngCode:
-                    baseName = rootEngCode
-                newDocBrws = cloneWithDoc(cloneDocument, oldDocBrws, node, isRoot, baseName)
-            if newDocBrws:
-                newDocBrws.write({'linkedcomponents': [(5, 0, 0)]}) # Clean copied links
-                if compBrws:
-                    compBrws.write({'linkeddocuments': [(4, newDocBrws.id, False)]}) # Add link to component
+            elif docName:    # Node is a document node
+                baseName = docName
+                rootDocName = newRootDocProps.get('name', '')
+                if rootEngCode or rootDocName:
+                    baseName = rootEngCode or rootDocName
+                newDocBrws = cloneWithDoc(cloneDocument,
+                                          oldDocBrws,
+                                          node,
+                                          isRoot,
+                                          baseName)
+            cleanAndSetupRelations(newDocBrws, compBrws)
             for childNode in node.get('RELATIONS', []):
                 if childNode.get('DOCUMENT_ATTRIBUTES', {}).get('DOC_TYPE').upper() == '2D':
-                    # If is a 2D document I have to erase the value before to compute it
-                    # Or the procedure with think that is a component
-                    childNode['COMPONENT_CHECKED'] = True # To skip component deletion
-                    childNode['PRODUCT_ATTRIBUTES'] = {}    # Setup the correct parent component
+                    childNode['PRODUCT_ATTRIBUTES'] = {'engineering_code': ''}
                 nodeResursionUpdate(childNode)
         
         nodeResursionUpdate(updatedNode, True)
