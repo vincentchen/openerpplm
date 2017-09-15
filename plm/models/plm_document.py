@@ -1222,7 +1222,7 @@ class PlmDocument(models.Model):
                 documentId = id(documentProperty)
                 documentAttributes[documentId] = documentProperty
             productProperty = structure.get('PRODUCT_ATTRIBUTES', False)
-            if productProperty:
+            if productProperty and productProperty.get('engineering_code', ''):
                 productId = id(productProperty)
                 productAttributes[productId] = productProperty
             if productId and documentId:
