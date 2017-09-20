@@ -31,10 +31,8 @@ from odoo.exceptions import UserError
 from odoo import osv
 from odoo import SUPERUSER_ID
 import odoo.tools as tools
-import copy
 import os
 import json
-from __builtin__ import False
 
 _logger = logging.getLogger(__name__)
 
@@ -272,7 +270,6 @@ class PlmComponent(models.Model):
         if thisObject.unitab:
             description = description + " " + thisObject.unitab
         return description
-
 
     @api.multi
     def product_template_open(self):
