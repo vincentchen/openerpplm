@@ -144,10 +144,7 @@ class ProductProductExtension(models.Model):
             Set standard description correctly, called from write and create
         '''
         ir_translation_obj = self.env['ir.translation']
-        descTransBrwsList = ir_translation_obj.search([('name', '=', 'plm.description,name'),             # field to translate
-                                                       ('res_id', '=', std_description_id)])
-        if not descTransBrwsList:
-            descTransBrwsList = ir_translation_obj.search([('name', '=', 'plm.description,description'),             # field to translate
+        descTransBrwsList = ir_translation_obj.search([('name', '=', 'plm.description,description'),             # field to translate
                                                            ('res_id', '=', std_description_id)])
         for transDescBrws in descTransBrwsList:
             alreadyPresentTranslations = ir_translation_obj.search([('name', '=', 'product.template,description'),
