@@ -10,12 +10,12 @@
             '.idw': 'inventor',
             '.iges': 'inventor',
             '.iam': 'inventor',
-            '.sldprt': 'inventor',
-            '.SLDPRT': 'inventor',
-            '.sldasm': 'inventor',
-            '.SLDASM': 'inventor',
-            '.slddrw': 'inventor',
-            '.SLDDRW': 'inventor'}</field>
+            '.sldprt': 'solidworks',
+            '.SLDPRT': 'solidworks',
+            '.sldasm': 'solidworks',
+            '.SLDASM': 'solidworks',
+            '.slddrw': 'solidworks',
+            '.SLDDRW': 'solidworks'}</field>
         </record> 
 	 
     </data>
