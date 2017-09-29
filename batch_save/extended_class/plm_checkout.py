@@ -38,7 +38,7 @@ import logging
 class PlmCheckout(models.Model):
     _name = 'plm.checkout'
     _inherit = 'plm.checkout'
-    
+
     batch_save_id = fields.Many2one('plm.batch_save', string=_('Related Batch Save'))
 
     @api.multi

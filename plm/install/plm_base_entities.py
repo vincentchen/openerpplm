@@ -216,7 +216,7 @@ class plm_relation_line(models.Model):
     itemlbl         = fields.Char(_('CAD Item Position Label'), size=64)
     ebom_source_id  = fields.Integer('Source Ebom ID')
     related_document_ids = fields.One2many(compute='_related_doc_ids', comodel_name='plm.document', string=_('Related Documents'))
- 
+
     _defaults = {
         'product_uom': 1,
     }
