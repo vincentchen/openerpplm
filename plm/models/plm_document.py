@@ -94,8 +94,8 @@ class PlmDocument(models.Model):
 
     @api.one
     def _is_checkout(self):
-        chechRes = self.getCheckedOut(self.id, None)
-        if chechRes:
+        _docName, _docRev, checkOutUser, _hostname = self.getCheckedOut(self.id, None)
+        if checkOutUser:
             self.is_checkout = True
         else:
             self.is_checkout = False
@@ -1125,7 +1125,7 @@ class PlmDocument(models.Model):
                    checkOutBrws.documentid.revisionid,
                    self.getUserSign(checkOutBrws.userid.id),
                    checkOutBrws.hostname)
-        return False
+        return ('', False, '', '')
 
     @api.model
     def _file_delete(self, fname):
@@ -1377,21 +1377,35 @@ class PlmDocument(models.Model):
         logging.debug("Time Spend For save structure is: %s" % (str(end - start)))
         return jsonify
 
-    @api.model
+    @api.multi
     def checkout(self, hostName, hostPws):
         """
         check out the current document
         """
-        if self.is_checkout:
-            raise UserError(_("Unable to check-Out a document that is already checked id by user %r" % self.checkout_user))
-        if self.state in ['released', 'obsoleted']:
-            raise UserError(_("Unable to check-Outcheck-Out a document that is in state %r" % self.state))
+        self.canCheckOut(showError=True)
         values = {'userid': self.env.uid,
                   'hostname': hostName,
                   'hostpws': hostPws,
                   'documentid': self.id}
-        self.env['plm.checkout'].create(values)
+        res = self.env['plm.checkout'].create(values)
+        return res.id
 
+    @api.multi
+    def canCheckOut(self, showError=False):
+        for docBrws in self:
+            if docBrws.is_checkout:
+                msg = _("Unable to check-Out a document that is already checked id by user %r" % docBrws.checkout_user)
+                if showError:
+                    raise UserError(msg)
+                return False, msg
+            if docBrws.state != 'draft':
+                msg = _("Unable to check-Outcheck-Out a document that is in state %r" % docBrws.state)
+                if showError:
+                    raise UserError(msg)
+                return False, msg
+            return True, ''
+        return False, 'No document provided'
+        
     @api.model
     def needUpdate(self):
         """
@@ -1553,6 +1567,33 @@ class PlmDocument(models.Model):
         recursionUpdate(rootNode, True)
         return json.dumps(rootNode)
 
+    @api.model
+    def getCheckedOutAttrs(self, vals):
+        outDict = {}
+        attrsList, hostname, hostpws = vals
+        for fileDict in attrsList:
+            outLocalDict = fileDict.copy()
+            file_path = fileDict.get('file_path', '')
+            docBrwsList = self.getDocumentBrws(fileDict)
+            outLocalDict['can_checkout'] = False
+            outLocalDict['hostname'] = hostname
+            outLocalDict['hostpws'] = hostpws
+            outLocalDict['state'] = ''
+            outLocalDict['_id'] = False
+            if not docBrwsList:
+                outLocalDict['help_checkout'] = _('Unable to find document to check-out. Please save it.') 
+            else:
+                for docBrws in docBrwsList:
+                    outLocalDict['_id'] = docBrws.id
+                    outLocalDict['state'] = docBrws.state
+                    flag, msg = docBrws.canCheckOut(showError=False)
+                    if flag:
+                        outLocalDict['can_checkout'] = True
+                    outLocalDict['help_checkout'] = msg
+                    break
+            outDict[file_path] = outLocalDict
+        return outDict
+        
 PlmDocument()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
