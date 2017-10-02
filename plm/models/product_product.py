@@ -748,7 +748,15 @@ class PlmComponent(models.Model):
         except Exception, ex:
             import psycopg2
             if isinstance(ex, psycopg2.IntegrityError):
-                raise ex
+                msg = _('Error during component creation with values:\n')
+                for key, value in vals.items():
+                    msg = msg + '%r = %r\n' % (key, value)
+                try:
+                    msg = msg + unicode(ex.message) + '\n'
+                except:
+                    pass
+                msg = msg + '\n\n------------------------------\n\n' + unicode(ex)
+                raise Exception(msg)
             logging.error("(%s). It has tried to create with values : (%s)." % (unicode(ex), unicode(vals)))
             raise Exception(_(" (%r). It has tried to create with values : (%r).") % (ex, vals))
 
