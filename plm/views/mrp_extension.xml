@@ -130,13 +130,12 @@
         	<field name="priority" eval="16"/>
             <field name="arch" type="xml">
             	<data>
-            		
+            		<field name="product_tmpl_id" position="replace">
+            			<field name="product_tmpl_id" context="{'default_type': 'product'}" options="{'no_open':True,'no_create':True}"/>
+            		</field>
             		<field name="product_tmpl_id" position="before">
             			<label for="id" string=""/>
             			<button name="open_related_bom_lines" type="object" string="Related BOM Lines"/>
-            		</field>
-            		<field name="product_tmpl_id" position="replace">
-            			<field name="product_tmpl_id" context="{'default_type': 'product'}" options="{'no_open':True,'no_create':True}"/>
             		</field>
 	                <field name="product_id" position="after">
 	                	<field name="engineering_revision" readonly="True"/>	
@@ -181,7 +180,7 @@
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">mrp.bom</field>
         <field name="view_type">form</field>
-        <field name="domain">[('type','=','normal'),]</field>
+        <field name="domain">[('type','=','normal')]</field>
         <field name="filter" eval="True"/>
     </record>
 
