@@ -79,6 +79,7 @@ class AdvancedPackView(osv.osv.osv_memory):
     doc_type = fields.Selection([('2d', _('2D')),
                                  ('3d', _('3D')),
                                  ('pdf', _('PDF')),
+                                 ('other', _('Other')),
                                  ], _('Document Type'))
     available_types = fields.Many2one('pack_and_go_types', _('Types'))
     pack_and_go_id = fields.Many2one('pack.and_go', _('Pack and go id'))

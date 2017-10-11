@@ -768,6 +768,8 @@ class plm_document(models.Model):
                     docBrws.document_type = '2d'
                 elif fileExtension in extensions3D:
                     docBrws.document_type = '3d'
+                else:
+                    docBrws.document_type = 'other'
             except Exception, ex:
                 logging.error('Unable to compute document type for document %r, error %r' % (docBrws.id, ex))
 
@@ -783,6 +785,7 @@ class plm_document(models.Model):
     
     document_type = fields.Selection([('2d', _('2D')),
                                       ('3d', _('3D')),
+                                      ('other', _('Other')),
                                       ], 
                                      compute=_compute_document_type,
                                      string= _('Document Type'))
