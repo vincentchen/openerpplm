@@ -781,10 +781,8 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             """
                 Remove broken components before make the copy. So the procedure will not fail
             """
-            logging.info('Start cleaning broken components')
-            brokenComponents = self.search(['|', ('engineering_code', '=', '-'), ('name', '=', '-')])
+            brokenComponents = self.search([('engineering_code', '=', '-')])
             for brokenComp in brokenComponents:
-                logging.info('Removing component eng_code %r, name %r' % (brokenComp.engineering_code, brokenComp.name))
                 brokenComp.unlink()
 
         previous_name = self.name
@@ -792,7 +790,9 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             defaults['name'] = '-'                   # If field is required super of clone will fail returning False, this is the case
             defaults['engineering_code'] = '-'
             defaults['engineering_revision'] = 0
-        clearBrokenComponents()
+            clearBrokenComponents()
+        if defaults.get('engineering_code', '') == '-':
+            clearBrokenComponents()
         # assign default value
         defaults['state'] = 'draft'
         defaults['engineering_writable'] = True
