@@ -790,9 +790,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             defaults['name'] = '-'                   # If field is required super of clone will fail returning False, this is the case
             defaults['engineering_code'] = '-'
             defaults['engineering_revision'] = 0
-            clearBrokenComponents()
-        if defaults.get('engineering_code', '') == '-':
-            clearBrokenComponents()
+        clearBrokenComponents()
         # assign default value
         defaults['state'] = 'draft'
         defaults['engineering_writable'] = True
