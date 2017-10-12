@@ -781,7 +781,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             """
                 Remove broken components before make the copy. So the procedure will not fail
             """
-            brokenComponents = self.search([('engineering_code', '=', '-')])
+            brokenComponents = self.search(['|', ('engineering_code', '=', '-'), ('name', '=', '-')])
             for brokenComp in brokenComponents:
                 brokenComp.unlink()
 
