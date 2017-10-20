@@ -34,7 +34,6 @@ from odoo import fields
 from odoo import api
 from odoo import _
 import logging
-from __builtin__ import False
 _logger = logging.getLogger(__name__)
 
 
