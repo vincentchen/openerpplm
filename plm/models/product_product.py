@@ -110,14 +110,14 @@ class PlmComponent(models.Model):
     std_umc1 = fields.Char(_('UM / Feature 1'),
                            size=32,
                            default='',
-                           help=_("Allow to specifiy a unit measure for the first feature."))
+                           help=_("Allow to specify a unit measure for the first feature."))
     std_value1 = fields.Float(_('Value 1'),
                               default=0,
                               help=_("Assign value to the first characteristic."))
     std_umc2 = fields.Char(_('UM / Feature 2'),
                            size=32,
                            default='',
-                           help=_("Allow to specifiy a unit measure for the second feature."))
+                           help=_("Allow to specify a unit measure for the second feature."))
     std_value2 = fields.Float(_('Value 2'),
                               default=0,
                               help=_("Assign value to the second characteristic."))
@@ -972,7 +972,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         bufferdata = []
         if level == 0 and currlevel > 1:
             return bufferdata
-        for bomid in component.product_tmpl_id.bom_ids: # TODO: Bom type??
+        for bomid in component.product_tmpl_id.bom_ids:  # TODO: Bom type??
             for bomline in bomid.bom_line_ids:
                 levelDict = {}
                 prodBrws = bomline.product_id
@@ -1049,8 +1049,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             return {
                 'root_props': rootProps,
                 'documents': self.computeLikedDocuments(prodBrws),
-                'bom': [],
-                }
+                'bom': []}
         elif computeType == 'bom-all-levels':
             return computeBomAllLevels(prodBrws)
         elif computeType == 'bom-one-level':
@@ -1066,7 +1065,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             if compBrws.state == 'released':
                 return True
         return False
-        
+
     @api.model
     def reviseCompAndDoc(self, elementsToClone):
         docEnv = self.env['plm.document']
@@ -1378,7 +1377,6 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
             ('engineering_revision', '=', engRev),
             ])
 
-        
 PlmComponent()
 
 
@@ -1386,6 +1384,7 @@ class PlmTemporayMessage(osv.osv.osv_memory):
     _name = "plm.temporary.message"
     _description = "Temporary Class"
     name = fields.Text(_('Bom Result'), readonly=True)
+
 
 PlmTemporayMessage()
 
@@ -1425,6 +1424,7 @@ class ProductProductDashboard(models.Model):
                     (SELECT count(*) FROM product_template WHERE state = 'obsoleted' and  engineering_code<>'') AS count_component_obsoleted
              )
         """)
+
 
 ProductProductDashboard()
 
