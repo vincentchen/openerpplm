@@ -26,6 +26,7 @@ Created on 11 Aug 2016
 @author: Daniel Smerghetto
 '''
 from openerp.exceptions import UserError
+from openerp import SUPERUSER_ID
 from openerp import models
 from openerp import fields
 from openerp import osv
@@ -59,7 +60,7 @@ class plm_backupdoc(models.Model):
     def unlink(self, cr, uid, ids, context=None):
         committed = False
         if context is not None and context != {}:
-            if uid != 1:
+            if uid != SUPERUSER_ID:
                 logging.warning("unlink : Unable to remove the required documents. You aren't authorized in this context.")
                 raise UserError(_("Unable to remove the required document.\n You aren't authorized in this context."))
                 return False
@@ -67,7 +68,7 @@ class plm_backupdoc(models.Model):
         checkObjs = self.browse(cr, uid, ids, context=context)
         for checkObj in checkObjs:
             if not int(checkObj.documentid):
-                return super(plm_backupdoc, self).unlink(cr, uid, ids, context=context)
+                return super(plm_backupdoc, self).unlink(cr, SUPERUSER_ID, ids, context=context)
             currentname = checkObj.documentid.store_fname
             if checkObj.existingfile != currentname:
                 fullname = os.path.join(documentType._get_filestore(cr), checkObj.existingfile)
@@ -111,7 +112,7 @@ class BackupDocWizard(osv.osv.osv_memory):
                       }
             if relDocBrws:
                 documentId = relDocBrws.id
-                writeRes = relDocBrws.write(values)
+                writeRes = relDocBrws.sudo().write(values)
                 if writeRes:
                     logging.info('[action_restore_document] Updated document %r' % (documentId))
                 else:
@@ -124,7 +125,7 @@ class BackupDocWizard(osv.osv.osv_memory):
                                'name': backupDocBrws.document_name,
                                }
                               )
-                documentId = plmDocObj.create(values)
+                documentId = plmDocObj.sudo().create(values)
                 if documentId:
                     logging.info('[action_restore_document] Created document %r' % (documentId))
                 else:
