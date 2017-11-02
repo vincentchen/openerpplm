@@ -685,7 +685,17 @@ class plm_document(models.Model):
                 if customObject.state in checkState:
                     raise UserError(_("The active state does not allow you to make save action"))
                     return False
+        self.writeCheckDatas(cr, uid, ids, vals, context)
         return super(plm_document, self).write(cr, uid, ids, vals, context=context)
+        
+    @api.multi
+    def writeCheckDatas(self, vals):
+        if 'datas' in vals.keys() or 'datas_fname' in vals.keys():
+            for docBrws in self:
+                if not docBrws._is_checkedout_for_me(docBrws.id) and self.env.uid != SUPERUSER_ID:
+                    msg = _("You cannot edit a file not in check-out by you! User ID %s" % (self.env.uid))
+                    docBrws.wf_message_post(body=msg)
+                    raise UserError(_(msg))
 
     def unlink(self, cr, uid, ids, context=None):
         values = {'state': 'released', }
