@@ -26,6 +26,7 @@ import os
 import logging
 import time
 from datetime import datetime
+from openerp import SUPERUSER_ID
 
 from openerp.osv import osv, fields
 from openerp.osv.orm import except_orm
@@ -608,7 +609,7 @@ class plm_document(osv.osv):
             blind write for xml-rpc call for recovering porpouse
             DO NOT USE FOR COMMON USE !!!!
         """
-        return self.write(cr, uid, ids, vals, context=context, check=False)
+        return super(plm_document, self).write(cr, uid, ids, vals, context=context)
 
 #   Overridden methods for this entity
     def _get_filestore(self, cr):
@@ -652,8 +653,15 @@ class plm_document(osv.osv):
                 if customObject.state in checkState:
                     raise osv.except_osv(_('Edit Entity Error'), _("The active state does not allow you to make save action"))
                     return False
+        self.writeCheckDatas(cr, uid, ids, vals, context)
         return super(plm_document, self).write(cr, uid, ids, vals, context=context)
 
+    def writeCheckDatas(self, cr, uid, ids, vals, context={}):
+        if 'datas' in vals.keys() or 'datas_fname' in vals.keys():
+            for docBrws in self.browse(cr, uid, ids, context=context):
+                if not self._is_checkedout_for_me(cr, uid, docBrws.id, context) and uid != SUPERUSER_ID:
+                    raise osv.except_osv(_('Entity Error'), _("You cannot edit a file not in check-out by you!"))
+        
     def unlink(self, cr, uid, ids, context=None):
         values={'state':'released',}
         checkState=('undermodify','obsoleted')
@@ -674,7 +682,6 @@ class plm_document(osv.osv):
 #   Overridden methods for this entity
 
     def _check_duplication(self, cr, uid, vals, ids=None, op='create'):
-        SUPERUSER_ID = 1
         name=vals.get('name',False)
         parent_id=vals.get('parent_id',False)
         ressource_parent_type_id=vals.get('ressource_parent_type_id',False)

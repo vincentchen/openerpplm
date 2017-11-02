@@ -113,7 +113,7 @@ class BackupDocWizard(osv.osv_memory):
                       }
             if relDocBrws:
                 documentId = relDocBrws.id
-                writeRes = plmDocObj.write(cr, uid, relDocBrws.id, values)
+                writeRes = plmDocObj.write(cr, SUPERUSER_ID, relDocBrws.id, values)
                 if writeRes:
                     logging.info('[action_restore_document] Updated document %r' % (documentId))
                 else:
@@ -126,7 +126,7 @@ class BackupDocWizard(osv.osv_memory):
                                'name': backupDocBrws.document_name,
                                }
                               )
-                documentId = plmDocObj.create(cr, uid, values)
+                documentId = plmDocObj.create(cr, SUPERUSER_ID, values)
                 if documentId:
                     logging.info('[action_restore_document] Created document %r' % (documentId))
                 else:
