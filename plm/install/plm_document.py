@@ -693,9 +693,7 @@ class plm_document(models.Model):
         if 'datas' in vals.keys() or 'datas_fname' in vals.keys():
             for docBrws in self:
                 if not docBrws._is_checkedout_for_me(docBrws.id) and self.env.uid != SUPERUSER_ID:
-                    msg = _("You cannot edit a file not in check-out by you! User ID %s" % (self.env.uid))
-                    docBrws.wf_message_post(body=msg)
-                    raise UserError(_(msg))
+                    raise UserError(_("You cannot edit a file not in check-out by you! User ID %s" % (self.env.uid)))
 
     def unlink(self, cr, uid, ids, context=None):
         values = {'state': 'released', }
