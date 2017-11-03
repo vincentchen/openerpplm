@@ -912,7 +912,7 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         give back the lines
         """
         return [bomLineBrowse.itemnum,
-                emptyStringIfFalse(bomLineBrowse.product_id.description),
+                emptyStringIfFalse(bomLineBrowse.product_id.description).replace(',', '.'),
                 self._translate(emptyStringIfFalse(bomLineBrowse.product_id.description), 'english'),
                 bomLineBrowse.product_id.engineering_code,
                 bomLineBrowse.product_qty]
