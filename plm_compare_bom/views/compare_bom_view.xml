@@ -7,7 +7,7 @@
             <field name="type">tree</field>
         	<field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="red:reason in ('Removed');darkgray:reason in ('Changed')" string="BoM Relations in Bom 2">
+                <tree colors="red:reason == 'Changed';darkgreen:reason == 'Added';darkgray:reason == 'Changed Qty'" string="BoM Relations in Bom 2">
                     <field name="itemnum" select="True"/>
                     <field name="bom_idrow" invisible="True"/>
                     <field name="part_id" select="True"/>
@@ -26,7 +26,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree colors="darkgreen:reason in ('Added');darkgray:reason in ('Changed')" string="BoM Relations in Bom 1">
+                <tree colors="red:reason == 'Changed';darkgreen:reason == 'Added';darkgray:reason == 'Changed Qty'" string="BoM Relations in Bom 1">
                     <field name="itemnum" select="True"/>
                     <field name="bom_idrow" invisible="True"/>
                     <field name="part_id" select="True"/>
@@ -52,13 +52,15 @@
                     	<field name="bom_id2"/>
                     </group>
                     <newline/>
-                    <separator colspan="4"/>
-                    <group col="2" colspan="4">
-                        <button special="cancel" string="Cancel" />
-                        <button name="action_compare_Bom" string="Compare selected BoMs"
-                            colspan="1" type="object"/>
+                    <group>
+                    	<field name="compute_type" widget="radio"/>
                     </group>
+		          <footer>
+                    <button name="action_compare_Bom" class="oe_highlight" string="Compare selected BoMs" type="object"/>
+		            <button string="Cancel" class="oe_link" special="cancel"/>
+		          </footer>
                 </form>
+                
             </field>
         </record>
 
