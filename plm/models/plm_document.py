@@ -819,7 +819,12 @@ class PlmDocument(models.Model):
         revisionId = attrs.get('revisionid', False)
         docBrwsList = self.search([('name', '=', documentName),
                                    ('revisionid', '=', revisionId)])
-        for docBrws in docBrwsList:
+        docBrwsList.checkin()
+        return False
+
+    @api.multi
+    def checkin(self):
+        for docBrws in self:
             checkOutId = docBrws.isCheckedOutByMe()
             if not checkOutId:
                 logging.info('Document %r is not in check out by user %r so cannot be checked-in' % (docBrws.id, self.env.user_id))
@@ -829,8 +834,7 @@ class PlmDocument(models.Model):
                 return False
             self.env['plm.checkout'].browse(checkOutId).unlink()
             return docBrws.id
-        return False
-
+        
     def getFileExtension(self, docBrws):
         fileExtension = ''
         datas_fname = docBrws.datas_fname
