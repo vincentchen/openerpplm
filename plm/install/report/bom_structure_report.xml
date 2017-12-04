@@ -36,33 +36,33 @@
 						<td name="parent_bom_weight"> <b><span t-esc="o.weight_net"/> </b></td>
 					</tr>
 					<t t-set="i" t-value="1"/>
-						<t t-foreach="get_children(o)" t-as="childDict" name='children_compute'>
-							<tr>
-								<t t-if="i%2 == 1">
-									<td name="bom_name_value_b" style="background-color: aliceblue;"></td>
-									<td name="bom_pos_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('item')"/></td>
-									<td name="bom_level_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('level')"/></td>
-									<td name="bom_prod_name_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('pname')"/></td>
-									<td name="bom_rev_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('previ')"/></td>
-									<td name="bom_description_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('pdesc')"/></td>
-									<td name="bom_qty_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('pqty')"/></td>
-									<td name="bom_uom_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('uname')"/></td>
-									<td name="bom_weight_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('pweight')"/></td>
-								</t>
-								<t t-if="i%2 != 1">
-									<td name="bom_name_value"></td>
-									<td name="bom_pos_value"><span t-esc="childDict.get('item')"/></td>
-									<td name="bom_level_value" ><span t-esc="childDict.get('level')"/></td>
-									<td name="bom_prod_name_value"><span t-esc="childDict.get('pname')"/></td>
-									<td name="bom_rev_value" ><span t-esc="childDict.get('previ')"/></td>
-									<td name="bom_description_value" ><span t-esc="childDict.get('pdesc')"/></td>
-									<td name="bom_qty_value" ><span t-esc="childDict.get('pqty')"/></td>
-									<td name="bom_uom_value" ><span t-esc="childDict.get('uname')"/></td>
-									<td name="bom_weight_value" ><span t-esc="childDict.get('pweight')"/></td>
-								</t>
-							</tr>
-							<t t-set="i" t-value="i+1"/>
-						</t> 
+					<t t-foreach="get_children(o)" t-as="childDict" name='children_compute'>
+						<t t-set="lineBrws" t-value="childDict.get('lineBrws')"/>
+						<t t-set="prodTmplBrws" t-value="childDict.get('prodTmplBrws')"/>
+						<tr>
+							<t t-if="i%2 == 1">
+								<td name="bom_name_value_b" style="background-color: aliceblue;"></td>
+								<td name="bom_pos_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('item')"/></td>
+								<td name="bom_level_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('level')"/></td>
+								<td name="bom_prod_name_value_b" style="background-color: aliceblue; white-space: nowrap;"><span t-esc="childDict.get('engineering_code')"/></td>
+								<td name="bom_description_value_b" style="background-color: aliceblue;"><span t-esc="prodTmplBrws.description"/></td>
+								<td name="bom_qty_value_b" style="background-color: aliceblue;"><span t-esc="childDict.get('pqty')"/></td>
+								<td name="bom_uom_value_b" style="background-color: aliceblue;"><span t-esc="lineBrws.product_uom.name"/></td>
+								<td name="bom_weight_value_b" style="background-color: aliceblue;"><span t-esc="prodTmplBrws.weight"/></td>
+							</t>
+							<t t-if="i%2 != 1">
+								<td name="bom_name_value"></td>
+								<td name="bom_pos_value"><span t-esc="childDict.get('item')"/></td>
+								<td name="bom_level_value" ><span t-esc="childDict.get('level')"/></td>
+								<td name="bom_prod_name_value"  style='white-space: nowrap;'><span t-esc="childDict.get('engineering_code')"/></td>
+								<td name="bom_description_value" ><span t-esc="prodTmplBrws.description"/></td>
+								<td name="bom_qty_value" ><span t-esc="childDict.get('pqty')"/></td>
+								<td name="bom_uom_value" ><span t-esc="lineBrws.product_uom.name"/></td>
+								<td name="bom_weight_value" ><span t-esc="prodTmplBrws.weight"/></td>
+							</t>
+						</tr>
+						<t t-set="i" t-value="i+1"/>
+					</t> 
 				</table>
             </div>
         </t> 
@@ -88,36 +88,6 @@
 
 <template id="plm.bom_structure_flat">
     <t t-call="plm.bom_structure_all"></t>
-</template>
-
-
-
-<template id="bom_spare_header">
-	<t t-foreach="docs" t-as="compBrws">
-		<t t-call="report.html_container">
-	        <t t-set="data_report_margin_top" t-value="12"/>
-	        <t t-set="data_report_header_spacing" t-value="9"/>
-	        <t t-set="data_report_dpi" t-value="110"/>
-	
-	        <t t-call="report.internal_layout">
-		        <div class="page" align="center">
-					<t t-set="docBrws" t-value="get_document_brws()"/>
-					<table> 
-						<tr><td style="text-align: center;"><b>Spare Parts Report</b></td></tr> 
-						<tr><td style="text-align: center;"><b><span t-esc="compBrws.product_tmpl_id.engineering_code or compBrws.product_tmpl_id.default_code"/></b></td></tr>
-						<tr><td style="text-align: center;"><b><span t-esc="compBrws.product_tmpl_id.description"/></b></td></tr>
-					</table>
-					<br></br>
-					<br></br>
-					<!--	to fix in merge pdf
-					<t t-if="docBrws != null">
-						<span t-field="docBrws.preview" t-field-options='{"widget": "image"}'/>
-					</t>
-					-->
-				</div>
-			</t>
-		</t>
-	</t>
 </template>
 
 </odoo>

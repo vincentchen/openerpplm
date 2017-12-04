@@ -31,6 +31,7 @@ from openerp.osv import osv
 from openerp.report import report_sxw
 from operator import itemgetter
 from openerp import _
+import openerp
 import time
 import logging
 
@@ -48,7 +49,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 newBom = bomBws
                 break
         return newBom
-
+    
     def getOutLineInfos(bomLineBrws, productTmplBrws, prodQty):
         res = {}
         res['row_bom_line'] = bomLineBrws
@@ -65,8 +66,10 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
         res['level'] = level
         res['prodBrws'] = bomLineBrws.product_id
         res['prodTmplBrws'] = productTmplBrws
+        res['lineBrws'] = bomLineBrws
         return res
-
+        
+        
     def leafComputeRecursion(bomObj, parentQty=1):
         for l in bomObj.bom_line_ids:
             lineQty = l.product_qty
@@ -79,11 +82,12 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
             else:
                 if prodTmlId not in leafRes.keys():
                     resDict = getOutLineInfos(l, productTmplObj, prodQty)
+                    resDict['engineering_code'] = productTmplObj.engineering_code
                     resDict['level'] = ''
                     leafRes[prodTmlId] = resDict
                 else:
                     leafRes[prodTmlId]['pqty'] = leafRes[prodTmlId]['pqty'] + prodQty
-
+        
     if leaf:
         leafRes = {}
         leafComputeRecursion(myObject)
@@ -91,6 +95,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
 
 
     def summarize_level(bomObj, recursion=False, flat=False, level=1, summarize=False, parentQty=1):
+        
         def updateQty(tmplId, qtyToAdd):
             for localIndex, valsList in orderDict.items():
                 count = 0
@@ -104,7 +109,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                         orderDict[localIndex][count]['pqty'] = newQty
                         return
                     count = count + 1
-
+        
         orderDict = {}
         levelListed = []
         for l in bomObj.bom_line_ids:
@@ -118,13 +123,13 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 myNewBom = getBom(l)
                 if myNewBom:
                     children = summarize_level(myNewBom, recursion, flat, level + 1, summarize, l.product_qty * parentQty)
-
             if prodTmlId in levelListed and summarize:
                 qty = l.product_qty
                 updateQty(prodTmlId, qty)
             else:
                 prodQty = l.product_qty
                 res = getOutLineInfos(l, productTmplObj, prodQty)
+                res['engineering_code'] = '- ' * level + ' ' + productTmplObj.engineering_code
                 res['children'] = children
                 res['level'] = level
                 levelListed.append(prodTmlId)
@@ -132,7 +137,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
         return orderDict
 
     out = []
-    
+
     def getOutList(outDict, parentQty=1):
         itemNums = outDict.keys()
         itemNums.sort()
@@ -180,7 +185,6 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context):
         super(bom_structure_all_custom_report, self).__init__(cr, uid, name, context=context)
-        self.context = context
         self.localcontext.update({
             'time': time,
             'get_children': self.get_children,
@@ -193,13 +197,12 @@ class bom_structure_all_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, recursion=True, flat=False, leaf=False, level=1, summarize=False)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
 class bom_structure_one_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        self.context = context
         super(bom_structure_one_custom_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -213,13 +216,12 @@ class bom_structure_one_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, summarize=False)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
 class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        self.context = context
         super(bom_structure_all_sum_custom_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -233,13 +235,12 @@ class bom_structure_all_sum_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, recursion=True, flat=False, leaf=False, level=level, summarize=True)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
 class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        self.context = context
         super(bom_structure_one_sum_custom_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -253,13 +254,12 @@ class bom_structure_one_sum_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, summarize=True)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
 class bom_structure_leaves_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        self.context = context
         super(bom_structure_leaves_custom_report, self).__init__(cr, uid, name, context=context)
         self.keyIndex = 0
         self.localcontext.update({
@@ -274,13 +274,12 @@ class bom_structure_leaves_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, leaf=True, level=level, summarize=True)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
 class bom_structure_flat_custom_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        self.context = context
         super(bom_structure_flat_custom_report, self).__init__(cr, uid, name, context=context)
         self.keyIndex = 0
         self.localcontext.update({
@@ -295,7 +294,7 @@ class bom_structure_flat_custom_report(report_sxw.rml_parse):
         return get_bom_report(myObject, recursion=True, flat=True, leaf=False, level=level, summarize=True)
 
     def bom_type(self, myObject):
-        result = dict(self.pool.get(myObject._model._name).fields_get(self.cr, self.uid, context=self.context)['type']['selection']).get(myObject.type, '')
+        result = dict(myObject.fields_get()['type']['selection']).get(myObject.type, '')
         return _(result)
 
 
