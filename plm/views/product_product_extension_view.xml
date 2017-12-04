@@ -166,6 +166,8 @@
             <field name="arch" type="xml">
                 <tree string="Bill of Materials">
                     <field name="name" string="Component Name"/>
+                    <field name="engineering_code"/>
+                    <field name="default_code"/>
                     <field name="engineering_revision" string="Revision"/>
                     <field name="description"/>
                 </tree>
