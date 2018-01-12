@@ -826,6 +826,23 @@ class plm_document(osv.osv):
             outIds = self._getlastrev(cr, uid, outIds, context)
         return self._data_check_files(cr, uid, outIds, listedFiles, forceFlag, context)
 
+    def CheckIn(self, cr, uid, attrs, context=None):
+        documentName = attrs.get('name', '')
+        revisionId = attrs.get('revisionid', False)
+        docBrwsListIds = self.search(cr, uid, [('name', '=', documentName),
+                                             ('revisionid', '=', revisionId)])
+        for docBrws in self.browse(cr, uid, docBrwsListIds):
+            checkOutId = self.isCheckedOutByMe(cr, uid, docBrws.id)
+            if not checkOutId:
+                logging.info('Document %r is not in check out by user %r so cannot be checked-in' % (docBrws.id, uid))
+                return False
+            if docBrws.file_size <= 0 or not docBrws.datas_fname:
+                logging.warning('Document %r has not document content so cannot be checked-in' % (docBrws.id))
+                return False
+            self.pool.get('plm.checkout').unlink(cr, uid, checkOutId)
+            return docBrws.id
+        return False
+
     def CheckInRecursive(self, cr, uid, request, default=None, context=None):
         """
             Evaluate documents to return
@@ -874,7 +891,7 @@ class plm_document(osv.osv):
                 checkoutObj.unlink(cr, uid, checkoutId)
         return self.read(cr, uid, docArray, ['datas_fname'], context)
 
-    def isCheckedOutByMe(self, cr, uid, docId, context):
+    def isCheckedOutByMe(self, cr, uid, docId, context=None):
         checkoutIds = self.pool.get('plm.checkout').search(cr, uid, [('documentid', '=', docId), ('userid', '=', uid)])
         for checkoutId in checkoutIds:
             return checkoutId
