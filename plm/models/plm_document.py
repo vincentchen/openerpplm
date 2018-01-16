@@ -827,7 +827,7 @@ class PlmDocument(models.Model):
         for docBrws in self:
             checkOutId = docBrws.isCheckedOutByMe()
             if not checkOutId:
-                logging.info('Document %r is not in check out by user %r so cannot be checked-in' % (docBrws.id, self.env.user_id))
+                logging.info('Document %r is not in check out by user %r so cannot be checked-in' % (docBrws.id, self.env.uid))
                 return False
             if docBrws.file_size <= 0 or not docBrws.datas_fname:
                 logging.warning('Document %r has not document content so cannot be checked-in' % (docBrws.id))
