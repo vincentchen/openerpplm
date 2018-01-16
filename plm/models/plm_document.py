@@ -819,8 +819,7 @@ class PlmDocument(models.Model):
         revisionId = attrs.get('revisionid', False)
         docBrwsList = self.search([('name', '=', documentName),
                                    ('revisionid', '=', revisionId)])
-        docBrwsList.checkin()
-        return False
+        return docBrwsList.checkin()
 
     @api.multi
     def checkin(self):
