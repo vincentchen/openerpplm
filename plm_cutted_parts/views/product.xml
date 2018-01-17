@@ -18,8 +18,11 @@
 					<field name="row_material"></field>
 					<field name="row_material_xlenght" attrs="{'readonly':[('is_row_material', '=', False)]}"></field>
 					<field name="row_material_ylenght" attrs="{'readonly':[('is_row_material', '=', False)]}"></field>
+				</group>
+				<group col="2" colspan="2">
 					<field name="wastage_percent"></field>
 					<field name="material_added"></field>
+					<field name="material_added_y"></field>
 					<field name="bom_rounding"></field>
 				</group>
 			</field>

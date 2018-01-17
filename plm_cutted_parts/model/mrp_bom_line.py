@@ -26,6 +26,7 @@ Created on 25/mag/2016
 import logging
 
 from openerp import models, fields, api, SUPERUSER_ID, _, osv
+import openerp.addons.decimal_precision as dp
 from openerp import tools
 
 _logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ _logger = logging.getLogger(__name__)
 
 class mrpBomLine_templateCuttedParts(models.Model):
     _inherit = 'mrp.bom.line'
-    x_leght = fields.Float("X Lenght", default=0.0)
-    y_leght = fields.Float("Y Lenght", default=0.0)
+    x_leght = fields.Float("X Lenght", default=0.0, digits=dp.get_precision('plm_cutted_parts'))
+    y_leght = fields.Float("Y Lenght", default=0.0, digits=dp.get_precision('plm_cutted_parts'))
 
 mrpBomLine_templateCuttedParts()

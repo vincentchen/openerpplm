@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data noupdate="1">
+        <!-- Sequences for plm.finishing --> 
+        <record id="plm_decimal_precision" model="decimal.precision">
+            <field name="name">plm_cutted_parts</field>
+            <field name="digits">5</field>
+        </record>
+    </data>
+
+</openerp>
