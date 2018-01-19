@@ -834,7 +834,7 @@ class PlmDocument(models.Model):
                 return False
             self.env['plm.checkout'].browse(checkOutId).unlink()
             return docBrws.id
-        
+
     def getFileExtension(self, docBrws):
         fileExtension = ''
         datas_fname = docBrws.datas_fname
@@ -858,7 +858,7 @@ class PlmDocument(models.Model):
                 return 'other'
         except Exception, ex:
             logging.error('Unable to compute document type, error %r' % (ex))
-        
+            
     @api.model
     def CheckedIn(self, files, default=None):
         """
@@ -1604,7 +1604,7 @@ class PlmDocument(models.Model):
                     break
             outDict[file_path] = outLocalDict
         return outDict
-        
+
 PlmDocument()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
