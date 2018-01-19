@@ -1,19 +1,27 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-#	* plm_cutted_parts
+# 	* plm_cutted_parts
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 9.0e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-05 18:39+0000\n"
-"PO-Revision-Date: 2016-07-05 18:39+0000\n"
-"Last-Translator: <>\n"
+"POT-Creation-Date: 2018-01-19 12:16+0000\n"
+"PO-Revision-Date: 2018-01-19 13:21+0100\n"
+"Last-Translator: Odoo Experts <erwin@odooexperts.nl>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: \n"
+"Language: nl\n"
+"X-Generator: Poedit 1.7.1\n"
+
+#. module: plm_cutted_parts
+#: code:addons/plm_cutted_parts/model/plm_temporary.py:109
+#, python-format
+msgid "Bom Generation Error"
+msgstr "Fout bij aanmaken Bom"
 
 #. module: plm_cutted_parts
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_plm_temporary_cutted_part_explosion
@@ -33,7 +41,7 @@ msgstr "Omschrijving"
 #. module: plm_cutted_parts
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_report_plm_cutted_parts_bom_structure_all_cutted_display_name
 msgid "Display Name"
-msgstr "Naam weergeven"
+msgstr "Weergave naam"
 
 #. module: plm_cutted_parts
 #: selection:plm.temporary,cutted_part_explosion:0
@@ -46,7 +54,12 @@ msgid "ID"
 msgstr "ID"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:44
+#: model:ir.model.fields,help:plm_cutted_parts.field_plm_temporary_migrate_custom_lines
+msgid "If the user adds custom BOM lines in the revision 0 BOM, than makes the revision 1, creates it's engineering BOM and than create the new Normal BOM form EBOM your revision 0 custom BOM lines are created in the new BOM"
+msgstr "Als een gebruiker speciale regels toevoegt aan revisie 0 van de Bom, maak dan deze revisie 1 en maak een engineering Bom aan. Maak vervolgens een nieuwe normale Bom aan van de EBom. De revisie 0 Bom regels worden aangemaakt in de nieuwe Bom."
+
+#. module: plm_cutted_parts
+#: code:addons/plm_cutted_parts/model/product_template.py:45
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_is_row_material
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_is_row_material
 #, python-format
@@ -64,12 +77,20 @@ msgid "Lenght"
 msgstr "Lengte"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:43
+#: code:addons/plm_cutted_parts/model/product_template.py:43
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_material_added
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_material_added
 #, python-format
-msgid "Material Wastage"
-msgstr "Materiaal verlies"
+msgid "Material Wastage X"
+msgstr "Materiaalverlies X"
+
+#. module: plm_cutted_parts
+#: code:addons/plm_cutted_parts/model/product_template.py:44
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_material_added_y
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_material_added_y
+#, python-format
+msgid "Material Wastage Y"
+msgstr "Materiaalverlies Y"
 
 #. module: plm_cutted_parts
 #: model:ir.ui.view,arch_db:plm_cutted_parts.bom_structure_all_cutted
@@ -82,17 +103,30 @@ msgid "None"
 msgstr "Geen"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:42
+#: code:addons/plm_cutted_parts/model/product_template.py:42
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_wastage_percent
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_wastage_percent
 #, python-format
 msgid "Percent Wastage"
-msgstr "Percentage verslies"
+msgstr "Factor verlies"
+
+#. module: plm_cutted_parts
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_plm_temporary_migrate_custom_lines
+msgid "Preserve custom BOM lines from previous Normal BOM revision"
+msgstr "Bewaar aangepaste materiaallijstregels van de vorige normale materiaallijstrevisie"
 
 #. module: plm_cutted_parts
 #: model:ir.model,name:plm_cutted_parts.model_product_product
 msgid "Product"
 msgstr "Product"
+
+#. module: plm_cutted_parts
+#: code:addons/plm_cutted_parts/model/product_template.py:46
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_bom_rounding
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_bom_rounding
+#, python-format
+msgid "Product Rounding"
+msgstr "Productafronding"
 
 #. module: plm_cutted_parts
 #: model:ir.model,name:plm_cutted_parts.model_product_template
@@ -102,10 +136,10 @@ msgstr "Productsjabloon"
 #. module: plm_cutted_parts
 #: model:ir.ui.view,arch_db:plm_cutted_parts.bom_structure_all_cutted
 msgid "Quantity"
-msgstr "Hoeveelheid"
+msgstr "Aantal"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:39
+#: code:addons/plm_cutted_parts/model/product_template.py:39
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_row_material
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_row_material
 #, python-format
@@ -113,7 +147,7 @@ msgid "Raw Material Product"
 msgstr "Grondstof productten"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:40
+#: code:addons/plm_cutted_parts/model/product_template.py:40
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_row_material_xlenght
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_row_material_xlenght
 #, python-format
@@ -121,12 +155,17 @@ msgid "Raw Material x lenght"
 msgstr "Grondstof x lengte"
 
 #. module: plm_cutted_parts
-#: code:addons/plm_cutted_parts/extended_class/product_template.py:41
+#: code:addons/plm_cutted_parts/model/product_template.py:41
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_product_row_material_ylenght
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_product_template_row_material_ylenght
 #, python-format
 msgid "Raw Material y lenght"
 msgstr "Grondstof y lengte"
+
+#. module: plm_cutted_parts
+#: model:ir.model.fields,field_description:plm_cutted_parts.field_mrp_bom_line_related_document_ids
+msgid "Related Documents"
+msgstr "Gekoppelde documenten"
 
 #. module: plm_cutted_parts
 #: selection:plm.temporary,cutted_part_explosion:0
@@ -162,3 +201,13 @@ msgstr "X Lengte"
 #: model:ir.model.fields,field_description:plm_cutted_parts.field_mrp_bom_line_y_leght
 msgid "Y Lenght"
 msgstr "Y Lengte"
+
+#. module: plm_cutted_parts
+#: model:ir.model,name:plm_cutted_parts.model_mrp_bom_line
+msgid "mrp.bom.line"
+msgstr "mrp.bom.line"
+
+#. module: plm_cutted_parts
+#: model:ir.model,name:plm_cutted_parts.model_report_plm_cutted_parts_bom_structure_all_cutted
+msgid "report.plm_cutted_parts.bom_structure_all_cutted"
+msgstr "report.plm_cutted_parts.bom_structure_all_cutted"
