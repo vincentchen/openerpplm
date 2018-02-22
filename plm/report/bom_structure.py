@@ -49,7 +49,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                 newBom = bomBws
                 break
         return newBom
-    
+
     def getOutLineInfos(bomLineBrws, productTmplBrws, prodQty):
         res = {}
         res['row_bom_line'] = bomLineBrws
@@ -68,8 +68,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
         res['prodTmplBrws'] = productTmplBrws
         res['lineBrws'] = bomLineBrws
         return res
-        
-        
+
     def leafComputeRecursion(bomObj, parentQty=1):
         for l in bomObj.bom_line_ids:
             lineQty = l.product_qty
@@ -87,15 +86,12 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                     leafRes[prodTmlId] = resDict
                 else:
                     leafRes[prodTmlId]['pqty'] = leafRes[prodTmlId]['pqty'] + prodQty
-        
     if leaf:
         leafRes = {}
         leafComputeRecursion(myObject)
         return leafRes.values()
 
-
     def summarize_level(bomObj, recursion=False, flat=False, level=1, summarize=False, parentQty=1):
-        
         def updateQty(tmplId, qtyToAdd):
             for localIndex, valsList in orderDict.items():
                 count = 0
@@ -109,7 +105,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
                         orderDict[localIndex][count]['pqty'] = newQty
                         return
                     count = count + 1
-        
+
         orderDict = {}
         levelListed = []
         for l in bomObj.bom_line_ids:
@@ -129,7 +125,10 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
             else:
                 prodQty = l.product_qty
                 res = getOutLineInfos(l, productTmplObj, prodQty)
-                res['engineering_code'] = '- ' * level + ' ' + productTmplObj.engineering_code or ''
+                if productTmplObj.engineering_code:
+                    res['engineering_code'] = '- ' * str(level) + ' ' + productTmplObj.engineering_code
+                else:
+                    res['engineering_code'] = '- ' * str(level) + ' '
                 res['children'] = children
                 res['level'] = level
                 levelListed.append(prodTmlId)
