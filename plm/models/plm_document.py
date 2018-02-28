@@ -1275,13 +1275,13 @@ class PlmDocument(models.Model):
         populateStructure(structure=objStructure)
 
         # Save the document
-        logging.info("Savind Document")
+        logging.info("Saving Document")
         alreadyEvaluated = []
         for documentAttribute in documentAttributes.values():
             documentAttribute['TO_UPDATE'] = False
             docBrws = False
-            for brwItem in self.search([('name', '=', documentAttribute.get('name')),
-                                        ('revisionid', '=', documentAttribute.get('revisionid'))]):
+            for brwItem in self.search([('name', '=', documentAttribute.get('name', '')),
+                                        ('revisionid', '=', documentAttribute.get('revisionid', 0))]):
                 if brwItem.id in alreadyEvaluated:
                     docBrws = brwItem   # To skip creation
                     documentAttribute['TO_UPDATE'] = False  # To skip same document preview/pdf uploading by the client

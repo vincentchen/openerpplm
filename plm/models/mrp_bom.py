@@ -494,11 +494,15 @@ class MrpBomExtension(models.Model):
 
         if len(relations) < 1:  # no relation to save
             return False
-        parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]
+
         if ECOModuleInstalled is None:
             toCleanRelations(relations)
-        toCompute(parentName, relations)
-        return False
+        for rel in relations:
+            parentName, _parentID, _childName, _childID, _sourceID, _relArgs = rel
+            if not _relArgs:  # Case of not children, so no more BOM for this product
+                return False
+            break
+        return toCompute(parentName, relations)
 
     def _sumBomWeight(self, bomObj):
         """
