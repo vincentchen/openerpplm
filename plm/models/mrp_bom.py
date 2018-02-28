@@ -300,7 +300,7 @@ class MrpBomExtension(models.Model):
                     for variantBrws in trmplBrws.product_variant_ids:
                         return variantBrws.id
             return False
-            
+
         pids = []
         for bomLineObj in bomLineObjs:
             if not bomLineObj.bom_id:
@@ -414,7 +414,7 @@ class MrpBomExtension(models.Model):
             existingBoms = self.search([('product_id', '=', parentID),
                                         ('source_id', '=', sourceID),
                                         ('active', '=', True)])
-            if existingBoms and ECOModuleInstalled != None:
+            if existingBoms and ECOModuleInstalled is not None:
                 newBomBrws = existingBoms[0]
                 parentVals = getParentVals(parentName, parentID, sourceID)
                 parentVals.update({'bom_line_ids': [(5, 0, 0)]})
@@ -425,8 +425,6 @@ class MrpBomExtension(models.Model):
             elif not existingBoms:
                 bomID = saveParent(parentName, parentID, sourceID)
                 saveChildrenBoms(subRelations, bomID, nexRelation)
-                
-                
             return bomID
 
         def saveChildrenBoms(subRelations, bomID, nexRelation):
@@ -438,13 +436,17 @@ class MrpBomExtension(models.Model):
                 saveChild(childName, childID, sourceID, bomID, args=relArgs)
                 toCompute(childName, nexRelation)
             self.RebaseProductWeight(bomID, self.browse(bomID).rebaseBomWeight())
-            
-        def repairQty(value):
-            if(not isinstance(value, float) or (value < 1e-6)):
-                return 1.0
-            return value
 
-        def getParentVals(name, partID, sourceID, args=None):
+        def repairQty(value):
+            """
+            from CAD application some time some value are string with strange value
+            so we need to fix it in some way
+            """
+            if(not isinstance(value, (float, int)) or (value < 1e-6)):
+                return 1.0
+            return float(value)
+
+        def getParentVals(partID, sourceID):
             """
                 Saves the relation ( parent side in mrp.bom )
             """
@@ -454,22 +456,19 @@ class MrpBomExtension(models.Model):
             res['product_tmpl_id'] = objPart.product_tmpl_id.id
             res['product_id'] = partID
             res['source_id'] = sourceID
-            if args is not None:
-                for arg in args:
-                    res[str(arg)] = args[str(arg)]
-            if ('product_qty' in res):
-                res['product_qty'] = repairQty(res['product_qty'])
             return res
 
-
-        def saveParent(name, partID, sourceID, args=None):
+        def saveParent(name, partID, sourceID):
+            """
+            Create o retrieve parent bom object
+            :return: id of the bom retrieved / created
+            """
             try:
-                vals = getParentVals(name, partID, sourceID, args)
+                vals = getParentVals(partID, sourceID)
                 return self.create(vals).id
             except Exception, ex:
-                logging.error("saveParent :  unable to create a relation for part (%s) with source (%d) : %s. ex: %r" % (name, sourceID, str(args), ex))
-                raise AttributeError(_("saveParent :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(sys.exc_info()))))
-
+                logging.error("saveParent :  unable to create a relation for part: (%s) with source: (%d)  exception: %r" % (name, sourceID, ex))
+                raise AttributeError(_("saveParent :  unable to create a relation for part (%s) with source (%d) : %s.") % (name, sourceID, str(sys.exc_info())))
 
         def saveChild(name, partID, sourceID, bomID=None, args=None):
             """
@@ -496,7 +495,7 @@ class MrpBomExtension(models.Model):
         if len(relations) < 1:  # no relation to save
             return False
         parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]
-        if ECOModuleInstalled == None:
+        if ECOModuleInstalled is None:
             toCleanRelations(relations)
         toCompute(parentName, relations)
         return False
@@ -557,8 +556,7 @@ class MrpBomExtension(models.Model):
                                 'name': bom_line.product_id.product_tmpl_id.name,
                                 'product_id': lateRevIdC[0]})
             newBomBrws.sudo().write({'source_id': False,
-                              'name': newBomBrws.product_tmpl_id.name},
-                             check=False)
+                                     'name': newBomBrws.product_tmpl_id.name})
         return newBomBrws
 
     @api.one
@@ -606,7 +604,5 @@ class MrpBomExtension(models.Model):
                     'domain': [('id', 'in', bomLineIds)],
                     'context': {"group_by": ['bom_id']},
                     }
-
-MrpBomExtension()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
