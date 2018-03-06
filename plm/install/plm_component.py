@@ -191,7 +191,7 @@ class plm_component(models.Model):
                 getCompIds(docName, docRev)
         return list(set(ids))
 
-    def NewRevision(self, cr, uid, ids, context=None):
+    def NewRevision(self, cr, uid, ids, context={}):
         """
             create a new revision of current component
         """

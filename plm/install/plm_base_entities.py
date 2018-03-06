@@ -586,8 +586,10 @@ class plm_relation(models.Model):
 
         if len(relations) < 1:  # no relation to save
             return False
-        parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]
+        parentName, _parentID, _childName, _childID, _sourceID, relArgs = relations[0]
         toCleanRelations(relations)
+        if not relArgs:
+            return False
         toCompute(parentName, relations)
         return False
 
