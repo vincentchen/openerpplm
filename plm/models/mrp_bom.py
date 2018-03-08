@@ -366,33 +366,37 @@ class MrpBomExtension(models.Model):
         t_bom_line = self.env['mrp.bom.line']
         t_product_product = self.env['product.product']
         ECOModuleInstalled = self.env.get('mrp.eco', None)
+        
+        evaluatedBOMs = {}
 
-        def cleanStructure(parentID=None, sourceID=None):
-            """
-                Clean relations having sourceID
-            """
-            if parentID is None or sourceID is None:
+
+        def cleanOldEngBomLines(relations):
+            
+            for _parentName, productProductParentID, _ChildName, productProductChildID, sourceID, _RelArgs in relations:
+                checkLevel(productProductParentID, [sourceID], productProductChildID)
+                
+        def checkLevel(productProductParentID, sourceIDs, productProductChildID):
+            logging.info('parentID: %r, source: %r, childID: %r' % (productProductParentID, sourceIDs, productProductChildID))
+            evaluated = []
+            if productProductParentID is None or sourceIDs is None:
                 return False
-            objPart = t_product_product.with_context({}).browse(parentID)
+            toCheck = (productProductParentID, sourceIDs, productProductChildID)
+            if toCheck in evaluated:
+                return
+            objPart = t_product_product.with_context({}).browse(productProductParentID)
             bomBrwsList = self.search(["|",
-                                       ('product_id', '=', parentID),
+                                       ('product_id', '=', productProductParentID),
                                        ('product_tmpl_id', '=', objPart.product_tmpl_id.id),
-                                       ('source_id', '=', sourceID)])
-
-            bomBrwsList2 = t_bom_line.search([('bom_id', 'in', bomBrwsList.ids),
-                                              ('source_id', '=', sourceID)])
-            bomBrwsList.unlink()
-            bomBrwsList2.unlink()
-            return True
-
-        def toCleanRelations(relations):
-            """
-                Processes relations
-            """
-            listedSource = []
-            for _parentName, parentID, _ChildName, _ChildID, sourceID, _RelArgs in relations:
-                if sourceID not in listedSource and cleanStructure(parentID, sourceID):
-                    listedSource.append(sourceID)
+                                       ('source_id', 'in', sourceIDs)])
+            bomLineBrwsList = t_bom_line.search([('bom_id', 'in', bomBrwsList.ids),
+                                              ('source_id', 'in', sourceIDs)])
+            for bomLineBrws in bomLineBrwsList:
+                logging.info('Line: %r product %r' % (bomLineBrws.id, bomLineBrws.product_id.id))
+                checkLevel(bomLineBrws.product_id.id, bomLineBrws.product_id.linkeddocuments.ids, False)
+            bomLineBrwsList.unlink()
+            for bomBrws in bomBrwsList:
+                evaluatedBOMs[bomBrws.id] = bomBrws
+            evaluated.append(toCheck)
             return False
 
         def toCompute(parentName, relations):
@@ -414,14 +418,14 @@ class MrpBomExtension(models.Model):
             existingBoms = self.search([('product_id', '=', parentID),
                                         ('source_id', '=', sourceID),
                                         ('active', '=', True)])
-            if existingBoms and ECOModuleInstalled != None:
+            if existingBoms:
                 newBomBrws = existingBoms[0]
-                parentVals = getParentVals(parentName, parentID, sourceID)
-                parentVals.update({'bom_line_ids': [(5, 0, 0)]})
+                parentVals = getParentVals(parentName, parentID, sourceID, bomType=newBomBrws.type)
                 newBomBrws.write(parentVals)
                 saveChildrenBoms(subRelations, newBomBrws.id, nexRelation)
-                for ecoBrws in self.env['mrp.eco'].search([('bom_id', '=', newBomBrws.id)]):
-                    ecoBrws._compute_bom_change_ids()
+                if ECOModuleInstalled is not None:
+                    for ecoBrws in self.env['mrp.eco'].search([('bom_id', '=', newBomBrws.id)]):
+                        ecoBrws._compute_bom_change_ids()
             elif not existingBoms:
                 bomID = saveParent(parentName, parentID, sourceID)
                 saveChildrenBoms(subRelations, bomID, nexRelation)
@@ -443,12 +447,12 @@ class MrpBomExtension(models.Model):
                 return 1.0
             return value
 
-        def getParentVals(name, partID, sourceID, args=None):
+        def getParentVals(name, partID, sourceID, args=None, bomType='normal'):
             """
                 Saves the relation ( parent side in mrp.bom )
             """
             res = {}
-            res['type'] = kindBom
+            res['type'] = bomType
             objPart = t_product_product.with_context({}).browse(partID)
             res['product_tmpl_id'] = objPart.product_tmpl_id.id
             res['product_id'] = partID
@@ -492,14 +496,21 @@ class MrpBomExtension(models.Model):
                 logging.error("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(args)))
                 raise AttributeError(_("saveChild :  unable to create a relation for part (%s) with source (%d) : %s." % (name, sourceID, str(sys.exc_info()))))
 
+        def cleanEmptyBoms():
+            for _bomId, bomBrws in evaluatedBOMs.items():
+                if not bomBrws.bom_line_ids:
+                    bomBrws.unlink()
+            
         if len(relations) < 1:  # no relation to save
             return False
         parentName, _parentID, _childName, _childID, _sourceID, relArgs = relations[0]
         if ECOModuleInstalled == None:
-            toCleanRelations(relations)
+            cleanOldEngBomLines(relations)
         if not relArgs: # Case of not children, so no more BOM for this product
             return False
-        return toCompute(parentName, relations)
+        bomID = toCompute(parentName, relations)
+        cleanEmptyBoms()
+        return bomID
 
     def _sumBomWeight(self, bomObj):
         """
