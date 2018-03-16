@@ -580,10 +580,13 @@ class plm_relation(osv.osv):
                 raise AttributeError(_("saveChild :  unable to create a relation for part (%r) with source (%r) : %r." % (name, sourceID, sys.exc_info())))
         if len(relations) < 1:  # no relation to save
             return False
-        parentName, _parentID, _childName, _childID, _sourceID, _relArgs = relations[0]
+        parentName, _parentID, _childName, _childID, _sourceID, relArgs = relations[0]
         toCleanRelations(relations)
+        if not relArgs:
+            return False
         tmpBomId = toCompute(parentName, relations)
         return tmpBomId
+
 
     def _sumBomWeight(self, bomObj):
         """

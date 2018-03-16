@@ -242,6 +242,7 @@
                         <field colspan="4" name="description_sale" 		nolabel="1" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
                         <separator string="Purchase Description"/>
                         <field colspan="4" name="description_purchase" 	nolabel="1" attrs="{'readonly':[('state','in',['released','obsoleted'])]}"/>
+                        <field name="source_product" readonly="True"/>
                    </page>
                    <page string="Linked Documents">
                 		<group name="LKDocs">

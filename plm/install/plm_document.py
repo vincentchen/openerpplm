@@ -1091,6 +1091,8 @@ class plm_checkout(osv.osv):
             raise osv.except_osv(_('Check-Out Error'), _("Unable to check-out the required document ("+str(docID.name)+"-"+str(docID.revisionid)+")."))
             return False
         self._adjustRelations(cr, uid, [docID.id], uid)
+        res = self.search(cr, uid, [('documentid', '=', vals['documentid'])])
+        self.unlink(cr, uid, res, context)
         newID = super(plm_checkout,self).create(cr, uid, vals, context=context)   
         documentType.wf_message_post(cr, uid, [docID.id], body=_('Checked-Out'))
         return newID

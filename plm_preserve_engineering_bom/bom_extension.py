@@ -26,6 +26,7 @@ Created on Mar 24, 2016
 @author: Daniel Smerghetto
 '''
 from openerp.osv import osv
+from openerp.tools.translate import _
 import logging
 
 

@@ -80,6 +80,7 @@ class plm_component(osv.osv):
 #                'tmp_treatment': fields.many2one('plm.treatment','Thermal Treatment', required=False, change_default=True, help="Select thermal treatment for current product"),
                 'tmp_surface': fields.many2one('plm.finishing','Surface Finishing', required=False, change_default=True, help="Select surface finishing for current product"),
                 'father_part_ids': fields.function(_father_part_compute, relation='product.product', method=True, string="BoM Hierarchy", type='many2many', store =False),
+                'source_product': fields.many2one('product.product', 'Generated From')
               }
 
     def on_change_tmpmater(self, cr, uid, ids, tmp_material=False):
