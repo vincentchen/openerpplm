@@ -451,7 +451,7 @@ class MrpBomExtension(models.Model):
                 return 1.0
             return float(value)
 
-        def getParentVals(name, partID, sourceID, args=None, bomType='normal'):
+        def getParentVals(parentName, partID, sourceID, args=None, bomType='normal'):
             """
                 Saves the relation ( parent side in mrp.bom )
             """
@@ -469,7 +469,7 @@ class MrpBomExtension(models.Model):
             :return: id of the bom retrieved / created
             """
             try:
-                vals = getParentVals(partID, sourceID)
+                vals = getParentVals(name, partID, sourceID)
                 return self.create(vals).id
             except Exception, ex:
                 logging.error("saveParent :  unable to create a relation for part: (%s) with source: (%d)  exception: %r" % (name, sourceID, ex))
