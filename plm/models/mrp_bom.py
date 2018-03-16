@@ -451,16 +451,25 @@ class MrpBomExtension(models.Model):
                 return 1.0
             return float(value)
 
+        def checkClonedFrom(productID, bomType):
+            prodEnv = self.env['product.product']
+            prodBrws = prodEnv.browse(productID)
+            if prodBrws.source_product:
+                for bomBrws in prodBrws.source_product.bom_ids:
+                    if bomBrws.source_id:
+                        return bomBrws.type, bomBrws.routing_id.id
+            return bomType, False
+            
         def getParentVals(parentName, partID, sourceID, args=None, bomType='normal'):
             """
                 Saves the relation ( parent side in mrp.bom )
             """
             res = {}
-            res['type'] = bomType
             objPart = t_product_product.with_context({}).browse(partID)
             res['product_tmpl_id'] = objPart.product_tmpl_id.id
             res['product_id'] = partID
             res['source_id'] = sourceID
+            res['type'], res['routing_id'] = checkClonedFrom(partID, bomType)
             return res
 
         def saveParent(name, partID, sourceID):
