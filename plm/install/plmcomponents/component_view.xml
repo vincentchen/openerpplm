@@ -123,6 +123,8 @@
 		               			<field name="state" 				colspan="2" 			readonly="True"/>	
 		               			<label for="description" 			colspan="6"/>
 		               			<field name="description" 			colspan="6" 			attrs="{'readonly':[('state','in',['released','obsoleted'])]}" nolabel="1" />
+		           				<label for="source_product" 			colspan="4"/>
+		           				<field name="source_product" readonly="True"/>
 		           			</group>
 		           		</group>
 		

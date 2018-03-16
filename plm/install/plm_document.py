@@ -403,10 +403,11 @@ class plm_document(models.Model):
             return True
         return False
 
-    def NewRevision(self, cr, uid, ids, context=None):
+    def NewRevision(self, cr, uid, ids, newBomDocumentRevision=True, context=None):
         """
             create a new revision of the document
         """
+        # TODO: Migrate document revision functionality from plm 10
         newID = None
         for tmpObject in self.browse(cr, uid, ids, context=context):
             latestIDs = self.GetLatestIds(cr, uid, [(tmpObject.name, tmpObject.revisionid, False)], context=context)
