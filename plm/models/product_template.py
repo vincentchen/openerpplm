@@ -60,7 +60,8 @@ class ProductTemplateExtension(models.Model):
 
     engineering_code = fields.Char(_('Part Number'),
                                    help=_("This is engineering reference to manage a different P/N from item Name."),
-                                   size=64)
+                                   size=64,
+                                   copy=False)
 
 #   ####################################    Overload to set default values    ####################################
     standard_price = fields.Float('Cost',
@@ -78,6 +79,7 @@ class ProductTemplateExtension(models.Model):
 
     engineering_writable = fields.Boolean(_('Writable'),
                                           default=True)
+    is_engcode_editable = fields.Boolean(_('Engineering Editable'), default=True)
 
     _sql_constraints = [
         ('partnumber_uniq', 'unique (engineering_code,engineering_revision)', _('Part Number has to be unique!'))

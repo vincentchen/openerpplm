@@ -746,7 +746,9 @@ class PlmComponent(models.Model):
                     raise UserError('Component %r already exists' % (vals['engineering_code']))
                     #return prodBrwsList[len(prodBrwsList) - 1]
         try:
-            return super(PlmComponent, self).create(vals)
+            vals['is_engcode_editable'] = False
+            res = super(PlmComponent, self).create(vals)
+            return res
         except Exception, ex:
             import psycopg2
             if isinstance(ex, psycopg2.IntegrityError):
@@ -773,6 +775,12 @@ Your user does not have enough permissions to make this operation. Error: \n
 %r\n
 Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fix module to solve the problem.''' % (ex)
             raise ex
+
+    @api.multi
+    def write(self, vals):
+        if not 'is_engcode_editable' in vals:
+            vals['is_engcode_editable'] = False
+        return super(PlmComponent, self).write(vals)
 
     @api.multi
     def copy(self, defaults={}):
@@ -803,7 +811,8 @@ Please try to contact OmniaSolutions to solve this error, or install Plm Sale Fi
         defaults['linkeddocuments'] = []
         defaults['release_date'] = False
         objId = super(PlmComponent, self).copy(defaults)
-        if (objId):
+        if objId:
+            objId.is_engcode_editable = True
             newContext = self.env.context.copy()
             newContext['uid'] = SUPERUSER_ID
             self.wf_message_post(body=_('Copied starting from : %s.' % previous_name))
