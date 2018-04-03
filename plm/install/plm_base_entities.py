@@ -62,14 +62,13 @@ class plm_component(models.Model):
     _name = 'product.template'
     _inherit = 'product.template'
 
-    state                   =   fields.Selection(USED_STATES, _('Status'), help=_("The status of the product in its LifeCycle."), readonly="True")
-    engineering_code        =   fields.Char(_('Part Number'), help=_("This is engineering reference to manage a different P/N from item Name."), size=64)
-    engineering_revision    =   fields.Integer(_('Revision'), required=True, help=_("The revision of the product."))
-    engineering_writable    =   fields.Boolean(_('Writable'))
-    engineering_material    =   fields.Char(_('Raw Material'), size=128, required=False, help=_("Raw material for current product, only description for titleblock."))
-
-    #engineering_treatment    =    fields.Char        (_('Treatment'),size=64,required=False,help=_("Thermal treatment for current product"))
-    engineering_surface     =   fields.Char(_('Surface Finishing'), size=128, required=False, help=_("Surface finishing for current product, only description for titleblock."))
+    state = fields.Selection(USED_STATES, _('Status'), help=_("The status of the product in its LifeCycle."), readonly="True")
+    engineering_code = fields.Char(_('Part Number'), help=_("This is engineering reference to manage a different P/N from item Name."), size=64)
+    engineering_revision = fields.Integer(_('Revision'), required=True, help=_("The revision of the product."))
+    engineering_writable = fields.Boolean(_('Writable'))
+    engineering_material = fields.Char(_('Raw Material'), size=128, required=False, help=_("Raw material for current product, only description for titleblock."))
+    engineering_surface = fields.Char(_('Surface Finishing'), size=128, required=False, help=_("Surface finishing for current product, only description for titleblock."))
+    is_engcode_editable = fields.Boolean(_('Engineering Editable'), default=True)
 
 #   Internal methods
     @api.multi

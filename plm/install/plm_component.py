@@ -134,7 +134,7 @@ class plm_component(models.Model):
             results = self.search([('name', '=', self.name)])
             if len(results) > 0:
                 raise UserError(_("Part %s already exists.\nClose with OK to reuse, with Cancel to discharge." % (self.name)))
-            if not self.engineering_code:
+            if not self.engineering_code or self.engineering_code == '-':
                 self.engineering_code = self.name
 
 #  External methods
@@ -677,6 +677,12 @@ class plm_component(models.Model):
 
 #   Overridden methods for this entity
 
+    @api.multi
+    def write(self, vals):
+        if not 'is_engcode_editable' in vals:
+            vals['is_engcode_editable'] = False
+        return super(plm_component, self).write(vals)
+
     def create(self, cr, uid, vals, context=None):
         if not vals:
             raise ValidationError(_("""You are trying to create a product without values"""))
@@ -701,6 +707,7 @@ class plm_component(models.Model):
                 else:
                     return existingID
         try:
+            vals['is_engcode_editable'] = False
             return super(plm_component, self).create(cr, uid, vals, context=context)
         except Exception, ex:
             import psycopg2
@@ -731,8 +738,8 @@ class plm_component(models.Model):
         defaults['write_date'] = None
         defaults['linkeddocuments'] = []
         objId = super(plm_component, self).copy(cr, uid, oid, defaults, context=context)
-        if (objId):
-            self.write(cr, uid, objId, {'state': 'draft'})
+        if objId:
+            self.write(cr, uid, objId, {'state': 'draft', 'is_engcode_editable': True})
             self.wf_message_post(cr, uid, [oid], body=_('Copied starting from : %s.' % previous_name))
         return objId
 
