@@ -408,6 +408,9 @@ class plm_document(models.Model):
             create a new revision of the document
         """
         # TODO: Migrate document revision functionality from plm 10
+        if isinstance(ids, (list, tuple)):  # This is to fix new style call
+            context = newBomDocumentRevision
+            ids, newBomDocumentRevision = ids
         newID = None
         for tmpObject in self.browse(cr, uid, ids, context=context):
             latestIDs = self.GetLatestIds(cr, uid, [(tmpObject.name, tmpObject.revisionid, False)], context=context)
