@@ -125,10 +125,7 @@ def get_bom_report(myObject, recursion=False, flat=False, leaf=False, level=1, s
             else:
                 prodQty = l.product_qty
                 res = getOutLineInfos(l, productTmplObj, prodQty)
-                if productTmplObj.engineering_code:
-                    res['engineering_code'] = '- ' * str(level) + ' ' + productTmplObj.engineering_code
-                else:
-                    res['engineering_code'] = '- ' * str(level) + ' '
+                res['engineering_code'] = (bomObj.env['ir.config_parameter'].get_param('REPORT_INDENTATION_KEY') or '') * level + ' ' + productTmplObj.engineering_code or ' '
                 res['children'] = children
                 res['level'] = level
                 levelListed.append(prodTmlId)
