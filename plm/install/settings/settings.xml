@@ -34,5 +34,10 @@
             '.ipt']</field>
         </record>
 
+        <record id="report_indentation_key" model="ir.config_parameter">
+            <field name="key">REPORT_INDENTATION_KEY</field>
+            <field name="value">- </field>
+        </record>
+        
     </data>
 </openerp>
