@@ -408,7 +408,7 @@ class plm_document(models.Model):
             create a new revision of the document
         """
         # TODO: Migrate document revision functionality from plm 10
-        if isinstance(ids, (list, tuple)):  # This is to fix new style call
+        if isinstance(ids, (list, tuple)) and len(ids) == 2 and isinstance(ids[1], bool): # This is to fix new style call
             context = newBomDocumentRevision
             ids, newBomDocumentRevision = ids
         newID = None
