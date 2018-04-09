@@ -372,22 +372,24 @@ class plm_document(osv.osv):
         """
             create a new revision of the document
         """
-        newID=None
+        newID = None
+        if isinstance(ids, (list, tuple)) and len(ids) == 2 and isinstance(ids[1], bool):   # FIX: for client api
+            ids, _newBomDocumentRevision = ids
         for tmpObject in self.browse(cr, uid, ids, context=context):
-            latestIDs=self.GetLatestIds(cr, uid,[(tmpObject.name,tmpObject.revisionid,False)], context=context)
+            latestIDs = self.GetLatestIds(cr, uid,[(tmpObject.name,tmpObject.revisionid,False)], context=context)
             for oldObject in self.browse(cr, uid, latestIDs, context=context):
-                self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context,check=False)
-                defaults={}
-                defaults['name']=oldObject.name
-                defaults['revisionid']=int(oldObject.revisionid)+1
-                defaults['writable']=True
-                defaults['state']='draft'
-                newID=super(plm_document,self).copy(cr,uid,oldObject.id,defaults,context=context)
+                self.write(cr,uid,[oldObject.id],{'state':'undermodify',} ,context=context, check=False)
+                defaults = {}
+                defaults['name'] = oldObject.name
+                defaults['revisionid'] = int(oldObject.revisionid)+1
+                defaults['writable'] = True
+                defaults['state'] = 'draft'
+                newID = super(plm_document,self).copy(cr, uid, oldObject.id, defaults, context=context)
                 self.wf_message_post(cr, uid, [oldObject.id], body=_('Created : New Revision.'))
                 break
             break
         return (newID, defaults['revisionid']) 
-    
+
     def Clone(self, cr, uid, oid, defaults={}, context=None):
         """
             create a new copy of the document
@@ -667,7 +669,7 @@ class plm_document(osv.osv):
         checkState=('undermodify','obsoleted')
         for checkObj in self.browse(cr, uid, ids, context=context):
             if not context.get('odooplm_forceunlink',False):
-                if checkObj.is_checkout:
+                if checkObj.is_checkout and uid != 1:
                     raise osv.except_osv(_('Unlink Entity Error'), _("The document is in check out state by user %r" % (checkObj.checkout_user)))
             existingID = self.search(cr, uid, [('name', '=', checkObj.name),('revisionid', '=', checkObj.revisionid-1)])
             if len(existingID)>0:
