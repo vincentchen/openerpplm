@@ -291,6 +291,22 @@ class PlmComponent(models.Model):
             }
 
     @api.multi
+    def product_product_open_eng_view(self):
+        product_id = self.id
+        search_res = self.env['ir.model.data'].get_object_reference('plm', 'plm_component_base_form')
+        form_id = search_res and search_res[1] or False
+        if product_id and form_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Product Engineering'),
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'product.product',
+                'res_id': product_id,
+                'views': [(form_id, 'form')],
+            }
+
+    @api.multi
     def open_boms(self):
         product_tmpl_id = self.product_tmpl_id.id
         if product_tmpl_id:
