@@ -36,7 +36,8 @@
                 'board',
                 'document',
                 'product',
-                'mrp'],
+                'mrp',
+                'report'],
     'description': """
 Manage Product Lifecycle Management in OpenERP
 ==============================================
