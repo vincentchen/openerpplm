@@ -1030,6 +1030,8 @@ class plm_document(osv.osv):
         '''
             Return a new name due to sequence next number.
         '''
+        if isinstance(documentName, (list, tuple)):
+            _integrationName, documentName = documentName
         nextDocNum = self.pool.get('ir.sequence').get(cr, uid, 'plm.document.progress')
         return documentName + '-' + nextDocNum
 
