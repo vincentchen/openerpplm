@@ -6,7 +6,7 @@
                 string="Print Pdf"
                 model="plm.document"
                 name="plm.document.pdf"
-                report_type="sxw"
+                report_type="pdf"
                 file=""
                 header="False"
                 />

@@ -57,6 +57,9 @@ class component_custom_report(report_int):
     """
         Return a pdf report of each printable document attached to given Part ( level = 0 one level only, level = 1 all levels)
     """
+    def __init__(self, name):
+        report_int.__init__(self, name)
+
     def create(self, cr, uid, ids, datas, context=None):
         components, documents, docRepository, output, _componentType = commonInfos(cr, uid, ids, context)
         for component in components:
@@ -77,8 +80,8 @@ class component_custom_report(report_int):
             pdf_string.close()
             return (obj.pdf, 'pdf')
 
-component_custom_report('report.product.product.pdf')
-
+component_custom_report('report.plm.report_product_product_pdf')
+# Name must start with 'report.'
 
 class component_one_custom_report(report_int):
     """

@@ -195,18 +195,19 @@ class bom_spare_header(report_sxw.rml_parse):
         component_ids = self.context.get('active_ids', [])
         for compBrws in self.env['product.product'].browse(component_ids):
             return compBrws
-        return ''
+        return None
 
     def get_document_brws(self):
         productBrws = self.get_component_brws()
         oldest_dt = datetime.now()
         oldest_obj = None
-        for linkedBrwsDoc in productBrws.linkeddocuments:
-            create_date_str = linkedBrwsDoc.create_date
-            create_date = datetime.strptime(create_date_str, DEFAULT_SERVER_DATETIME_FORMAT)
-            if create_date < oldest_dt:
-                oldest_dt = create_date
-                oldest_obj = linkedBrwsDoc
+        if productBrws:
+            for linkedBrwsDoc in productBrws.linkeddocuments:
+                create_date_str = linkedBrwsDoc.create_date
+                create_date = datetime.strptime(create_date_str, DEFAULT_SERVER_DATETIME_FORMAT)
+                if create_date < oldest_dt:
+                    oldest_dt = create_date
+                    oldest_obj = linkedBrwsDoc
         return oldest_obj
 
 

@@ -5,7 +5,7 @@
                 string="Print Spare Parts Manual"
                 model="product.product"
                 name="product.product.spare.parts.pdf"
-                report_type="sxw"
+                report_type="pdf"
                 file=""
                 header="False"
                 />
@@ -16,7 +16,7 @@
                 string="Print Spare Parts Manual One Level"
                 model="product.product"
                 name="product.product.spare.parts.pdf.one"
-                report_type="sxw"
+                report_type="pdf"
                 file=""
                 header="False"
                 />
