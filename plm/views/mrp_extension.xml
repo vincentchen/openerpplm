@@ -17,7 +17,7 @@
                  	<field name="engineering_revision" readonly="True"/>	
 	                <field name="state" readonly="True"/>
 	            	<field name="description" select="True"/>
-	                <field name="source_id" string="Source Relation Document"/>
+	                <field name="source_id" string="Source Relation Document"  groups="base.group_no_one"/>
  	            	<field name="type" />
                 </field>
         		<field name="product_qty" position="after">
@@ -35,7 +35,7 @@
             <field name="inherit_id" ref="mrp.mrp_bom_tree_view"/>
             <field name="arch" type="xml">
                  <field name="product_id" position="after">
-                    <field name="source_id" string="Source Relation Document"/>
+                    <field name="source_id" string="Source Relation Document"  groups="base.group_no_one"/>
   	            	<field name="type" />
                    	<field name="weight_net"/>
                    	<field name="engineering_revision"/>
@@ -80,7 +80,7 @@
 					                <field name="engineering_revision" readonly="True"/>
                                     <field name="state" readonly="True"/>
 					            	<field name="description" readonly="True"/>
-					                <field name="source_id" string="Source Relation Document"/>
+					                <field name="source_id" string="Source Relation Document" groups="base.group_no_one"/>
 			 	            		<field name="type" />
                                     <field name="hasChildBoms" invisible="True"/>
                                 </tree>
@@ -153,7 +153,7 @@
 	            		<field name="engineering_revision" readonly="True"/>	
 		                <field name="state" readonly="True"/>
 		            	<field name="description" readonly="True"/>
-		                <field name="source_id" string="Source Relation Document"/>
+		                <field name="source_id" string="Source Relation Document"  groups="base.group_no_one"/>
  	            		<field name="type" />
 	           		</xpath>
 	            	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='product_qty']" position="after">
@@ -225,7 +225,7 @@
                     <field name="code" string="BoM Name"/>
                     <field name="engineering_revision" string="Revision"/>
                     <field name="description"/>
-                    <field name="source_id" string="Source Relation Document"/>
+                    <field name="source_id" string="Source Relation Document"  groups="base.group_no_one"/>
                     <field name="product_qty"/>
                     <field name="product_uom_id"/>
                     <field name="weight_net"/>
@@ -245,7 +245,7 @@
                     <field name="product_id" string="Component Name"/>
                     <field name="engineering_revision" string="Revision"/>
                     <field name="description"/>
-                    <field name="source_id" string="Source Relation Document"/>
+                    <field name="source_id" string="Source Relation Document"  groups="base.group_no_one"/>
                     <field name="product_qty"/>
                     <field name="product_uom_id"/>
                     <field name="weight_net"/>
