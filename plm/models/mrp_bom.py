@@ -399,7 +399,7 @@ class MrpBomExtension(models.Model):
             evaluated.append(toCheck)
             return False
 
-        def toCompute(parentName, relations):
+        def toCompute(parentName, relations, kindBom='normal'):
             """
                 Processes relations
             """
@@ -427,7 +427,7 @@ class MrpBomExtension(models.Model):
                     for ecoBrws in self.env['mrp.eco'].search([('bom_id', '=', newBomBrws.id)]):
                         ecoBrws._compute_bom_change_ids()
             elif not existingBoms:
-                bomID = saveParent(parentName, parentID, sourceID)
+                bomID = saveParent(parentName, parentID, sourceID, kindBom)
                 saveChildrenBoms(subRelations, bomID, nexRelation)
                 
             return bomID
@@ -469,16 +469,16 @@ class MrpBomExtension(models.Model):
             res['product_tmpl_id'] = objPart.product_tmpl_id.id
             res['product_id'] = partID
             res['source_id'] = sourceID
-            res['type'], res['routing_id'] = checkClonedFrom(partID, bomType)
+            res['type'], res['routing_id'] = checkClonedFrom(partID, bomType=bomType)
             return res
 
-        def saveParent(name, partID, sourceID):
+        def saveParent(name, partID, sourceID, kindBom='normal'):
             """
             Create o retrieve parent bom object
             :return: id of the bom retrieved / created
             """
             try:
-                vals = getParentVals(name, partID, sourceID)
+                vals = getParentVals(name, partID, sourceID, bomType=kindBom)
                 return self.create(vals).id
             except Exception, ex:
                 logging.error("saveParent :  unable to create a relation for part: (%s) with source: (%d)  exception: %r" % (name, sourceID, ex))
@@ -518,7 +518,7 @@ class MrpBomExtension(models.Model):
             cleanOldEngBomLines(relations)
         if not relArgs: # Case of not children, so no more BOM for this product
             return False
-        bomID = toCompute(parentName, relations)
+        bomID = toCompute(parentName, relations, kindBom)
         cleanEmptyBoms()
         return bomID
 
