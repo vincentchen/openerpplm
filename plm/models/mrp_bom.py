@@ -422,24 +422,24 @@ class MrpBomExtension(models.Model):
                 newBomBrws = existingBoms[0]
                 parentVals = getParentVals(parentName, parentID, sourceID, bomType=newBomBrws.type)
                 newBomBrws.write(parentVals)
-                saveChildrenBoms(subRelations, newBomBrws.id, nexRelation)
+                saveChildrenBoms(subRelations, newBomBrws.id, nexRelation, newBomBrws.type)
                 if ECOModuleInstalled is not None:
                     for ecoBrws in self.env['mrp.eco'].search([('bom_id', '=', newBomBrws.id)]):
                         ecoBrws._compute_bom_change_ids()
             elif not existingBoms:
                 bomID = saveParent(parentName, parentID, sourceID, kindBom)
-                saveChildrenBoms(subRelations, bomID, nexRelation)
+                saveChildrenBoms(subRelations, bomID, nexRelation, kindBom)
                 
             return bomID
 
-        def saveChildrenBoms(subRelations, bomID, nexRelation):
+        def saveChildrenBoms(subRelations, bomID, nexRelation, kindBom):
             for parentName, _parentID, childName, childID, sourceID, relArgs in subRelations:
                 if parentName == childName:
                     logging.error('toCompute : Father (%s) refers to himself' % (str(parentName)))
                     raise Exception(_('saveChild.toCompute : Father "%s" refers to himself' % (str(parentName))))
 
                 saveChild(childName, childID, sourceID, bomID, args=relArgs)
-                toCompute(childName, nexRelation)
+                toCompute(childName, nexRelation, kindBom)
             self.RebaseProductWeight(bomID, self.browse(bomID).rebaseBomWeight())
 
         def repairQty(value):
